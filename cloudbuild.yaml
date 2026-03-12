@@ -1,5 +1,6 @@
 # PTOWL CI/CD Pipeline — Google Cloud Build
 # Triggers on push to main: test → build → deploy to Cloudflare
+# Connected: GitHub → Cloud Build → Cloudflare (Workers + Pages)
 #
 # Prerequisites:
 #   1. Enable APIs: cloudbuild.googleapis.com, secretmanager.googleapis.com
