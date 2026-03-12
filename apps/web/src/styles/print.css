@@ -1,0 +1,212 @@
+@media print {
+  /* Hide everything non-print */
+  header, nav, .no-print, .sidebar, button:not(.print-only),
+  .toast, .modal-overlay {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  /* Print header */
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid var(--green-dark);
+    padding-bottom: 12pt;
+    margin-bottom: 16pt;
+  }
+
+  .print-header .clinic-logo {
+    max-width: 80px;
+    max-height: 80px;
+  }
+
+  .print-header .clinic-info {
+    text-align: right;
+    font-size: 9pt;
+    color: #333;
+  }
+
+  .print-title {
+    text-align: center;
+    font-size: 16pt;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 4pt;
+  }
+
+  .print-subtitle {
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+    margin-bottom: 16pt;
+  }
+
+  /* Schedule table */
+  .schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+  }
+
+  .schedule-table th {
+    background: var(--print-header-bg) !important;
+    color: var(--print-header-text) !important;
+    padding: 6pt 8pt;
+    text-align: left;
+    font-weight: 600;
+    border: 1px solid var(--gray-mid);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .schedule-table td {
+    padding: 5pt 8pt;
+    border: 1px solid var(--gray-mid);
+  }
+
+  .schedule-table tr:nth-child(even) td {
+    background: var(--print-row-alt) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .reminder-sent {
+    color: var(--print-sent) !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .reminder-not-sent {
+    color: var(--print-not-sent) !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Calendar grid */
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    border: 1px solid var(--gray-mid);
+  }
+
+  .calendar-header-cell {
+    background: var(--orange-light) !important;
+    color: var(--green-dark) !important;
+    padding: 4pt;
+    text-align: center;
+    font-weight: 600;
+    font-size: 9pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .calendar-cell {
+    min-height: 60pt;
+    padding: 3pt;
+    font-size: 8pt;
+    border: 1px solid var(--green-light);
+    vertical-align: top;
+  }
+
+  .calendar-cell .date-num {
+    font-weight: 600;
+    margin-bottom: 2pt;
+  }
+
+  .calendar-cell .appt-entry {
+    font-size: 7pt;
+    margin-bottom: 1pt;
+  }
+
+  /* Print footer */
+  .print-footer {
+    margin-top: 16pt;
+    padding-top: 8pt;
+    border-top: 1px solid var(--gray-mid);
+    font-size: 8pt;
+    color: #999;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .print-notes {
+    margin-top: 12pt;
+    font-size: 9pt;
+  }
+
+  .print-notes-line {
+    border-bottom: 1px solid #ccc;
+    height: 20pt;
+    margin-top: 4pt;
+  }
+
+  /* Page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* ── Schedule Preview Overlay (print mode) ── */
+
+  /* Strip overlay backdrop — make it transparent and static */
+  .schedule-preview-overlay {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    display: block !important;
+    z-index: auto !important;
+  }
+
+  /* Strip modal chrome — no shadow, no border-radius, no max-height */
+  .schedule-preview-modal {
+    max-height: none !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide the overlay header (close button, stats, tabs) */
+  .schedule-preview-header,
+  .schedule-preview-tabs,
+  .schedule-preview-footer {
+    display: none !important;
+  }
+
+  /* Expand content area — no scroll, no padding constraints */
+  .schedule-preview-content {
+    overflow: visible !important;
+    padding: 0 !important;
+    flex: none !important;
+  }
+
+  /* Print preview area — strip paper simulation border */
+  .schedule-preview-print-area {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+}
+
+/* Hide print elements on screen */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

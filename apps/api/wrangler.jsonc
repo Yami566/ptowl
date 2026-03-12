@@ -1,0 +1,27 @@
+{
+  "name": "ptowl-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ptowl-db",
+      "database_id": "d6c122ba-decb-47d3-a444-2627c6f8c8fd",
+      "migrations_dir": "src/migrations"
+    }
+  ],
+  // Secrets (set via `wrangler secret put`):
+  // JWT_SECRET - 64-char random hex for JWT signing
+  // ADMIN_EMAIL - admin notification email address
+  // EMAIL_API_KEY - transactional email service key
+  // TURNSTILE_SECRET_KEY - Cloudflare Turnstile secret key
+  "vars": {
+    "ENVIRONMENT": "production",
+    "FRONTEND_URL": "https://ptowl.com"
+  },
+  "routes": [
+    { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
+    { "pattern": "www.ptowl.com/api/*", "zone_name": "ptowl.com" }
+  ]
+}

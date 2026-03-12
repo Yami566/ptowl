@@ -1,0 +1,27 @@
+{
+  "name": "ptowl",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter @ptowl/api dev",
+    "dev:web": "pnpm --filter @ptowl/web dev",
+    "build": "pnpm -r build",
+    "build:shared": "pnpm --filter @ptowl/shared build",
+    "build:api": "pnpm --filter @ptowl/api build",
+    "build:web": "pnpm --filter @ptowl/web build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "e2e": "playwright test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd",
+      "sharp"
+    ]
+  }
+}

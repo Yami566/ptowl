@@ -1,0 +1,214 @@
+import { Hono } from 'hono';
+import type { Env } from '../types/env.js';
+import { requireAuth, requireCSRF } from '../middleware/auth.js';
+import { validateInitials, validateScheduleParams, generateSchedule } from '@ptowl/shared';
+import { TIER_LIMITS } from '@ptowl/shared';
+
+type Variables = {
+  user: { id: string; email: string; role: string; tier: string } | null;
+};
+
+export const scheduleRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
+
+// All routes require auth
+scheduleRoutes.use('*', requireAuth);
+
+// GET / - List user's schedules
+scheduleRoutes.get('/', async (c) => {
+  try {
+    const user = c.get('user')!;
+    const page = Math.max(1, parseInt(c.req.query('page') || '1') || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(c.req.query('limit') || '20') || 20));
+    const offset = (page - 1) * limit;
+
+    const countResult = await c.env.DB.prepare('SELECT COUNT(*) as total FROM schedules WHERE user_id = ?')
+      .bind(user.id)
+      .first<{ total: number }>();
+
+    const schedules = await c.env.DB.prepare(
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+    )
+      .bind(user.id, limit, offset)
+      .all();
+
+    return c.json({
+      ok: true,
+      data: schedules.results,
+      meta: { page, limit, total: countResult?.total || 0 },
+    });
+  } catch (err) {
+    console.error('List schedules error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedules' } }, 500);
+  }
+});
+
+// POST / - Create new schedule
+scheduleRoutes.post('/', requireCSRF, async (c) => {
+  try {
+    const user = c.get('user')!;
+    const body = await c.req.json<{
+      template_id?: string;
+      patient_initials: string;
+      start_date: string;
+      sessions_per_week: number;
+      duration_weeks: number;
+      provider_name?: string;
+      notes?: string;
+    }>();
+
+    // Validate initials
+    const initialsErr = validateInitials(body.patient_initials);
+    if (initialsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: initialsErr } }, 400);
+
+    // Validate schedule params
+    const paramsErr = validateScheduleParams({
+      sessions_per_week: body.sessions_per_week,
+      duration_weeks: body.duration_weeks,
+    });
+    if (paramsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: paramsErr } }, 400);
+
+    // Validate start_date format (YYYY-MM-DD)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(body.start_date) || isNaN(Date.parse(body.start_date))) {
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid start date format' } }, 400);
+    }
+
+    // M8 FIX: Validate template_id format if provided
+    if (body.template_id) {
+      if (!/^[0-9a-f]{32}$/i.test(body.template_id)) {
+        return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid template ID' } }, 400);
+      }
+    }
+
+    // Validate provider_name length
+    const providerName = (body.provider_name || '').replace(/<[^>]*>/g, '').trim().slice(0, 200);
+    const notes = (body.notes || '').replace(/<[^>]*>/g, '').trim().slice(0, 1000);
+
+    // Tier limit check
+    const tier = user.tier as 'free' | 'paid';
+    const limits = TIER_LIMITS[tier];
+    const countResult = await c.env.DB.prepare('SELECT COUNT(*) as total FROM schedules WHERE user_id = ?')
+      .bind(user.id)
+      .first<{ total: number }>();
+
+    if ((countResult?.total || 0) >= limits.maxSchedules) {
+      return c.json(
+        { ok: false, error: { code: 'TIER_LIMIT', message: `Free tier limited to ${limits.maxSchedules} schedules. Upgrade to create more.` } },
+        403,
+      );
+    }
+
+    // Generate appointments
+    const { appointments, end_date } = generateSchedule({
+      start_date: body.start_date,
+      sessions_per_week: body.sessions_per_week,
+      duration_weeks: body.duration_weeks,
+    });
+
+    const initials = body.patient_initials.toUpperCase();
+
+    // Create schedule
+    const scheduleId = crypto.randomUUID().replace(/-/g, '');
+    await c.env.DB.prepare(
+      'INSERT INTO schedules (id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    )
+      .bind(
+        scheduleId,
+        user.id,
+        body.template_id || null,
+        initials,
+        '', // alias will be set from separate alias call
+        body.start_date,
+        end_date,
+        body.sessions_per_week,
+        body.duration_weeks,
+        providerName,
+        notes,
+      )
+      .run();
+
+    // Insert appointments
+    for (const appt of appointments) {
+      const apptId = crypto.randomUUID().replace(/-/g, '');
+      await c.env.DB.prepare(
+        'INSERT INTO appointments (id, schedule_id, appointment_date, appointment_time, provider_name, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+      )
+        .bind(apptId, scheduleId, appt.appointment_date, appt.appointment_time, providerName, appt.sort_order)
+        .run();
+    }
+
+    // Fetch full schedule with appointments
+    const schedule = await c.env.DB.prepare('SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?')
+      .bind(scheduleId, user.id)
+      .first();
+
+    const appts = await c.env.DB.prepare(
+      'SELECT id, schedule_id, appointment_date, appointment_time, provider_name, reminder_sent, sort_order, created_at, updated_at FROM appointments WHERE schedule_id = ? ORDER BY sort_order',
+    )
+      .bind(scheduleId)
+      .all();
+
+    return c.json({ ok: true, data: { schedule, appointments: appts.results } }, 201);
+  } catch (err) {
+    console.error('Create schedule error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create schedule' } }, 500);
+  }
+});
+
+// GET /:id - Get schedule with appointments
+scheduleRoutes.get('/:id', async (c) => {
+  try {
+    const user = c.get('user')!;
+    const scheduleId = c.req.param('id');
+    if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+    }
+
+    const schedule = await c.env.DB.prepare('SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?')
+      .bind(scheduleId, user.id)
+      .first();
+
+    if (!schedule) {
+      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
+    }
+
+    const appointments = await c.env.DB.prepare(
+      'SELECT id, schedule_id, appointment_date, appointment_time, provider_name, reminder_sent, sort_order, created_at, updated_at FROM appointments WHERE schedule_id = ? ORDER BY sort_order',
+    )
+      .bind(scheduleId)
+      .all();
+
+    return c.json({ ok: true, data: { schedule, appointments: appointments.results } });
+  } catch (err) {
+    console.error('Get schedule error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedule' } }, 500);
+  }
+});
+
+// DELETE /:id - Delete schedule (cascade deletes appointments)
+scheduleRoutes.delete('/:id', requireCSRF, async (c) => {
+  try {
+    const user = c.get('user')!;
+    const scheduleId = c.req.param('id');
+    if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+    }
+
+    // Delete appointments first (in case no CASCADE)
+    await c.env.DB.prepare('DELETE FROM appointments WHERE schedule_id = ? AND schedule_id IN (SELECT id FROM schedules WHERE user_id = ?)')
+      .bind(scheduleId, user.id)
+      .run();
+
+    const result = await c.env.DB.prepare('DELETE FROM schedules WHERE id = ? AND user_id = ?')
+      .bind(scheduleId, user.id)
+      .run();
+
+    if (!result.meta.changes) {
+      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
+    }
+
+    return c.json({ ok: true, data: { message: 'Schedule deleted' } });
+  } catch (err) {
+    console.error('Delete schedule error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to delete schedule' } }, 500);
+  }
+});

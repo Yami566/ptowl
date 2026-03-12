@@ -1,0 +1,16 @@
+{
+  "name": "PTOWL",
+  "short_name": "PTOWL",
+  "description": "Fast schedule printing for medical providers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFCFA",
+  "theme_color": "#1B5E20",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# Ignore for Google Cloud Build uploads
+node_modules/
+.wrangler/
+dist/
+apps/web/dist/
+apps/api/dist/
+*.log
+.env
+.env.*
+.git/
