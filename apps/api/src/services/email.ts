@@ -53,41 +53,36 @@ async function sendEmail(apiKey: string, params: SendEmailParams): Promise<boole
 
 /**
  * Notify admin that a new user registered and needs approval.
+ * Uses the user's championship team alias for PII protection.
+ * Includes a one-click approval link.
  */
 export async function notifyAdminNewRegistration(
   adminEmail: string,
   apiKey: string,
-  userEmail: string,
-  displayName: string,
+  teamAlias: string,
+  approvalUrl: string,
 ): Promise<void> {
   if (!apiKey) {
     console.warn('EMAIL_API_KEY not set — skipping notification');
     return;
   }
 
-  const subject = `[PTOWL] New signup: ${userEmail}`;
+  const subject = `[PTOWL] New signup: ${teamAlias}`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
       <h2 style="color: #1B5E20; margin-bottom: 1rem;">New User Registration</h2>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 1.5rem;">
-        <tr>
-          <td style="padding: 0.5rem 0; color: #666; width: 100px;">Email</td>
-          <td style="padding: 0.5rem 0; font-weight: 600;">${escapeHtml(userEmail)}</td>
-        </tr>
-        <tr>
-          <td style="padding: 0.5rem 0; color: #666;">Name</td>
-          <td style="padding: 0.5rem 0; font-weight: 600;">${escapeHtml(displayName || '(none)')}</td>
-        </tr>
-        <tr>
-          <td style="padding: 0.5rem 0; color: #666;">Status</td>
-          <td style="padding: 0.5rem 0; color: #FF7043; font-weight: 600;">Pending Approval</td>
-        </tr>
-      </table>
-      <a href="https://ptowl.com/admin"
-         style="display: inline-block; padding: 0.75rem 1.5rem; background: #4CAF50; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
-        Review in Admin Panel
+      <p style="color: #333; font-size: 1rem; margin-bottom: 1.5rem;">
+        <strong>${escapeHtml(teamAlias)}</strong> wants to join PtOwl.
+      </p>
+      <a href="${escapeHtml(approvalUrl)}"
+         style="display: inline-block; padding: 1rem 2rem; background: #4CAF50; color: white; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 1.1rem;">
+        Approve ${escapeHtml(teamAlias)}
       </a>
       <p style="color: #999; font-size: 0.8rem; margin-top: 2rem;">
+        Tap the button above to approve this user instantly.
+        <br/>Or open the <a href="https://ptowl.com/admin" style="color: #4CAF50;">Admin Panel</a> to review all users.
+      </p>
+      <p style="color: #999; font-size: 0.75rem; margin-top: 1rem;">
         Sent by PTOWL &middot; <a href="https://ptowl.com" style="color: #999;">ptowl.com</a>
       </p>
     </div>
@@ -151,45 +146,6 @@ export async function notifyUserDenied(
         Your PTOWL account request was not approved at this time.
         If you believe this is an error, please contact us at
         <a href="mailto:help@ptowl.com" style="color: #4CAF50;">help@ptowl.com</a>.
-      </p>
-      <p style="color: #999; font-size: 0.8rem; margin-top: 2rem;">
-        Sent by PTOWL &middot; <a href="https://ptowl.com" style="color: #999;">ptowl.com</a>
-      </p>
-    </div>
-  `;
-
-  await sendEmail(apiKey, { to: userEmail, subject, html });
-}
-
-/**
- * Send password reset email with a reset link.
- */
-export async function sendPasswordResetEmail(
-  apiKey: string,
-  userEmail: string,
-  displayName: string,
-  resetUrl: string,
-): Promise<void> {
-  if (!apiKey) {
-    console.warn('EMAIL_API_KEY not set — skipping notification');
-    return;
-  }
-
-  const name = displayName || 'there';
-  const subject = 'Reset your PTOWL password';
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
-      <h2 style="color: #1B5E20; margin-bottom: 1rem;">Password Reset</h2>
-      <p style="color: #333; line-height: 1.6;">
-        Hey ${escapeHtml(name)}, we received a request to reset your PTOWL password.
-        Click the button below to choose a new password.
-      </p>
-      <a href="${escapeHtml(resetUrl)}"
-         style="display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #FF7043; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">
-        Reset Password
-      </a>
-      <p style="color: #666; font-size: 0.85rem; margin-top: 1.5rem; line-height: 1.5;">
-        This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
       </p>
       <p style="color: #999; font-size: 0.8rem; margin-top: 2rem;">
         Sent by PTOWL &middot; <a href="https://ptowl.com" style="color: #999;">ptowl.com</a>

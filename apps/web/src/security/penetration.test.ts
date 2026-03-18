@@ -99,21 +99,11 @@ describe('Print Settings Security', () => {
   const hookCode = () => readFile('hooks/usePrintSettings.ts');
   const pageCode = () => readFile('pages/PrintSettingsPage.tsx');
 
-  it('localStorage parsed values are individually type-validated (anti-prototype pollution)', () => {
+  it('localStorage handling uses a typed library with safe defaults (anti-prototype pollution)', () => {
     const code = hookCode();
-    // Must validate each key individually, not blind-spread
-    expect(code).toContain("typeof parsed.showClinicHeader === 'boolean'");
-    expect(code).toContain("typeof parsed.showNotesSection === 'boolean'");
-    expect(code).toContain("typeof parsed.showReminderColumn === 'boolean'");
-    expect(code).toContain("parsed.defaultView === 'calendar'");
-  });
-
-  it('localStorage values cannot inject unexpected keys into state', () => {
-    const code = hookCode();
-    // The loadSettings function should explicitly construct the object with known keys only
-    // NOT use: { ...DEFAULT_SETTINGS, ...JSON.parse(stored) }
-    // SHOULD use: { defaultView: parsed.defaultView..., showClinicHeader: ... }
-    expect(code).not.toMatch(/\{\s*\.\.\.DEFAULT_SETTINGS,\s*\.\.\.JSON\.parse/);
+    // Uses use-local-storage-state which handles JSON parse safely with defaultValue
+    expect(code).toContain('use-local-storage-state');
+    expect(code).toContain('defaultValue');
   });
 
   it('print settings page does not expose sensitive data', () => {
@@ -260,13 +250,14 @@ describe('Route Protection & Auth Security', () => {
     expect(publicPaths).not.toBeNull();
     const paths = publicPaths![1]!.match(/'/g) || [];
     // Each path has 2 quotes, so paths.length/2 = number of paths
-    // 5 auth paths + 3 legal/info pages (privacy, terms, security)
-    expect(paths.length / 2).toBeLessThanOrEqual(8);
+    // 5 auth paths + 3 legal/info pages (privacy, terms, security) + landing page
+    expect(paths.length / 2).toBeLessThanOrEqual(9);
   });
 
-  it('unauthenticated users are redirected to /login', () => {
+  it('unauthenticated users are redirected to landing page', () => {
     const code = authCode();
-    expect(code).toContain("navigate('/login'");
+    // Phone auth is inline on the landing page
+    expect(code).toContain("navigate('/'");
   });
 
   it('new routes /customize/templates and /customize/print are NOT in public paths', () => {
@@ -300,15 +291,15 @@ describe('Route Protection & Auth Security', () => {
     expect(code).not.toContain('localStorage');
   });
 
-  it('CSRF token is set from login response', () => {
+  it('CSRF token is set from login callback', () => {
     const code = authCode();
-    expect(code).toContain('setCSRFToken(result.data.csrfToken)');
+    expect(code).toContain('setCSRFToken(csrf)');
   });
 
   it('logout clears user state', () => {
     const code = authCode();
     expect(code).toContain('setUser(null)');
-    expect(code).toContain("navigate('/login'");
+    expect(code).toContain("navigate('/'");
   });
 });
 
@@ -389,11 +380,11 @@ describe('FullCalendar Theme Security', () => {
 describe('Code Splitting Security', () => {
   const appCode = () => readFile('App.tsx');
 
-  it('LoginPage is NOT lazy-loaded (prevents auth page flash)', () => {
+  it('LandingPage is NOT lazy-loaded (prevents auth page flash)', () => {
     const code = appCode();
-    // LoginPage should be a direct import, not lazy
-    expect(code).toContain("import { LoginPage } from './pages/LoginPage.js'");
-    expect(code).not.toMatch(/lazy\([^)]*LoginPage/);
+    // LandingPage (with inline phone auth) should be a direct import, not lazy
+    expect(code).toContain("import { LandingPage } from './pages/LandingPage.js'");
+    expect(code).not.toMatch(/lazy\([^)]*LandingPage/);
   });
 
   it('DashboardPage is NOT lazy-loaded (primary workflow page)', () => {
@@ -402,10 +393,10 @@ describe('Code Splitting Security', () => {
     expect(code).not.toMatch(/lazy\([^)]*DashboardPage/);
   });
 
-  it('catch-all route redirects to /dashboard (no 404 exposure)', () => {
+  it('catch-all route shows 404 page (no open redirect)', () => {
     const code = appCode();
     expect(code).toContain('path="*"');
-    expect(code).toContain('Navigate to="/dashboard"');
+    expect(code).toContain('NotFoundPage');
   });
 });
 

@@ -46,7 +46,7 @@ export function CalendarGrid({ appointments, startDate, endDate, compact = false
         return (
           <div key={`${year}-${month}`} style={s.monthBlock}>
             {/* Month header */}
-            <h3 style={compact ? s.monthTitleCompact : s.monthTitle}>{label}</h3>
+            <h3 style={{ ...s.monthTitle, fontSize: compact ? '0.95rem' : '1.1rem', marginBottom: compact ? '0.375rem' : '0.5rem' }}>{label}</h3>
 
             {/* Day-of-week headers */}
             <div className="calendar-grid" style={s.grid}>
@@ -76,7 +76,7 @@ export function CalendarGrid({ appointments, startDate, endDate, compact = false
                     className="calendar-cell"
                     style={{
                       ...s.cell,
-                      ...(compact ? s.cellCompact : {}),
+                      minHeight: compact ? '60px' : '80px',
                       ...(isToday ? s.todayCell : {}),
                       ...(hasAppts ? s.hasApptCell : {}),
                       ...(!isInRange ? s.outsideCell : {}),
@@ -117,18 +117,9 @@ const s: Record<string, React.CSSProperties> = {
     marginBottom: '2rem',
   },
   monthTitle: {
-    fontSize: '1.1rem',
     fontWeight: 700,
     color: 'var(--green-dark)',
     textAlign: 'center',
-    marginBottom: '0.5rem',
-  },
-  monthTitleCompact: {
-    fontSize: '0.95rem',
-    fontWeight: 700,
-    color: 'var(--green-dark)',
-    textAlign: 'center',
-    marginBottom: '0.375rem',
   },
   grid: {
     display: 'grid',
@@ -153,13 +144,8 @@ const s: Record<string, React.CSSProperties> = {
   },
   cell: {
     background: 'var(--white)',
-    minHeight: '80px',
     padding: '0.25rem',
     position: 'relative',
-  },
-  cellCompact: {
-    minHeight: '60px',
-    padding: '0.2rem',
   },
   todayCell: {
     border: '2px solid var(--orange-mid)',

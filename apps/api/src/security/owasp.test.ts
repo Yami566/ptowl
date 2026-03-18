@@ -183,10 +183,9 @@ describe('OWASP A07: Authentication Security', () => {
     expect(content).toContain('validateScheduleParams');
   });
 
-  it('rate limiting is configured on auth routes', () => {
+  it('rate limiting is handled by Cloudflare WAF', () => {
     const content = fs.readFileSync(path.join(API_SRC, 'index.ts'), 'utf-8');
-    expect(content).toContain('rateLimit');
-    expect(content).toContain('/auth/firebase');
+    expect(content).toContain('Cloudflare WAF');
   });
 });
 

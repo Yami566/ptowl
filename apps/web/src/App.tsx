@@ -1,16 +1,19 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext.js';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, ProtectedRoute, AdminRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
+import { ErrorBoundary } from './components/ErrorBoundary.js';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 5 * 60 * 1000, retry: 1 } },
+});
 
 // Critical path — keep in main bundle
-import { LoginPage } from './pages/LoginPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
+import { LandingPage } from './pages/LandingPage.js';
 
 // Lazy-loaded routes — split into separate chunks
-const RegisterPage = lazy(() => import('./pages/RegisterPage.js').then(m => ({ default: m.RegisterPage })));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.js').then(m => ({ default: m.ResetPasswordPage })));
 const PendingPage = lazy(() => import('./pages/PendingPage.js').then(m => ({ default: m.PendingPage })));
 const SchedulePage = lazy(() => import('./pages/SchedulePage.js').then(m => ({ default: m.SchedulePage })));
 const CustomizePage = lazy(() => import('./pages/CustomizePage.js').then(m => ({ default: m.CustomizePage })));
@@ -25,33 +28,39 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage.js').then(m => ({ d
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <a href="#main-content" className="skip-to-main">
-          Skip to main content
-        </a>
-        <Suspense fallback={<LoadingOverlay message="Loading..." />}>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/pending" element={<PendingPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/schedule/:id" element={<SchedulePage />} />
-            <Route path="/customize" element={<CustomizePage />} />
-            <Route path="/customize/templates" element={<TemplateEditorPage />} />
-            <Route path="/customize/print" element={<PrintSettingsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsOfServicePage />} />
-            <Route path="/security" element={<SecurityPage />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <a href="#main-content" className="skip-to-main">
+            Skip to main content
+          </a>
+          <Suspense fallback={<LoadingOverlay message="Loading..." />}>
+            <ErrorBoundary>
+            <Routes>
+              {/* Public routes — accessible without authentication */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/pending" element={<PendingPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/security" element={<SecurityPage />} />
+
+              {/* Protected routes — require authenticated + approved user */}
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+              <Route path="/schedule/:id" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
+              <Route path="/customize" element={<ProtectedRoute><CustomizePage /></ProtectedRoute>} />
+              <Route path="/customize/templates" element={<ProtectedRoute><TemplateEditorPage /></ProtectedRoute>} />
+              <Route path="/customize/print" element={<ProtectedRoute><PrintSettingsPage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+              {/* Admin route — requires admin role */}
+              <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+            </ErrorBoundary>
+          </Suspense>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }

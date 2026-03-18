@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../api/client.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
 import { CalendarGrid } from '../components/schedule/CalendarGrid.js';
-import { ScheduleConfirmationModal } from '../components/schedule/ScheduleConfirmationModal.js';
 import { formatDate, formatTime } from '@ptowl/shared';
 import type { Schedule, Appointment } from '@ptowl/shared';
 import { usePrintSettings } from '../hooks/usePrintSettings.js';
@@ -29,14 +30,14 @@ function getWeekNumber(apptDate: string, startDate: string): number {
 }
 
 export function SchedulePage() {
+  usePageTitle('Schedule');
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'table' | 'calendar'>('table');
-  const [showReview, setShowReview] = useState(false);
 
   const { settings: printSettings } = usePrintSettings();
 
@@ -87,7 +88,9 @@ export function SchedulePage() {
   });
 
   return (
+    <PageLayout>
     <div id="main-content" role="main" style={styles.page}>
+      <h1 className="sr-only">Schedule Details</h1>
       {/* Screen header */}
       <header style={styles.header} className="no-print">
         <OwlLogo size="md" linkTo="/dashboard" />
@@ -98,9 +101,9 @@ export function SchedulePage() {
           >
             {view === 'table' ? 'Calendar View' : 'Table View'}
           </button>
-          <button style={styles.reviewBtn} onClick={() => setShowReview(true)}>Review</button>
           <button style={styles.printBtn} onClick={() => window.print()}>Print</button>
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Back</button>
+          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
@@ -251,28 +254,8 @@ export function SchedulePage() {
         </div>
       )}
 
-      {/* Review Modal (read-only) */}
-      {showReview && (
-        <ScheduleConfirmationModal
-          appointments={appointments.map((a) => ({
-            appointment_date: a.appointment_date,
-            appointment_time: a.appointment_time,
-            day_of_week: formatDate(a.appointment_date).split(',')[0]!,
-            sort_order: a.sort_order,
-          }))}
-          patientAlias={schedule.patient_alias || schedule.patient_initials}
-          patientInitials={schedule.patient_initials}
-          startDate={schedule.start_date}
-          endDate={schedule.end_date}
-          sessionsPerWeek={schedule.sessions_per_week}
-          durationWeeks={schedule.duration_weeks}
-          templateName=""
-          readOnly
-          onConfirm={() => setShowReview(false)}
-          onCancel={() => setShowReview(false)}
-        />
-      )}
     </div>
+    </PageLayout>
   );
 }
 
@@ -294,9 +277,9 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
   headerActions: { display: 'flex', gap: '0.5rem' },
   viewToggle: { padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer' },
-  reviewBtn: { padding: '0.5rem 1rem', background: 'var(--orange-light)', color: 'var(--dark)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' },
   printBtn: { padding: '0.5rem 1.25rem', background: 'var(--green-mid)', color: 'white', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600 },
-  backBtn: { padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
+  backBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
+  logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
   infoBar: { maxWidth: '960px', margin: '0 auto', padding: '1.5rem 1.5rem 0.5rem', display: 'flex', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' as const },
   patientName: { fontSize: '1.25rem', fontWeight: 700, color: 'var(--dark)' },
   dateRange: { fontSize: '0.875rem', color: 'var(--gray-text)' },

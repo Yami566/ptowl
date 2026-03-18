@@ -16,6 +16,10 @@
   --orange-mid: #FF7043;
   --orange-dark: #FF6F20;
 
+  /* Backgrounds */
+  --green-bg: #E8F5E9;
+  --green-bg-footer: #FAFFF9;
+
   /* Neutrals */
   --white: #FFFFFF;
   --off-white: #FAFCFA;
@@ -135,6 +139,96 @@ button, a {
 /* Card hover effect */
 button:hover:not(:disabled) {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Bee buzzing animation for landing page */
+@keyframes bee-buzz {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(2px, -3px) rotate(2deg); }
+  20% { transform: translate(-1px, -5px) rotate(-1deg); }
+  30% { transform: translate(3px, -2px) rotate(3deg); }
+  40% { transform: translate(-2px, -4px) rotate(-2deg); }
+  50% { transform: translate(1px, -6px) rotate(1deg); }
+  60% { transform: translate(-3px, -3px) rotate(-3deg); }
+  70% { transform: translate(2px, -5px) rotate(2deg); }
+  80% { transform: translate(-1px, -2px) rotate(-1deg); }
+  90% { transform: translate(3px, -4px) rotate(3deg); }
+}
+
+@keyframes bee-wings {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.6); }
+}
+
+.bee-container {
+  position: relative;
+  display: inline-block;
+  font-size: 2.8rem;
+  animation: bee-buzz 1.5s ease-in-out infinite;
+  cursor: default;
+  line-height: 1;
+}
+
+.bee-container::before,
+.bee-container::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  width: 10px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: bee-wings 0.08s ease-in-out infinite;
+}
+
+.bee-container::before { left: 8px; transform-origin: bottom right; }
+.bee-container::after { right: 8px; transform-origin: bottom left; }
+
+/* Landing page section fade-in on load */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-fade-in {
+  animation: fade-in-up 0.6s ease-out both;
+}
+
+.landing-fade-in-delay-1 { animation-delay: 0.15s; }
+.landing-fade-in-delay-2 { animation-delay: 0.3s; }
+.landing-fade-in-delay-3 { animation-delay: 0.45s; }
+
+/* Feature card hover lift */
+.feature-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Keyboard key press animation on hover */
+@keyframes key-press {
+  0%, 100% { transform: translateY(0); box-shadow: 0 3px 0 var(--green-mid); }
+  50% { transform: translateY(2px); box-shadow: 0 1px 0 var(--green-mid); }
+}
+
+.key-animate:hover {
+  animation: key-press 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bee-container { animation: none; }
+  .bee-container::before,
+  .bee-container::after { animation: none; }
+  .landing-fade-in { animation: none; opacity: 1; }
+  .feature-card-hover:hover { transform: none; }
+  .key-animate:hover { animation: none; }
 }
 
 /* Responsive breakpoints */

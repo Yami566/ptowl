@@ -3,25 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
-import { ScheduleConfirmationModal } from '../components/schedule/ScheduleConfirmationModal.js';
 import { SchedulePreviewOverlay } from '../components/schedule/SchedulePreviewOverlay.js';
-import { ScheduleWizard, type WizardResult } from '../components/schedule/ScheduleWizard.js';
+import { ScheduleWizard } from '../components/schedule/ScheduleWizard.js';
+import { DashboardWizard } from '../components/schedule/DashboardWizard.js';
+import { ScheduleEditor } from '../components/schedule/ScheduleEditor.js';
+import type { WizardResult } from '../components/schedule/wizard-constants.js';
 import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
-import { generateSchedule } from '@ptowl/shared';
+import { generateScheduleWithRRule } from '@ptowl/shared';
 import type { Template, Schedule, GeneratedAppointment } from '@ptowl/shared';
 
-interface PendingSchedule {
-  template: Template;
+interface EditorData {
   initials: string;
   alias: string;
   appointments: GeneratedAppointment[];
   startDate: string;
   endDate: string;
+  sessionsPerWeek: number;
+  durationWeeks: number;
+  appointmentTime: string;
 }
 
 export function DashboardPage() {
-  const { user, loading: authLoading } = useAuth();
+  usePageTitle('Dashboard');
+  const { user, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -30,7 +37,7 @@ export function DashboardPage() {
   const [initials, setInitials] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
-  const [pending, setPending] = useState<PendingSchedule | null>(null);
+  const [editorData, setEditorData] = useState<EditorData | null>(null);
   const [generatingPreview, setGeneratingPreview] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const modalInputRef = useRef<HTMLInputElement>(null);
@@ -73,13 +80,13 @@ export function DashboardPage() {
     }
   }, [showInitialsModal]);
 
-  // Keyboard listener — press 1 for wizard, 2-6 for preset templates
+  // Keyboard listener — press 1 for wizard overlay, 2-6 for preset templates
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       // Don't fire if user is typing in an input/textarea
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
-      if (showInitialsModal || creating || pending || previewScheduleId || showWizard) return;
+      if (showInitialsModal || creating || editorData || previewScheduleId || showWizard) return;
 
       if (e.key === '1') {
         setShowWizard(true);
@@ -98,7 +105,7 @@ export function DashboardPage() {
         }
       }
     },
-    [templates, showInitialsModal, creating, pending, previewScheduleId, showWizard],
+    [templates, showInitialsModal, creating, editorData, previewScheduleId, showWizard],
   );
 
   useEffect(() => {
@@ -137,21 +144,25 @@ export function DashboardPage() {
         });
         const alias = aliasResult.ok && aliasResult.data ? aliasResult.data.alias : cleaned.toUpperCase();
 
-        // Generate schedule preview client-side (same function API uses)
+        // Generate schedule with rrule
         const today = new Date().toISOString().split('T')[0]!;
-        const result = generateSchedule({
+        const defaultTime = '09:00';
+        const result = generateScheduleWithRRule({
           start_date: today,
           sessions_per_week: selectedTemplate.sessions_per_week,
           duration_weeks: selectedTemplate.duration_weeks,
+          default_time: defaultTime,
         });
 
-        setPending({
-          template: selectedTemplate,
+        setEditorData({
           initials: cleaned,
           alias,
           appointments: result.appointments,
           startDate: today,
           endDate: result.end_date,
+          sessionsPerWeek: selectedTemplate.sessions_per_week,
+          durationWeeks: selectedTemplate.duration_weeks,
+          appointmentTime: defaultTime,
         });
       } catch {
         setError('Failed to generate preview. Please try again.');
@@ -162,22 +173,24 @@ export function DashboardPage() {
     }
   };
 
-  // Confirm and save schedule via API
-  const handleConfirmSchedule = async () => {
-    if (!pending) return;
+  // Save edited appointments via new endpoint
+  const handleEditorSave = async (finalAppointments: GeneratedAppointment[]) => {
+    if (!editorData) return;
     setCreating(true);
-    setPending(null);
+    setEditorData(null);
     setError('');
 
     try {
-      const schedResult = await apiRequest<{ schedule: Schedule }>('/schedules', {
+      const schedResult = await apiRequest<{ schedule: Schedule }>('/schedules/from-appointments', {
         method: 'POST',
         body: JSON.stringify({
-          template_id: pending.template.id || undefined,
-          patient_initials: pending.initials,
-          start_date: pending.startDate,
-          sessions_per_week: pending.template.sessions_per_week,
-          duration_weeks: pending.template.duration_weeks,
+          patient_initials: editorData.initials,
+          patient_alias: editorData.alias,
+          start_date: editorData.startDate,
+          end_date: editorData.endDate,
+          sessions_per_week: editorData.sessionsPerWeek,
+          duration_weeks: editorData.durationWeeks,
+          appointments: finalAppointments,
         }),
       });
 
@@ -200,44 +213,35 @@ export function DashboardPage() {
     setSelectedTemplate(null);
   };
 
-  const handleCancelSchedule = () => {
-    setPending(null);
+  const handleEditorCancel = () => {
+    setEditorData(null);
     setSelectedTemplate(null);
     setInitials('');
   };
 
-  // Wizard completion — create schedule from wizard result
+  // Wizard completion — create schedule from wizard result (both keyboard & mouse wizard)
   const handleWizardComplete = async (result: WizardResult) => {
     setShowWizard(false);
     setGeneratingPreview(true);
     setError('');
 
     try {
-      const preview = generateSchedule({
+      const preview = generateScheduleWithRRule({
         start_date: result.startDate,
         sessions_per_week: result.sessionsPerWeek,
         duration_weeks: result.durationWeeks,
+        default_time: result.appointmentTime,
       });
 
-      setPending({
-        template: {
-          id: '',
-          user_id: '',
-          hotkey: 0,
-          name: `Custom: ${result.bodyRegion}`,
-          sessions_per_week: result.sessionsPerWeek,
-          duration_weeks: result.durationWeeks,
-          default_time: '09:00',
-          is_active: 1,
-          sort_order: 0,
-          created_at: '',
-          updated_at: '',
-        },
+      setEditorData({
         initials: result.patientInitials,
         alias: result.patientAlias,
         appointments: preview.appointments,
         startDate: result.startDate,
         endDate: preview.end_date,
+        sessionsPerWeek: result.sessionsPerWeek,
+        durationWeeks: result.durationWeeks,
+        appointmentTime: result.appointmentTime,
       });
     } catch {
       setError('Failed to generate preview. Please try again.');
@@ -250,63 +254,71 @@ export function DashboardPage() {
   if (!user) return null;
 
   return (
+    <PageLayout>
     <div style={styles.page}>
       <header style={styles.header}>
         <OwlLogo size="md" linkTo="/dashboard" />
         <div style={styles.headerRight}>
           <button style={styles.headerBtn} onClick={() => navigate('/customize')}>Customize</button>
           <button style={styles.headerBtn} onClick={() => navigate('/profile')}>Profile</button>
-          {user.role === 'admin' && (
-            <button style={styles.headerBtn} onClick={() => navigate('/admin')}>Admin</button>
-          )}
+          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
       <main id="main-content" style={styles.main}>
         <div style={styles.welcome}>
-          <h2 style={styles.welcomeTitle}>
+          <h1 style={styles.welcomeTitle}>
             {user.display_name ? `Welcome back, ${user.display_name}` : 'Welcome back'}
-          </h2>
-          <p style={styles.welcomeText}>Press 1 to create a custom routine, or 2-6 for a preset</p>
+          </h1>
+          <p style={styles.welcomeText}>Create a new schedule below, or press 2-6 for a preset</p>
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <div style={error ? styles.error : { height: 0, overflow: 'hidden' }} aria-live="assertive" role="alert">
+          {error ? `Error: ${error}` : ''}
+        </div>
 
-        {/* Template Grid */}
-        <div style={styles.grid}>
-          {/* Wizard card — always first at hotkey 1 */}
-          <button
-            style={{ ...styles.templateCard, borderColor: 'var(--orange-mid)', background: 'var(--orange-light)' }}
-            onClick={() => { setShowWizard(true); setError(''); }}
-            aria-label="Press 1: Create New Routine with the schedule wizard"
-          >
-            <span style={{ ...styles.hotkey, background: 'var(--orange-mid)' }} aria-hidden="true">1</span>
-            <span style={styles.templateName}>Create New Routine</span>
-            <span style={styles.templateInfo}>Custom wizard &middot; 6 quick steps</span>
-          </button>
-          {templates.map((tmpl) => (
+        {/* Inline Mouse-Friendly Wizard */}
+        <DashboardWizard onComplete={handleWizardComplete} />
+
+        {/* Quick Presets */}
+        <div style={styles.presetsSection}>
+          <div style={styles.presetsHeader}>
+            <h3 style={styles.presetsTitle}>Quick Presets</h3>
             <button
-              key={tmpl.id}
-              style={styles.templateCard}
-              onClick={() => {
-                setSelectedTemplate(tmpl);
-                setShowInitialsModal(true);
-                setInitials('');
-                setError('');
-              }}
-              aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
+              style={styles.keyboardHint}
+              onClick={() => { setShowWizard(true); setError(''); }}
+              title="Open keyboard-only wizard (hotkey: 1)"
             >
-              <span style={styles.hotkey} aria-hidden="true">{tmpl.hotkey}</span>
-              <span style={styles.templateName}>{tmpl.name}</span>
-              <span style={styles.templateInfo}>
-                {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} weeks
-              </span>
+              <span style={styles.keyBadge}>1</span> Keyboard Mode
             </button>
-          ))}
+          </div>
+          <div style={styles.presetsGrid}>
+            {templates.map((tmpl) => (
+              <button
+                key={tmpl.id}
+                style={styles.presetCard}
+                onClick={() => {
+                  setSelectedTemplate(tmpl);
+                  setShowInitialsModal(true);
+                  setInitials('');
+                  setError('');
+                }}
+                aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
+              >
+                <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
+                <div style={styles.presetText}>
+                  <span style={styles.presetName}>{tmpl.name}</span>
+                  <span style={styles.presetInfo}>
+                    {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Saved Schedules */}
-        {schedules.length > 0 && (
+        {schedules.length > 0 ? (
           <div style={styles.savedSection}>
             <h3 style={styles.savedTitle}>Saved Schedules</h3>
             <div style={styles.savedList}>
@@ -324,6 +336,10 @@ export function DashboardPage() {
                 </button>
               ))}
             </div>
+          </div>
+        ) : (
+          <div style={styles.emptyState}>
+            <p style={styles.emptyText}>No schedules yet. Create your first one above!</p>
           </div>
         )}
       </main>
@@ -360,19 +376,19 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* Schedule Confirmation Modal */}
-      {pending && (
-        <ScheduleConfirmationModal
-          appointments={pending.appointments}
-          patientAlias={pending.alias}
-          patientInitials={pending.initials}
-          startDate={pending.startDate}
-          endDate={pending.endDate}
-          sessionsPerWeek={pending.template.sessions_per_week}
-          durationWeeks={pending.template.duration_weeks}
-          templateName={pending.template.name}
-          onConfirm={handleConfirmSchedule}
-          onCancel={handleCancelSchedule}
+      {/* Schedule Editor (drag-and-drop calendar) */}
+      {editorData && (
+        <ScheduleEditor
+          appointments={editorData.appointments}
+          patientInitials={editorData.initials}
+          patientAlias={editorData.alias}
+          startDate={editorData.startDate}
+          endDate={editorData.endDate}
+          sessionsPerWeek={editorData.sessionsPerWeek}
+          durationWeeks={editorData.durationWeeks}
+          appointmentTime={editorData.appointmentTime}
+          onSave={handleEditorSave}
+          onCancel={handleEditorCancel}
         />
       )}
 
@@ -380,7 +396,7 @@ export function DashboardPage() {
         <LoadingOverlay message={creating ? 'Saving schedule...' : 'Generating preview...'} />
       )}
 
-      {/* Schedule Wizard */}
+      {/* Keyboard-only Schedule Wizard */}
       {showWizard && (
         <ScheduleWizard
           onComplete={handleWizardComplete}
@@ -403,6 +419,7 @@ export function DashboardPage() {
         />
       )}
     </div>
+    </PageLayout>
   );
 }
 
@@ -410,23 +427,103 @@ const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', background: 'var(--off-white)' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
   headerRight: { display: 'flex', gap: '0.5rem' },
-  headerBtn: { padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)' },
+  headerBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)' },
+  logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
   main: { maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' },
   welcome: { marginBottom: '2rem' },
   welcomeTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.25rem' },
   welcomeText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
   error: { background: 'var(--red-light)', color: 'var(--red-mid)', padding: '0.75rem', borderRadius: 'var(--radius)', fontSize: '0.875rem', marginBottom: '1rem' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2.5rem' },
-  templateCard: { display: 'flex', flexDirection: 'column' as const, padding: '1.25rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '2px solid var(--green-light)', textAlign: 'left' as const, transition: 'border-color 0.15s, box-shadow 0.15s', cursor: 'pointer' },
-  hotkey: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', background: 'var(--green-dark)', color: 'white', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.75rem' },
-  templateName: { fontWeight: 600, fontSize: '1rem', color: 'var(--dark)', marginBottom: '0.25rem' },
-  templateInfo: { fontSize: '0.8rem', color: 'var(--gray-text)' },
+
+  // Quick Presets
+  presetsSection: { marginBottom: '2rem' },
+  presetsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' },
+  presetsTitle: { fontSize: '1rem', fontWeight: 600, color: 'var(--dark)' },
+  keyboardHint: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+    padding: '0.375rem 0.75rem',
+    background: 'var(--orange-light)',
+    border: '1px solid var(--orange-mid)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.8rem',
+    fontWeight: 600,
+    color: 'var(--orange-mid)',
+    cursor: 'pointer',
+  },
+  keyBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '20px',
+    height: '20px',
+    background: 'var(--orange-mid)',
+    color: 'white',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+  },
+  presetsGrid: {
+    display: 'flex',
+    gap: '0.625rem',
+    overflowX: 'auto' as const,
+    paddingBottom: '0.25rem',
+  },
+  presetCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.625rem',
+    padding: '0.75rem 1rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--green-light)',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
+    transition: 'border-color 0.15s, box-shadow 0.15s',
+    flexShrink: 0,
+  },
+  presetHotkey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    minWidth: '28px',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: '6px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.8rem',
+  },
+  presetText: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.125rem',
+  },
+  presetName: {
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    color: 'var(--dark)',
+  },
+  presetInfo: {
+    fontSize: '0.7rem',
+    color: 'var(--gray-text)',
+  },
+
+  // Saved Schedules
   savedSection: { marginTop: '1rem' },
   savedTitle: { fontSize: '1.1rem', fontWeight: 600, color: 'var(--dark)', marginBottom: '0.75rem' },
   savedList: { display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' },
   savedCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', textAlign: 'left' as const, cursor: 'pointer' },
   savedAlias: { fontWeight: 600, color: 'var(--dark)' },
   savedInfo: { fontSize: '0.8rem', color: 'var(--gray-text)' },
+  emptyState: { textAlign: 'center' as const, padding: '2rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--gray-mid)', marginTop: '1rem' },
+  emptyText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
+
+  // Modals
   modalOverlay: { position: 'fixed' as const, inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
   modal: { background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '100%', maxWidth: '360px', textAlign: 'center' as const },
   modalTitle: { fontSize: '1.25rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.25rem' },

@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
 import type { Template } from '@ptowl/shared';
 
 export function TemplateEditorPage() {
-  const { user } = useAuth();
+  usePageTitle('Edit Templates');
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,14 +91,18 @@ export function TemplateEditorPage() {
   if (loading) return <LoadingOverlay message="Loading templates..." />;
 
   return (
+    <PageLayout>
     <div style={s.page}>
       <header style={s.header}>
         <OwlLogo size="md" linkTo="/dashboard" />
-        <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
+          <button style={s.logoutBtn} onClick={logout}>Logout</button>
+        </div>
       </header>
 
       <main id="main-content" style={s.main}>
-        <h2 style={s.title}>Edit Templates</h2>
+        <h1 style={s.title}>Edit Templates</h1>
         <p style={s.subtitle}>
           Customize your 6 schedule templates. Changes only affect new schedules.
         </p>
@@ -185,6 +192,7 @@ export function TemplateEditorPage() {
         </div>
       </main>
     </div>
+    </PageLayout>
   );
 }
 
@@ -195,7 +203,10 @@ const s: Record<string, React.CSSProperties> = {
     padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)',
   },
   backBtn: {
-    padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
+    padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
+  },
+  logoutBtn: {
+    padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
   },
   main: { maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },

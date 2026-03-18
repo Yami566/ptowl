@@ -47,6 +47,7 @@ export interface Schedule {
   duration_weeks: number;
   notes: string;
   view_preference: 'table' | 'calendar';
+  share_token: string | null;
   created_at: string;
   updated_at: string;
 }

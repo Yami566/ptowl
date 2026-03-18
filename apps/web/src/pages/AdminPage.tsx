@@ -1,47 +1,42 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest, setCSRFToken } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
-import { signInWithEmail } from '../lib/firebase.js';
-
-/** Convert Firebase error codes to user-friendly messages */
-function parseFirebaseError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err);
-  const match = msg.match(/\(auth\/([^)]+)\)/);
-  const code = match ? match[1] : '';
-  switch (code) {
-    case 'user-not-found': case 'wrong-password': case 'invalid-credential':
-      return 'Invalid admin credentials.';
-    case 'too-many-requests':
-      return 'Too many attempts. Please wait a few minutes.';
-    case 'user-disabled':
-      return 'This admin account has been disabled.';
-    default:
-      return msg || 'Login failed.';
-  }
-}
 
 interface PendingUser {
   id: string;
   email: string;
+  phone?: string;
   display_name: string;
   status: string;
   created_at: string;
 }
 
 export function AdminPage() {
+  usePageTitle('Admin');
   const navigate = useNavigate();
-  const [step, setStep] = useState<'login' | 'code' | 'dashboard'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [adminEmail, setAdminEmail] = useState('');
+  const { user, logout } = useAuth();
+  // Admin is already logged in via phone auth. Just need email 2FA to access admin panel.
+  const [step, setStep] = useState<'code' | 'dashboard'>(user?.role === 'admin' ? 'code' : 'code');
   const [code, setCode] = useState('');
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
+
+  // If not logged in or not admin, redirect
+  useEffect(() => {
+    if (!user) {
+      navigate('/', { replace: true });
+    } else if (user.role !== 'admin') {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   // Focus code input when step changes
   useEffect(() => {
@@ -50,35 +45,7 @@ export function AdminPage() {
     }
   }, [step, codeSent]);
 
-  // Step 1: Admin login via Firebase → then backend admin verification
-  const handleLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      // Authenticate through Firebase (third-party)
-      const idToken = await signInWithEmail(email, password);
-
-      // Exchange Firebase token for admin session (backend verifies admin role)
-      const result = await apiRequest<{ needs_email_code?: boolean; email?: string }>('/admin/login', {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
-      });
-
-      if (result.ok && result.data?.needs_email_code) {
-        setAdminEmail(result.data.email || email);
-        setStep('code');
-      } else {
-        setError(result.error?.message || 'Login failed');
-      }
-    } catch (err) {
-      setError(parseFirebaseError(err));
-    }
-    setLoading(false);
-  };
-
-  // Step 2a: Request verification code
+  // Request verification code
   const handleSendCode = async () => {
     setError('');
     setLoading(true);
@@ -93,7 +60,7 @@ export function AdminPage() {
     setLoading(false);
   };
 
-  // Step 2b: Verify the code
+  // Verify the code
   const handleVerifyCode = async (submittedCode: string) => {
     setError('');
     setLoading(true);
@@ -148,22 +115,26 @@ export function AdminPage() {
     }
   };
 
-  // ── Step 2: Email verification code ──
+  if (!user || user.role !== 'admin') return null;
+
+  // ── Email 2FA verification ──
   if (step === 'code') {
     return (
+      <PageLayout>
       <div style={styles.page}>
         {loading && <LoadingOverlay message="Verifying..." />}
         <div style={styles.card}>
-          <div style={{ textAlign: 'center' as const, marginBottom: '1rem' }}><OwlLogo size="md" linkTo="/login" /></div>
-          <h2 style={styles.title}>Email Verification</h2>
+          <div style={{ textAlign: 'center' as const, marginBottom: '1rem' }}><OwlLogo size="md" linkTo="/" /></div>
+          <h1 style={styles.title}>Admin Verification</h1>
 
           {!codeSent ? (
             <>
               <p style={styles.text}>
-                We'll send a 6-digit verification code to:
+                A 6-digit code will be sent to the admin email to verify your identity.
               </p>
-              <p style={styles.emailHighlight}>{adminEmail}</p>
-              {error && <div style={styles.error}>{error}</div>}
+              <div style={error ? styles.error : { height: 0, overflow: 'hidden' }} aria-live="assertive" role="alert">
+                {error ? `Error: ${error}` : ''}
+              </div>
               <button style={styles.button} onClick={handleSendCode} disabled={loading}>
                 Send Verification Code
               </button>
@@ -171,11 +142,12 @@ export function AdminPage() {
           ) : (
             <>
               <p style={styles.text}>
-                A code was sent to <strong>{adminEmail}</strong>.
-                Check your inbox and enter it below.
+                Check the admin email for a 6-digit code. Enter it below.
               </p>
               <p style={styles.expiry}>Code expires in 5 minutes</p>
-              {error && <div style={styles.error}>{error}</div>}
+              <div style={error ? styles.error : { height: 0, overflow: 'hidden' }} aria-live="assertive" role="alert">
+                {error ? `Error: ${error}` : ''}
+              </div>
               <input
                 ref={codeInputRef}
                 type="text"
@@ -198,45 +170,28 @@ export function AdminPage() {
             </>
           )}
 
-          <button style={styles.backLink} onClick={() => { setStep('login'); setError(''); setCode(''); setCodeSent(false); }}>
-            Back to Login
+          <button style={styles.backLink} onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
           </button>
         </div>
       </div>
+      </PageLayout>
     );
   }
 
-  // ── Step 1: Admin login ──
-  if (step === 'login') {
-    return (
-      <div style={styles.page}>
-        {loading && <LoadingOverlay message="Authenticating..." />}
-        <div style={styles.card}>
-          <div style={{ textAlign: 'center' as const, marginBottom: '1rem' }}><OwlLogo size="md" linkTo="/login" /></div>
-          <h2 style={styles.title}>Admin Panel</h2>
-          <form onSubmit={handleLogin} style={styles.form}>
-            {error && <div style={styles.error}>{error}</div>}
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Admin email" style={styles.input} required autoFocus aria-label="Admin email" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={styles.input} required aria-label="Password" />
-            <button type="submit" style={styles.button} disabled={loading}>
-              Sign In
-            </button>
-          </form>
-          <button style={styles.backLink} onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Step 3: Admin dashboard ──
+  // ── Admin dashboard ──
   const pending = users.filter((u) => u.status === 'pending');
   const others = users.filter((u) => u.status !== 'pending');
 
   return (
+    <PageLayout>
     <div style={styles.page}>
       <header style={styles.header}>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><OwlLogo size="md" linkTo="/dashboard" /><span style={styles.adminLabel}>Admin</span></span>
-        <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
+          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
+        </div>
       </header>
       <main id="main-content" style={styles.main}>
         {error && <div style={{ ...styles.error, marginBottom: '1rem' }}>{error}</div>}
@@ -247,7 +202,7 @@ export function AdminPage() {
             {pending.map((u) => (
               <div key={u.id} style={styles.userRow}>
                 <div>
-                  <strong>{u.email}</strong>
+                  <strong>{u.phone || u.email}</strong>
                   <span style={styles.userDate}> &middot; {new Date(u.created_at).toLocaleDateString()}</span>
                 </div>
                 <div style={styles.actions}>
@@ -269,7 +224,7 @@ export function AdminPage() {
         {others.map((u) => (
           <div key={u.id} style={styles.userRow}>
             <div>
-              <strong>{u.email}</strong>
+              <strong>{u.phone || u.email}</strong>
               <span style={styles.userDate}> &middot; {u.display_name}</span>
             </div>
             <span style={{ color: u.status === 'approved' ? 'var(--green-mid)' : 'var(--orange-mid)', fontWeight: 600, fontSize: '0.8rem' }}>
@@ -279,6 +234,7 @@ export function AdminPage() {
         ))}
       </main>
     </div>
+    </PageLayout>
   );
 }
 
@@ -287,24 +243,22 @@ const styles: Record<string, React.CSSProperties> = {
   card: { maxWidth: '420px', margin: 'auto', background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem', textAlign: 'center' as const },
   text: { color: 'var(--gray-text)', fontSize: '0.875rem', marginBottom: '0.5rem', textAlign: 'center' as const },
-  emailHighlight: { textAlign: 'center' as const, fontWeight: 600, color: 'var(--dark)', fontSize: '1rem', marginBottom: '1.5rem' },
   expiry: { textAlign: 'center' as const, fontSize: '0.75rem', color: 'var(--orange-mid)', fontWeight: 600, marginBottom: '1rem' },
-  form: { display: 'flex', flexDirection: 'column' as const, gap: '0.75rem' },
-  input: { padding: '0.75rem', border: '1px solid var(--gray-mid)', borderRadius: 'var(--radius)', fontSize: '1rem' },
   codeInput: { display: 'block', width: '100%', padding: '1rem', fontSize: '2rem', textAlign: 'center' as const, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.5rem', border: '2px solid var(--green-mid)', borderRadius: 'var(--radius)', boxSizing: 'border-box' as const },
-  button: { padding: '0.75rem', background: 'var(--green-mid)', color: 'white', borderRadius: 'var(--radius)', fontSize: '1rem', fontWeight: 600, marginTop: '0.5rem' },
-  resendBtn: { display: 'block', width: '100%', background: 'none', color: 'var(--gray-text)', fontSize: '0.85rem', marginTop: '1rem', textDecoration: 'underline', cursor: 'pointer' },
+  button: { padding: '0.75rem', background: 'var(--green-mid)', color: 'white', borderRadius: 'var(--radius)', fontSize: '1rem', fontWeight: 600, marginTop: '0.5rem', width: '100%', cursor: 'pointer', border: 'none' },
+  resendBtn: { display: 'block', width: '100%', padding: '0.625rem', background: 'none', color: 'var(--gray-text)', fontSize: '0.85rem', marginTop: '1rem', textDecoration: 'underline', cursor: 'pointer', border: 'none' },
   error: { background: 'var(--red-light)', color: 'var(--red-mid)', padding: '0.75rem', borderRadius: 'var(--radius)', fontSize: '0.875rem', textAlign: 'center' as const },
-  backLink: { display: 'block', textAlign: 'center' as const, marginTop: '1rem', background: 'none', color: 'var(--gray-text)', fontSize: '0.875rem', cursor: 'pointer' },
+  backLink: { display: 'block', textAlign: 'center' as const, marginTop: '1rem', padding: '0.625rem', background: 'none', color: 'var(--gray-text)', fontSize: '0.875rem', cursor: 'pointer', border: 'none' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
   adminLabel: { fontFamily: 'var(--font-mono)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--gray-text)' },
-  backBtn: { padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
+  backBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', border: 'none', cursor: 'pointer' },
+  logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer' },
   main: { maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1 },
   sectionTitle: { fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--dark)' },
   userRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', marginBottom: '0.5rem' },
   userDate: { color: 'var(--gray-text)', fontSize: '0.8rem' },
   actions: { display: 'flex', gap: '0.5rem' },
-  approveBtn: { padding: '0.375rem 0.75rem', background: 'var(--green-mid)', color: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 },
-  denyBtn: { padding: '0.375rem 0.75rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 },
+  approveBtn: { padding: '0.375rem 0.75rem', background: 'var(--green-mid)', color: 'white', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: 'none', cursor: 'pointer' },
+  denyBtn: { padding: '0.375rem 0.75rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, border: 'none', cursor: 'pointer' },
   noPending: { textAlign: 'center' as const, padding: '2rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--gray-mid)' },
 };

@@ -3,6 +3,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2024-12-01",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "triggers": {
+    "crons": ["0 3 * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -12,16 +18,43 @@
     }
   ],
   // Secrets (set via `wrangler secret put`):
-  // JWT_SECRET - 64-char random hex for JWT signing
-  // ADMIN_EMAIL - admin notification email address
-  // EMAIL_API_KEY - transactional email service key
+  // JWT_SECRET         - 64-char random hex for JWT signing
+  // ADMIN_EMAIL        - admin notification email address
+  // EMAIL_API_KEY      - transactional email service key (Resend)
   // TURNSTILE_SECRET_KEY - Cloudflare Turnstile secret key
   "vars": {
     "ENVIRONMENT": "production",
-    "FRONTEND_URL": "https://ptowl.com"
+    "FRONTEND_URL": "https://ptowl.com",
+    "FIREBASE_PROJECT_ID": "ptowl-bdfbe"
   },
   "routes": [
     { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
     { "pattern": "www.ptowl.com/api/*", "zone_name": "ptowl.com" }
-  ]
+  ],
+  // ─── Staging environment ────────────────────────────────────
+  // Deploy: wrangler deploy --env staging
+  // Uses Cloudflare preview URL (not publicly discoverable)
+  // Separate D1 database for safe testing
+  "env": {
+    "staging": {
+      "name": "ptowl-api-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "ptowl-db-staging",
+          "database_id": "30b11ee4-19a5-4627-8540-c11fee9b484f",
+          "migrations_dir": "src/migrations"
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "FRONTEND_URL": "https://staging.ptowl.pages.dev",
+        "FIREBASE_PROJECT_ID": "ptowl-bdfbe"
+      },
+      // Override routes to empty — staging uses *.workers.dev URL only
+      "routes": [],
+      "workers_dev": true
+      // Secrets must be set separately: wrangler secret put JWT_SECRET --env staging
+    }
+  }
 }

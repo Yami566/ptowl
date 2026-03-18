@@ -5,7 +5,6 @@ import { requireAuth, requireAdmin, requireCSRF } from '../middleware/auth.js';
 import { signJWT } from '../crypto/jwt.js';
 import { generateSignedCSRFToken } from '../crypto/csrf.js';
 import { notifyUserApproved, notifyUserDenied, sendAdminVerificationCode } from '../services/email.js';
-import { verifyFirebaseToken } from '../auth/firebase-verify.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string; admin_verified?: boolean } | null;
@@ -13,75 +12,8 @@ type Variables = {
 
 export const adminRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// POST /login - Admin login via Firebase token — issues temp JWT for 2FA code step
-adminRoutes.post('/login', async (c) => {
-  try {
-    const body = await c.req.json<{ idToken?: string }>();
-
-    if (!body.idToken) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Firebase token required' } }, 400);
-    }
-
-    // Verify Firebase ID token (third-party auth)
-    let firebaseUser;
-    try {
-      firebaseUser = await verifyFirebaseToken(body.idToken, c.env.FIREBASE_PROJECT_ID);
-    } catch (err) {
-      console.error('Admin Firebase token failed:', err instanceof Error ? err.message : 'Unknown');
-      return c.json({ ok: false, error: { code: 'AUTH_FAILED', message: 'Invalid or expired token' } }, 401);
-    }
-
-    const email = (firebaseUser.email || '').toLowerCase();
-    if (!email) {
-      return c.json({ ok: false, error: { code: 'AUTH_FAILED', message: 'No email in token' } }, 400);
-    }
-
-    // Account lockout — check recent failed attempts
-    const recentFailures = await c.env.DB.prepare(
-      `SELECT COUNT(*) as cnt FROM audit_log
-       WHERE action = 'admin_login_failed' AND detail = ?
-       AND created_at > datetime('now', '-15 minutes')`,
-    )
-      .bind(email)
-      .first<{ cnt: number }>();
-
-    if (recentFailures && recentFailures.cnt >= 5) {
-      return c.json(
-        { ok: false, error: { code: 'ACCOUNT_LOCKED', message: 'Too many failed attempts. Try again in 15 minutes.' } },
-        429,
-      );
-    }
-
-    // Look up admin user by email
-    const user = await c.env.DB.prepare(
-      'SELECT id, email, role, tier FROM users WHERE email = ? AND role = ?',
-    )
-      .bind(email, 'admin')
-      .first<{ id: string; email: string; role: string; tier: string }>();
-
-    if (!user) {
-      await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)')
-        .bind(crypto.randomUUID().replace(/-/g, ''), '', 'admin_login_failed', email, c.req.header('cf-connecting-ip') || '')
-        .run();
-      return c.json({ ok: false, error: { code: 'INVALID_CREDENTIALS', message: 'Not an admin account' } }, 401);
-    }
-
-    // Issue a temporary JWT (5 min) for the code verification step
-    const jwt = await signJWT(
-      { sub: user.id, email: user.email, role: user.role, tier: user.tier },
-      c.env.JWT_SECRET,
-      300,
-    );
-
-    const isProduction = c.env.ENVIRONMENT === 'production';
-    setCookie(c, 'token', jwt, { httpOnly: true, secure: isProduction, sameSite: isProduction ? 'Strict' : 'Lax', path: '/', maxAge: 300 });
-
-    return c.json({ ok: true, data: { needs_email_code: true, email: user.email } });
-  } catch (err) {
-    console.error('Admin login error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Login failed' } }, 500);
-  }
-});
+// Admin login is now handled by the normal phone auth flow.
+// Admins log in like any user, then verify via email 2FA to access admin panel.
 
 // POST /send-code - Generate and email a 6-digit verification code
 adminRoutes.post('/send-code', requireAuth, async (c) => {
@@ -134,17 +66,18 @@ adminRoutes.post('/send-code', requireAuth, async (c) => {
       .bind(crypto.randomUUID().replace(/-/g, ''), user.id, codeHash)
       .run();
 
-    // Send email (fire-and-forget)
+    // Send code to ADMIN_EMAIL (configured at infrastructure level)
+    const adminEmail = c.env.ADMIN_EMAIL || '';
     c.executionCtx.waitUntil(
-      sendAdminVerificationCode(c.env.EMAIL_API_KEY || '', user.email, code),
+      sendAdminVerificationCode(c.env.EMAIL_API_KEY || '', adminEmail, code),
     );
 
     // Audit log
     await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)')
-      .bind(crypto.randomUUID().replace(/-/g, ''), user.id, 'admin_code_sent', user.email, c.req.header('cf-connecting-ip') || '')
+      .bind(crypto.randomUUID().replace(/-/g, ''), user.id, 'admin_code_sent', adminEmail, c.req.header('cf-connecting-ip') || '')
       .run();
 
-    return c.json({ ok: true, data: { message: 'Verification code sent to your email' } });
+    return c.json({ ok: true, data: { message: 'Verification code sent' } });
   } catch (err) {
     console.error('Send code error:', err instanceof Error ? err.message : 'Unknown error');
     return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to send code' } }, 500);
@@ -225,7 +158,7 @@ adminRoutes.post('/verify-code', requireAuth, async (c) => {
 adminRoutes.get('/users', requireAuth, requireAdmin, async (c) => {
   try {
     const users = await c.env.DB.prepare(
-      'SELECT id, email, display_name, status, role, tier, created_at FROM users ORDER BY created_at DESC',
+      'SELECT id, email, phone, display_name, user_alias, status, role, tier, created_at FROM users ORDER BY created_at DESC',
     ).all();
 
     return c.json({ ok: true, data: users.results });

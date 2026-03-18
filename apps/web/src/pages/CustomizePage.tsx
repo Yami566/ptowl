@@ -1,21 +1,28 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 
 export function CustomizePage() {
-  const { user } = useAuth();
+  usePageTitle('Customize');
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   if (!user) return null;
 
   return (
+    <PageLayout>
     <div style={styles.page}>
       <header style={styles.header}>
         <OwlLogo size="md" linkTo="/dashboard" />
-        <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
+          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
+        </div>
       </header>
       <main id="main-content" style={styles.main}>
-        <h2 style={styles.title}>Customize</h2>
+        <h1 style={styles.title}>Customize</h1>
         <p style={styles.subtitle}>Personalize your templates, print settings, and clinic info.</p>
 
         <div style={styles.section}>
@@ -37,13 +44,15 @@ export function CustomizePage() {
         </div>
       </main>
     </div>
+    </PageLayout>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', background: 'var(--off-white)' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
-  backBtn: { padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
+  backBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
+  logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
   main: { maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '2rem' },

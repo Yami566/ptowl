@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 
 export function NotFoundPage() {
+  usePageTitle('Page Not Found');
   return (
     <main id="main-content" style={styles.page}>
       <div style={styles.center}>

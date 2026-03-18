@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { PageLayout } from '../components/layout/PageLayout.js';
+import { usePageTitle } from '../hooks/usePageTitle.js';
 import { usePrintSettings } from '../hooks/usePrintSettings.js';
 
 export function PrintSettingsPage() {
-  const { user } = useAuth();
+  usePageTitle('Print Settings');
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { settings, updateSettings, resetSettings } = usePrintSettings();
   const [saved, setSaved] = useState(false);
@@ -18,42 +21,48 @@ export function PrintSettingsPage() {
   };
 
   return (
+    <PageLayout>
     <div style={s.page}>
       <header style={s.header}>
         <OwlLogo size="md" linkTo="/dashboard" />
-        <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
+          <button style={s.logoutBtn} onClick={logout}>Logout</button>
+        </div>
       </header>
 
       <main id="main-content" style={s.main}>
-        <h2 style={s.title}>Print Settings</h2>
+        <h1 style={s.title}>Print Settings</h1>
         <p style={s.subtitle}>
           Customize how your schedules look when printed. Settings are saved to this device.
         </p>
 
         <div style={s.card}>
-          <h3 style={s.sectionTitle}>Default Print View</h3>
-          <div style={s.radioGroup}>
-            <label style={s.radioLabel}>
-              <input
-                type="radio"
-                name="defaultView"
-                checked={settings.defaultView === 'table'}
-                onChange={() => updateSettings({ defaultView: 'table' })}
-              />
-              <span style={s.radioText}>Table View</span>
-              <span style={s.radioDesc}>Numbered list with date, time, and provider columns</span>
-            </label>
-            <label style={s.radioLabel}>
-              <input
-                type="radio"
-                name="defaultView"
-                checked={settings.defaultView === 'calendar'}
-                onChange={() => updateSettings({ defaultView: 'calendar' })}
-              />
-              <span style={s.radioText}>Calendar View</span>
-              <span style={s.radioDesc}>Month grid with appointments on dates</span>
-            </label>
-          </div>
+          <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+            <legend style={s.sectionTitle}>Default Print View</legend>
+            <div style={s.radioGroup}>
+              <label style={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="defaultView"
+                  checked={settings.defaultView === 'table'}
+                  onChange={() => updateSettings({ defaultView: 'table' })}
+                />
+                <span style={s.radioText}>Table View</span>
+                <span style={s.radioDesc}>Numbered list with date, time, and provider columns</span>
+              </label>
+              <label style={s.radioLabel}>
+                <input
+                  type="radio"
+                  name="defaultView"
+                  checked={settings.defaultView === 'calendar'}
+                  onChange={() => updateSettings({ defaultView: 'calendar' })}
+                />
+                <span style={s.radioText}>Calendar View</span>
+                <span style={s.radioDesc}>Month grid with appointments on dates</span>
+              </label>
+            </div>
+          </fieldset>
         </div>
 
         <div style={s.card}>
@@ -108,6 +117,7 @@ export function PrintSettingsPage() {
         </div>
       </main>
     </div>
+    </PageLayout>
   );
 }
 
@@ -118,7 +128,10 @@ const s: Record<string, React.CSSProperties> = {
     padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)',
   },
   backBtn: {
-    padding: '0.5rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
+    padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
+  },
+  logoutBtn: {
+    padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
   },
   main: { maxWidth: '640px', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },

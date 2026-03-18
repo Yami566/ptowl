@@ -87,7 +87,7 @@ export function AppointmentDetailPopover({
           <span style={s.label}>Reminder</span>
           {onToggleReminder ? (
             <button
-              style={appointment.reminder_sent ? s.reminderSent : s.reminderNotSent}
+              style={{ ...s.reminderBtn, color: appointment.reminder_sent ? 'var(--green-dark)' : 'var(--orange-mid)' }}
               onClick={() => onToggleReminder(appointment.id, appointment.reminder_sent)}
             >
               {appointment.reminder_sent ? 'Sent' : 'Not sent'}
@@ -158,20 +158,9 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '0.8rem',
     fontWeight: 600,
   },
-  reminderSent: {
+  reminderBtn: {
     background: 'none',
     border: 'none',
-    color: 'var(--green-dark)',
-    fontWeight: 600,
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    padding: '0.125rem 0.375rem',
-    borderRadius: '4px',
-  },
-  reminderNotSent: {
-    background: 'none',
-    border: 'none',
-    color: 'var(--orange-mid)',
     fontWeight: 600,
     fontSize: '0.8rem',
     cursor: 'pointer',

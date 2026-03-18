@@ -5,17 +5,14 @@
 ### Production Admin Login
 - **URL:** https://ptowl.com
 - **Email:** help@ptowl.com
-- **Password:** PtOwl-Admin-2026!
+- **Auth:** Auth0 (login via Auth0 Universal Login)
 - **Role:** Admin (approved, paid tier)
 
-> IMPORTANT: Change this password after your first login via the Profile page.
-
 ### Admin Panel Access
-1. Go to https://ptowl.com
-2. Log in with the credentials above
-3. Click "Admin" in the navigation (only visible to admin accounts)
-4. You'll need to verify via email 2FA code sent to help@ptowl.com
-5. After verification, you can approve/deny new user registrations
+1. Go to https://ptowl.com/admin
+2. Click "Sign In as Admin" — authenticates via Auth0 popup
+3. You'll need to verify via email 2FA code sent to help@ptowl.com
+4. After verification, you can approve/deny new user registrations
 
 ---
 
@@ -36,7 +33,8 @@
 
 | Service | URL | What It Does |
 |---------|-----|--------------|
-| **Resend** | https://resend.com/dashboard | Sends password reset emails & admin 2FA codes |
+| **Auth0** | https://manage.auth0.com | User authentication & login |
+| **Resend** | https://resend.com/dashboard | Sends admin 2FA codes & notifications |
 | **Google Workspace** | https://admin.google.com | Your help@ptowl.com inbox |
 | **Cloudflare Registrar** | Cloudflare Dashboard > Domain Registration | Domain registration for ptowl.com |
 
@@ -157,7 +155,7 @@ npx wrangler deployments list
 ## Security Checklist
 
 ### After First Login
-- [ ] Change the admin password (Profile page)
+- [ ] Verify Auth0 application has correct callback URLs
 - [ ] Verify Turnstile widget has `ptowl.com` as allowed hostname
 - [ ] Check Resend domain verification is green
 - [ ] Test a password reset email actually arrives

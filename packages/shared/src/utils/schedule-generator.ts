@@ -15,7 +15,7 @@ export interface ScheduleParams {
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Pick N evenly distributed weekdays (Mon-Fri)
-function pickWeekdays(count: number): number[] {
+export function pickWeekdays(count: number): number[] {
   // 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
   const distributions: Record<number, number[]> = {
     1: [1], // Monday
@@ -82,10 +82,7 @@ export function generateSchedule(params: ScheduleParams): {
 
 // ── Calendar helpers ──
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
+const monthFmt = new Intl.DateTimeFormat('en-US', { month: 'long' });
 
 export function getMonthsInRange(
   startDate: string,
@@ -101,7 +98,7 @@ export function getMonthsInRange(
   const endMonth = end.getUTCMonth();
 
   while (year < endYear || (year === endYear && month <= endMonth)) {
-    months.push({ year, month, label: `${MONTH_NAMES[month]} ${year}` });
+    months.push({ year, month, label: `${monthFmt.format(new Date(year, month))} ${year}` });
     month++;
     if (month > 11) {
       month = 0;
@@ -120,29 +117,23 @@ export function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 1)).getUTCDay();
 }
 
-// ── Formatters ──
+// ── Formatters (Intl.DateTimeFormat — zero custom arrays) ──
+
+const dateFmt = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+});
 
 export function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  const day = days[d.getUTCDay()];
-  const month = months[d.getUTCMonth()];
-  const date = d.getUTCDate();
-  const year = d.getUTCFullYear();
-  return `${day}, ${month} ${date}, ${year}`;
+  return dateFmt.format(new Date(dateStr + 'T00:00:00Z'));
 }
+
+const timeFmt = new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric', minute: '2-digit', hour12: true,
+});
 
 export function formatTime(timeStr: string): string {
   if (!timeStr || !timeStr.includes(':')) return timeStr || '';
-  const parts = timeStr.split(':').map(Number);
-  const hours = parts[0] ?? 0;
-  const minutes = parts[1] ?? 0;
-  if (isNaN(hours) || isNaN(minutes)) return timeStr;
-  const h = hours % 12 || 12;
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  return `${h}:${String(minutes).padStart(2, '0')} ${ampm}`;
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h!) || isNaN(m!)) return timeStr;
+  return timeFmt.format(new Date(2000, 0, 1, h!, m!));
 }

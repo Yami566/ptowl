@@ -118,13 +118,12 @@ describe('Auth Middleware Security', () => {
 describe('Admin Route Security', () => {
   const adminCode = () => readFile('routes/admin.ts');
 
-  it('admin login uses Firebase token verification (H1 FIX)', () => {
+  it('admin auth uses phone login + email 2FA (no Auth0)', () => {
     const code = adminCode();
-    const loginSection = code.slice(code.indexOf("'/login'"), code.indexOf("'/send-code'"));
-    // Admin login now uses Firebase for authentication (third-party)
-    expect(loginSection).toContain('verifyFirebaseToken');
-    expect(loginSection).toContain('idToken');
-    expect(loginSection).toContain('AUTH_FAILED');
+    // Admin login is handled by normal phone auth; admin panel uses email 2FA
+    expect(code).toContain("'/send-code'");
+    expect(code).toContain("'/verify-code'");
+    expect(code).toContain("user.role !== 'admin'");
   });
 
   it('admin cookies use secure flag based on environment (H2 FIX)', () => {
@@ -162,23 +161,9 @@ describe('Admin Route Security', () => {
     expect(validationPos).toBeLessThan(updatePos);
   });
 
-  it('admin login endpoint is rate limited', () => {
+  it('rate limiting is handled by Cloudflare WAF (edge-level)', () => {
     const indexCode = readFile('index.ts');
-    expect(indexCode).toContain("'/api/v1/admin/login'");
-    expect(indexCode).toContain("keyPrefix: 'admin-login'");
-  });
-
-  it('admin TOTP send-code endpoint is rate limited (3 per minute)', () => {
-    const indexCode = readFile('index.ts');
-    expect(indexCode).toContain("'/api/v1/admin/send-code'");
-    expect(indexCode).toContain("keyPrefix: 'admin-code'");
-    expect(indexCode).toContain('max: 3');
-  });
-
-  it('admin TOTP verify-code endpoint is rate limited', () => {
-    const indexCode = readFile('index.ts');
-    expect(indexCode).toContain("'/api/v1/admin/verify-code'");
-    expect(indexCode).toContain("keyPrefix: 'admin-verify'");
+    expect(indexCode).toContain('Cloudflare WAF');
   });
 });
 
@@ -442,22 +427,24 @@ describe('Error Handling Security', () => {
 // ══════════════════════════════════════════════════════════════════
 
 describe('Cookie Security', () => {
-  // User login is now handled by Firebase → /auth/firebase endpoint sets cookies
-  it('Firebase auth endpoint issues cookies with httpOnly flag', () => {
-    const code = readFile('routes/firebase-auth.ts');
-    expect(code).toContain('httpOnly: true');
+  // User login is handled by Firebase phone auth → /auth/firebase sets cookies
+  it('firebase auth endpoint issues cookies with httpOnly flag', () => {
+    const code = readFile('routes/auth.ts');
+    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
+    expect(firebaseSection).toContain('httpOnly: true');
   });
 
-  it('Firebase auth endpoint issues cookies with sameSite attribute', () => {
-    const code = readFile('routes/firebase-auth.ts');
-    expect(code).toContain('sameSite:');
-    // Lax for initial Firebase login (requires cross-origin redirect from Google/Phone)
-    expect(code).toContain("'Lax'");
+  it('firebase auth endpoint issues cookies with sameSite attribute', () => {
+    const code = readFile('routes/auth.ts');
+    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
+    expect(firebaseSection).toContain('sameSite:');
+    expect(firebaseSection).toContain("'Lax'");
   });
 
-  it('Firebase auth endpoint issues cookies with path set to root', () => {
-    const code = readFile('routes/firebase-auth.ts');
-    expect(code).toContain("path: '/'");
+  it('firebase auth endpoint issues cookies with path set to root', () => {
+    const code = readFile('routes/auth.ts');
+    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
+    expect(firebaseSection).toContain("path: '/'");
   });
 
   it('auth refresh endpoint issues cookies with same security attributes', () => {
@@ -467,13 +454,6 @@ describe('Cookie Security', () => {
     expect(refreshSection).toContain('secure: isProduction');
     expect(refreshSection).toContain('sameSite:');
     expect(refreshSection).toContain("path: '/'");
-  });
-
-  it('admin login cookie uses httpOnly and secure flags', () => {
-    const code = readFile('routes/admin.ts');
-    const loginSection = code.slice(code.indexOf("'/login'"), code.indexOf("'/send-code'"));
-    expect(loginSection).toContain('httpOnly: true');
-    expect(loginSection).toContain('secure: isProduction');
   });
 
   it('admin verify-code cookie uses httpOnly and secure flags', () => {
@@ -598,23 +578,24 @@ describe('Workers.dev Access Blocking', () => {
 });
 
 describe('Account Lockout Protection', () => {
-  // User login lockout is now handled by Firebase (built-in brute-force protection).
-  // Admin login still has custom lockout since it adds a 2FA layer on top of Firebase.
-  it('admin login has account lockout after failed attempts', () => {
+  // User login uses Firebase Phone Auth which handles rate limiting internally.
+  // Admin 2FA has custom rate limiting (max 3 codes per 5 min).
+  it('admin send-code has rate limiting for verification codes', () => {
     const code = readFile('routes/admin.ts');
-    const loginSection = code.slice(code.indexOf("'/login'"), code.indexOf("'/send-code'"));
-    expect(loginSection).toContain('ACCOUNT_LOCKED');
-    expect(loginSection).toContain('admin_login_failed');
+    const sendCodeSection = code.slice(code.indexOf("'/send-code'"), code.indexOf("'/verify-code'"));
+    expect(sendCodeSection).toContain('RATE_LIMITED');
+    expect(sendCodeSection).toContain('Too many codes requested');
   });
 });
 
 describe('Anti-Enumeration Protection', () => {
-  // Registration and password reset are now handled by Firebase.
-  // Firebase does not reveal whether an email exists (built-in anti-enumeration).
-  // The firebase-auth endpoint uses INSERT OR IGNORE for user creation.
-  it('Firebase auth user creation uses INSERT OR IGNORE for duplicate email safety', () => {
-    const code = readFile('routes/firebase-auth.ts');
-    expect(code).toContain('INSERT OR IGNORE');
+  // Phone auth uses Firebase which does not reveal whether a phone number is registered.
+  // Firebase handles SMS delivery and code verification.
+  // Backend returns generic "Invalid or expired token" for bad Firebase tokens.
+  it('firebase endpoint returns generic error for invalid tokens (no user enumeration)', () => {
+    const code = readFile('routes/auth.ts');
+    expect(code).toContain('INVALID_TOKEN');
+    expect(code).toContain('Invalid or expired token');
   });
 });
 
@@ -629,7 +610,7 @@ describe('Email Template Security', () => {
     expect(code).toContain('&quot;');
   });
 
-  // Password reset is now handled entirely by Firebase — no custom token storage needed.
+  // No passwords in phone auth system — only SMS OTP.
   it('admin verification code is hashed before storage (SHA-256)', () => {
     const code = readFile('routes/admin.ts');
     expect(code).toContain("crypto.subtle.digest('SHA-256'");

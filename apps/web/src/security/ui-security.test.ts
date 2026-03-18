@@ -120,24 +120,22 @@ describe('Authentication Security', () => {
     const authFile = fs.readFileSync(path.join(WEB_SRC, 'contexts/AuthContext.tsx'), 'utf-8');
     // Auth state is managed in React state (not localStorage)
     expect(authFile).toContain('useState<AuthUser | null>(null)');
-    // Redirects unauthenticated users
-    expect(authFile).toContain("navigate('/login'");
+    // Redirects unauthenticated users to landing page
+    expect(authFile).toContain("navigate('/'");
   });
 
-  it('password fields use type="password"', () => {
-    const files = readAllFiles(WEB_SRC, ['.tsx']);
-    const passwordFiles = files.filter((f) => f.content.includes('password') && f.content.includes('<input'));
-    for (const file of passwordFiles) {
-      if (file.content.includes("type=\"password\"") || file.content.includes("type='password'")) {
-        // Good - password input is properly typed
-        expect(true).toBe(true);
-      }
-    }
+  it('phone auth uses Firebase (no local password form)', () => {
+    const landingFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LandingPage.tsx'), 'utf-8');
+    // Firebase phone auth — SMS handled by Firebase, token exchanged with backend
+    expect(landingFile).toContain('sendPhoneCode');
+    expect(landingFile).toContain('/auth/firebase');
+    expect(landingFile).toContain("inputMode=\"numeric\"");
   });
 
-  it('login form has autocomplete attributes', () => {
+  it('login page redirects to landing (phone auth is inline)', () => {
     const loginFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LoginPage.tsx'), 'utf-8');
-    expect(loginFile).toContain('autoComplete');
+    // LoginPage is a redirect stub — phone auth lives on LandingPage
+    expect(loginFile).toContain("navigate('/'");
   });
 });
 
@@ -162,8 +160,8 @@ describe('Secure Routing', () => {
     const authFile = fs.readFileSync(path.join(WEB_SRC, 'contexts/AuthContext.tsx'), 'utf-8');
     expect(authFile).toContain('PUBLIC_PATHS');
     // Verify it's a restricted list, not a broad pattern
-    expect(authFile).toContain("'/login'");
-    expect(authFile).toContain("'/register'");
+    expect(authFile).toContain("'/privacy'");
+    expect(authFile).toContain("'/terms'");
   });
 
   it('admin route exists and is protected', () => {
@@ -175,9 +173,12 @@ describe('Secure Routing', () => {
 // ── No Secrets in Source Code ──
 
 describe('No Secrets in Source Code', () => {
-  it('no API keys in frontend source', () => {
+  it('no API keys in frontend source (excluding Firebase public config)', () => {
+    // Firebase API keys are public by design (restricted by domain, not secrecy)
+    const SAFE_KEY_FILES = ['firebase.ts'];
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
+      if (SAFE_KEY_FILES.some((f) => file.path.includes(f))) continue;
       // Check for common API key patterns
       const apiKeyPattern = /(?:api[_-]?key|secret|token)\s*[:=]\s*['"][a-zA-Z0-9]{20,}['"]/gi;
       const matches = file.content.match(apiKeyPattern);

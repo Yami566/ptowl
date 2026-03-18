@@ -9,8 +9,9 @@ import { templateRoutes } from './routes/templates.js';
 import { profileRoutes } from './routes/profile.js';
 import { adminRoutes } from './routes/admin.js';
 import { aliasRoutes } from './routes/alias.js';
-import { firebaseAuthRoutes } from './routes/firebase-auth.js';
-import { rateLimit } from './middleware/rateLimit.js';
+import { calendarRoutes } from './routes/calendar.js';
+// Rate limiting moved to Cloudflare WAF Rules (dashboard config, edge-level).
+// Custom per-isolate rate limiting was unreliable on distributed Workers.
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string } | null;
@@ -53,8 +54,8 @@ app.use('*', secureHeaders({
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
-    connectSrc: ["'self'", 'https://identitytoolkit.googleapis.com', 'https://securetoken.googleapis.com', 'https://www.googleapis.com', 'https://firebaseinstallations.googleapis.com', 'https://content-firebaseappcheck.googleapis.com'],
-    frameSrc: ["'self'", 'https://challenges.cloudflare.com', 'https://*.firebaseapp.com', 'https://www.google.com'],
+    connectSrc: ["'self'"],
+    frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
     frameAncestors: ["'none'"],
     objectSrc: ["'none'"],       // Block Flash/Java plugin content
     baseUri: ["'self'"],         // Prevent base tag hijacking
@@ -82,15 +83,31 @@ app.use('*', async (c, next) => {
   return next();
 });
 
-// Rate limiting on auth endpoints (per IP)
-app.use('/api/v1/auth/refresh', rateLimit({ windowMs: 60_000, max: 20, keyPrefix: 'refresh' }));
-app.use('/api/v1/auth/firebase', rateLimit({ windowMs: 60_000, max: 10, keyPrefix: 'firebase' }));
-app.use('/api/v1/admin/login', rateLimit({ windowMs: 60_000, max: 5, keyPrefix: 'admin-login' }));
-app.use('/api/v1/admin/send-code', rateLimit({ windowMs: 60_000, max: 3, keyPrefix: 'admin-code' }));
-app.use('/api/v1/admin/verify-code', rateLimit({ windowMs: 60_000, max: 5, keyPrefix: 'admin-verify' }));
-
-// Health check
-app.get('/api/v1/health', (c) => c.json({ ok: true }));
+// Health check — DB connectivity for monitoring (no environment info exposed)
+app.get('/api/v1/health', async (c) => {
+  try {
+    const start = Date.now();
+    await c.env.DB.prepare('SELECT 1').first();
+    const dbLatencyMs = Date.now() - start;
+    return c.json({
+      ok: true,
+      data: {
+        status: 'healthy',
+        db: { connected: true, latency_ms: dbLatencyMs },
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch {
+    return c.json({
+      ok: false,
+      data: {
+        status: 'degraded',
+        db: { connected: false, latency_ms: -1 },
+        timestamp: new Date().toISOString(),
+      },
+    }, 503);
+  }
+});
 
 // Mount routes
 app.route('/api/v1/auth', authRoutes);
@@ -100,18 +117,50 @@ app.route('/api/v1/templates', templateRoutes);
 app.route('/api/v1/profile', profileRoutes);
 app.route('/api/v1/admin', adminRoutes);
 app.route('/api/v1/alias', aliasRoutes);
-app.route('/api/v1/auth', firebaseAuthRoutes);
+app.route('/api/v1/cal', calendarRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404));
 
-// Error handler
+// Structured error handler — logs JSON for Cloudflare Workers Observability
 app.onError((err, c) => {
-  console.error('Unhandled error:', err instanceof Error ? err.message : 'Unknown error');
+  const errorInfo = {
+    level: 'error',
+    message: err instanceof Error ? err.message : 'Unknown error',
+    stack: err instanceof Error ? err.stack : undefined,
+    path: c.req.path,
+    method: c.req.method,
+    environment: c.env.ENVIRONMENT,
+    timestamp: new Date().toISOString(),
+    requestId: c.req.header('cf-ray') || crypto.randomUUID(),
+  };
+  console.error(JSON.stringify(errorInfo));
   return c.json(
     { ok: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } },
     500,
   );
 });
 
-export default app;
+// ─── Scheduled cleanup (Cron Trigger) ────────────────────────
+// Runs daily at 3 AM UTC — deletes expired tokens and trims audit log
+async function cleanupExpiredData(db: D1Database): Promise<void> {
+  await db.prepare(
+    `DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`,
+  ).run();
+  await db.prepare(
+    `DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`,
+  ).run();
+  await db.prepare(
+    `DELETE FROM sessions WHERE expires_at < datetime('now')`,
+  ).run();
+  await db.prepare(
+    `DELETE FROM audit_log WHERE created_at < datetime('now', '-90 days')`,
+  ).run();
+}
+
+export default {
+  fetch: app.fetch,
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(cleanupExpiredData(env.DB));
+  },
+};

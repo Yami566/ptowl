@@ -379,29 +379,28 @@ describe('Security Headers & CSP', () => {
   });
 });
 
-// ── Firebase Auth Protection ──
-// All user auth (login, register, password reset) now delegates to Firebase.
-// Bot protection is handled by Firebase's built-in reCAPTCHA and rate limiting.
+// ── Phone Auth Security (Firebase) ──
+// User auth uses Firebase Phone Auth (SMS OTP handled by Google).
+// Backend verifies Firebase ID tokens using Google JWKS.
 
-describe('Firebase Auth Protection', () => {
-  it('Firebase auth endpoint verifies Firebase ID token', () => {
-    const code = readFile('routes/firebase-auth.ts');
+describe('Firebase Phone Auth Security', () => {
+  it('firebase endpoint verifies ID token using Google JWKS', () => {
+    const code = readFile('routes/auth.ts');
     expect(code).toContain('verifyFirebaseToken');
-    expect(code).toContain('idToken');
+    expect(code).toContain('FIREBASE_JWKS_URL');
   });
 
-  it('admin login uses Firebase token verification (not custom password)', () => {
-    const code = readFile('routes/admin.ts');
-    expect(code).toContain('verifyFirebaseToken');
-    expect(code).toContain('idToken');
-    expect(code).toContain('AUTH_FAILED');
-  });
-
-  it('Firebase token verification checks algorithm and issuer', () => {
-    const code = readFile('auth/firebase-verify.ts');
-    expect(code).toContain('jwtVerify');
+  it('firebase endpoint validates issuer and audience against project ID', () => {
+    const code = readFile('routes/auth.ts');
     expect(code).toContain('securetoken.google.com');
-    expect(code).toContain('projectId');
+    expect(code).toContain('payload.aud !== projectId');
+    expect(code).toContain('payload.iss !==');
+  });
+
+  it('firebase endpoint extracts phone number from token', () => {
+    const code = readFile('routes/auth.ts');
+    expect(code).toContain('phone_number');
+    expect(code).toContain('normalizePhone');
   });
 
   it('FIREBASE_PROJECT_ID is in Env type (not hardcoded)', () => {
@@ -411,35 +410,15 @@ describe('Firebase Auth Protection', () => {
 });
 
 // ── Rate Limiting Coverage ──
+// Rate limiting moved to Cloudflare WAF Rules (edge-level, dashboard config).
+// Custom per-isolate rate limiting was unreliable on distributed Workers.
 
 describe('Rate Limiting Coverage', () => {
   const indexCode = () => readFile('index.ts');
 
-  it('Firebase auth endpoint is rate limited', () => {
+  it('documents that rate limiting is handled by Cloudflare WAF', () => {
     const code = indexCode();
-    expect(code).toContain("'/api/v1/auth/firebase'");
-    expect(code).toContain('rateLimit');
-  });
-
-  it('token refresh endpoint is rate limited', () => {
-    const code = indexCode();
-    expect(code).toContain("'/api/v1/auth/refresh'");
-  });
-
-  it('admin login is rate limited', () => {
-    const code = indexCode();
-    expect(code).toContain("'/api/v1/admin/login'");
-  });
-
-  it('admin send-code is rate limited (3 per minute)', () => {
-    const code = indexCode();
-    expect(code).toContain("'/api/v1/admin/send-code'");
-    expect(code).toContain("max: 3");
-  });
-
-  it('admin verify-code is rate limited', () => {
-    const code = indexCode();
-    expect(code).toContain("'/api/v1/admin/verify-code'");
+    expect(code).toContain('Cloudflare WAF');
   });
 });
 

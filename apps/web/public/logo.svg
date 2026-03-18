@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Owl head -->
+  <circle cx="60" cy="62" r="46" fill="#E8F5E9" stroke="#1B5E20" stroke-width="2.5"/>
+
+  <!-- Ear tufts -->
+  <path d="M26 28 L37 46 L20 40Z" fill="#1B5E20"/>
+  <path d="M94 28 L83 46 L100 40Z" fill="#1B5E20"/>
+
+  <!-- Left eye -->
+  <circle cx="42" cy="54" r="16" fill="white" stroke="#1B5E20" stroke-width="2"/>
+  <circle cx="44" cy="52" r="9" fill="#1B5E20"/>
+  <circle cx="47" cy="49" r="3" fill="white"/>
+
+  <!-- Right eye -->
+  <circle cx="78" cy="54" r="16" fill="white" stroke="#1B5E20" stroke-width="2"/>
+  <circle cx="80" cy="52" r="9" fill="#1B5E20"/>
+  <circle cx="83" cy="49" r="3" fill="white"/>
+
+  <!-- Beak -->
+  <path d="M54 70 L60 82 L66 70Z" fill="#FF7043"/>
+
+  <!-- Chest -->
+  <ellipse cx="60" cy="94" rx="20" ry="14" fill="#C8E6C9" stroke="#1B5E20" stroke-width="1.5"/>
+
+  <!-- Chest pattern -->
+  <path d="M52 88 Q60 98 68 88" fill="none" stroke="#1B5E20" stroke-width="1" opacity="0.4"/>
+  <path d="M48 92 Q60 104 72 92" fill="none" stroke="#1B5E20" stroke-width="1" opacity="0.3"/>
+</svg>

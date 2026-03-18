@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { apiRequest } from '../../api/client.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { useFocusTrap } from '../../hooks/useFocusTrap.js';
@@ -56,6 +57,10 @@ export function SchedulePreviewOverlay({
   const { settings: printSettings } = usePrintSettings();
   const [view, setView] = useState<'table' | 'calendar'>('table');
   const [printPreview, setPrintPreview] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [showSharePanel, setShowSharePanel] = useState(false);
+  const [copied, setCopied] = useState(false);
   const trapRef = useFocusTrap(true);
 
   // Lock body scroll
@@ -91,6 +96,48 @@ export function SchedulePreviewOverlay({
       onToggleReminder(apptId, result.data.reminder_sent);
     }
   };
+
+  // Generate or show share link
+  const handleShare = useCallback(async () => {
+    if (shareUrl) {
+      setShowSharePanel(true);
+      return;
+    }
+    setShareLoading(true);
+    try {
+      const result = await apiRequest<{ share_token: string }>(`/schedules/${schedule.id}/share`, {
+        method: 'POST',
+      });
+      if (result.ok && result.data) {
+        const apiBase = window.location.origin.replace('ptowl.com', 'api.ptowl.com');
+        const url = `${apiBase}/api/v1/cal/${result.data.share_token}.ics`;
+        setShareUrl(url);
+        setShowSharePanel(true);
+      }
+    } catch {
+      // Silently fail
+    }
+    setShareLoading(false);
+  }, [schedule.id, shareUrl]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const input = document.createElement('input');
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [shareUrl]);
 
   // Week groupings for table view
   const weekGroups = useMemo(() => {
@@ -346,6 +393,35 @@ export function SchedulePreviewOverlay({
           )}
         </div>
 
+        {/* ── Share Panel ── */}
+        {showSharePanel && shareUrl && (
+          <div style={s.sharePanel}>
+            <div style={s.sharePanelHeader}>
+              <strong style={s.sharePanelTitle}>Share with Patient</strong>
+              <button style={s.sharePanelClose} onClick={() => setShowSharePanel(false)}>&times;</button>
+            </div>
+            <p style={s.shareText}>
+              Patient can open this link on their phone to add all appointments to their calendar automatically.
+            </p>
+            <div style={s.shareQRWrap}>
+              <QRCodeSVG value={shareUrl} size={160} level="M" />
+            </div>
+            <div style={s.shareLinkRow}>
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                style={s.shareLinkInput}
+                aria-label="Calendar share URL"
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+              />
+              <button style={s.copyBtn} onClick={handleCopyLink}>
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Footer ── */}
         <div className="schedule-preview-footer" style={s.footer}>
           {printPreview ? (
@@ -353,9 +429,14 @@ export function SchedulePreviewOverlay({
               Confirm &amp; Print
             </button>
           ) : (
-            <button style={s.printPreviewBtn} onClick={() => setPrintPreview(true)}>
-              Print Preview
-            </button>
+            <>
+              <button style={s.shareBtn} onClick={handleShare} disabled={shareLoading}>
+                {shareLoading ? 'Generating...' : 'Share'}
+              </button>
+              <button style={s.printPreviewBtn} onClick={() => setPrintPreview(true)}>
+                Print Preview
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -576,6 +657,75 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: '0.875rem',
     cursor: 'pointer',
     border: 'none',
+  },
+  shareBtn: {
+    padding: '0.625rem 1.5rem',
+    background: 'var(--off-white)',
+    color: 'var(--dark)',
+    borderRadius: 'var(--radius)',
+    fontWeight: 600,
+    fontSize: '0.875rem',
+    cursor: 'pointer',
+    border: '1px solid var(--gray-mid)',
+  },
+  sharePanel: {
+    padding: '1rem 1.5rem',
+    borderTop: '1px solid var(--gray-mid)',
+    background: 'var(--off-white)',
+  },
+  sharePanelHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+  },
+  sharePanelTitle: {
+    fontSize: '0.95rem',
+    color: 'var(--dark)',
+  },
+  sharePanelClose: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.25rem',
+    color: 'var(--gray-text)',
+    cursor: 'pointer',
+    lineHeight: 1,
+    padding: '0.125rem 0.375rem',
+  },
+  shareText: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    marginBottom: '1rem',
+  },
+  shareQRWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '1rem',
+  },
+  shareLinkRow: {
+    display: 'flex',
+    gap: '0.5rem',
+  },
+  shareLinkInput: {
+    flex: 1,
+    padding: '0.5rem 0.75rem',
+    fontSize: '0.75rem',
+    fontFamily: 'var(--font-mono)',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    background: 'var(--white)',
+    color: 'var(--dark)',
+  },
+  copyBtn: {
+    padding: '0.5rem 1rem',
+    background: 'var(--green-mid)',
+    color: 'white',
+    borderRadius: 'var(--radius)',
+    fontWeight: 600,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    border: 'none',
+    whiteSpace: 'nowrap' as const,
   },
 
   // ── Print Preview (on-screen paper simulation) ──
