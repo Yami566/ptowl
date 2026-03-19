@@ -1,0 +1,119 @@
+/* ==========================================================================
+   PTOWL Dark Theme
+   Overrides CSS custom properties when [data-theme="dark"] is set on <html>.
+   Toggle via useTheme() hook or Command Palette.
+   ========================================================================== */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Green (safe/OK) */
+  --green-light: #2D4A37;
+  --green-light-alt: #345E40;
+  --green-mid: #66BB6A;
+  --green-dark: #A5D6A7;
+
+  /* Red (error/danger) */
+  --red-light: #3D1F1F;
+  --red-mid: #EF5350;
+  --red-dark: #FFCDD2;
+
+  /* Orange (attention/action) */
+  --orange-light: #3D2A14;
+  --orange-light-alt: #CC8A2E;
+  --orange-mid: #FF8A65;
+  --orange-dark: #FFB74D;
+
+  /* Backgrounds */
+  --green-bg: #1A2E23;
+  --green-bg-footer: #141E18;
+
+  /* Neutrals */
+  --white: #1E1E2E;
+  --off-white: #181825;
+  --gray-light: #2A2A3C;
+  --gray-mid: #3A3A4C;
+  --gray-text: #9CA3AF;
+  --dark: #E8E8EC;
+  --dark-alt: #C8D0CE;
+
+  /* Print variables stay unchanged — handled by @media print below */
+}
+
+/* Form inputs in dark mode */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: var(--gray-light);
+  color: var(--dark);
+  border-color: var(--gray-mid);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--gray-text);
+  opacity: 0.7;
+}
+
+/* Buttons with explicit background colors in dark mode */
+[data-theme="dark"] button {
+  color: inherit;
+}
+
+/* Links */
+[data-theme="dark"] a {
+  color: var(--green-mid);
+}
+
+/* Scrollbar theming */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--gray-light);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--gray-mid);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-text);
+}
+
+/* Box shadows soften in dark mode */
+[data-theme="dark"] .feature-card-hover:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Skeleton loading adapts via CSS vars automatically */
+
+/* ── Restore light theme for printing ── */
+@media print {
+  [data-theme="dark"] {
+    --green-light: #AADFAA;
+    --green-light-alt: #B4E9A9;
+    --green-mid: #4CAF50;
+    --green-dark: #1B5E20;
+    --red-light: #FEE2E2;
+    --red-mid: #DC2626;
+    --red-dark: #991B1B;
+    --orange-light: #FFDBBB;
+    --orange-light-alt: #FFB84F;
+    --orange-mid: #FF7043;
+    --orange-dark: #FF6F20;
+    --green-bg: #E8F5E9;
+    --green-bg-footer: #FAFFF9;
+    --white: #FFFFFF;
+    --off-white: #FAFCFA;
+    --gray-light: #F0F4F0;
+    --gray-mid: #D0D8D0;
+    --gray-text: #6B7F73;
+    --dark: #1A2E23;
+    --dark-alt: #2D4A37;
+    color-scheme: light;
+  }
+}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -10,6 +12,7 @@ import { SchedulePreviewOverlay } from '../components/schedule/SchedulePreviewOv
 import { ScheduleWizard } from '../components/schedule/ScheduleWizard.js';
 import { DashboardWizard } from '../components/schedule/DashboardWizard.js';
 import { ScheduleEditor } from '../components/schedule/ScheduleEditor.js';
+import { OnboardingChecklist } from '../components/OnboardingChecklist.js';
 import type { WizardResult } from '../components/schedule/wizard-constants.js';
 import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
 import { generateScheduleWithRRule } from '@ptowl/shared';
@@ -36,7 +39,6 @@ export function DashboardPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [initials, setInitials] = useState('');
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState('');
   const [editorData, setEditorData] = useState<EditorData | null>(null);
   const [generatingPreview, setGeneratingPreview] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -90,7 +92,6 @@ export function DashboardPage() {
 
       if (e.key === '1') {
         setShowWizard(true);
-        setError('');
         return;
       }
 
@@ -101,7 +102,6 @@ export function DashboardPage() {
           setSelectedTemplate(tmpl);
           setShowInitialsModal(true);
           setInitials('');
-          setError('');
         }
       }
     },
@@ -134,7 +134,6 @@ export function DashboardPage() {
     if (cleaned.length === 2 && selectedTemplate) {
       setShowInitialsModal(false);
       setGeneratingPreview(true);
-      setError('');
 
       try {
         // Get alias
@@ -165,7 +164,7 @@ export function DashboardPage() {
           appointmentTime: defaultTime,
         });
       } catch {
-        setError('Failed to generate preview. Please try again.');
+        toast.error('Failed to generate preview. Please try again.');
         setSelectedTemplate(null);
       }
 
@@ -178,7 +177,6 @@ export function DashboardPage() {
     if (!editorData) return;
     setCreating(true);
     setEditorData(null);
-    setError('');
 
     try {
       const schedResult = await apiRequest<{ schedule: Schedule }>('/schedules/from-appointments', {
@@ -202,11 +200,18 @@ export function DashboardPage() {
           setSchedules(data);
         }
         openPreview(schedResult.data.schedule.id);
+        toast.success('Schedule created successfully!');
+        // Confetti celebration (respects reduced motion)
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+        }
+        // Onboarding event
+        window.dispatchEvent(new CustomEvent('ptowl-onboarding', { detail: 'schedule' }));
       } else {
-        setError(schedResult.error?.message || 'Failed to create schedule');
+        toast.error(schedResult.error?.message || 'Failed to create schedule');
       }
     } catch {
-      setError('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
     }
 
     setCreating(false);
@@ -223,7 +228,6 @@ export function DashboardPage() {
   const handleWizardComplete = async (result: WizardResult) => {
     setShowWizard(false);
     setGeneratingPreview(true);
-    setError('');
 
     try {
       const preview = generateScheduleWithRRule({
@@ -244,7 +248,7 @@ export function DashboardPage() {
         appointmentTime: result.appointmentTime,
       });
     } catch {
-      setError('Failed to generate preview. Please try again.');
+      toast.error('Failed to generate preview. Please try again.');
     }
 
     setGeneratingPreview(false);
@@ -256,25 +260,22 @@ export function DashboardPage() {
   return (
     <PageLayout>
     <div style={styles.page}>
-      <header style={styles.header}>
+      <header style={styles.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={styles.headerRight}>
+        <div style={styles.headerRight} className="ptowl-header-actions">
           <button style={styles.headerBtn} onClick={() => navigate('/customize')}>Customize</button>
           <button style={styles.headerBtn} onClick={() => navigate('/profile')}>Profile</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
-      <main id="main-content" style={styles.main}>
+      <main id="main-content" style={styles.main} className="ptowl-main">
+        <OnboardingChecklist />
         <div style={styles.welcome}>
-          <h1 style={styles.welcomeTitle}>
+          <h1 style={styles.welcomeTitle} className="ptowl-page-title">
             {user.display_name ? `Welcome back, ${user.display_name}` : 'Welcome back'}
           </h1>
           <p style={styles.welcomeText}>Create a new schedule below, or press 2-6 for a preset</p>
-        </div>
-
-        <div style={error ? styles.error : { height: 0, overflow: 'hidden' }} aria-live="assertive" role="alert">
-          {error ? `Error: ${error}` : ''}
         </div>
 
         {/* Inline Mouse-Friendly Wizard */}
@@ -286,23 +287,23 @@ export function DashboardPage() {
             <h3 style={styles.presetsTitle}>Quick Presets</h3>
             <button
               style={styles.keyboardHint}
-              onClick={() => { setShowWizard(true); setError(''); }}
+              onClick={() => setShowWizard(true)}
               title="Open keyboard-only wizard (hotkey: 1)"
             >
               <span style={styles.keyBadge}>1</span> Keyboard Mode
             </button>
           </div>
-          <div style={styles.presetsGrid}>
+          <div style={styles.presetsGrid} className="dash-presets-grid">
             {templates.map((tmpl) => (
               <button
                 key={tmpl.id}
                 style={styles.presetCard}
+                className="dash-preset-card"
                 onClick={() => {
                   setSelectedTemplate(tmpl);
                   setShowInitialsModal(true);
                   setInitials('');
-                  setError('');
-                }}
+                        }}
                 aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
               >
                 <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
@@ -326,6 +327,7 @@ export function DashboardPage() {
                 <button
                   key={sched.id}
                   style={styles.savedCard}
+                  className="dash-saved-card"
                   onClick={() => openPreview(sched.id)}
                   aria-label={`Schedule for ${sched.patient_alias || sched.patient_initials}`}
                 >
@@ -353,7 +355,7 @@ export function DashboardPage() {
           aria-modal="true"
           aria-label="Enter patient initials"
         >
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.modal} className="dash-modal" onClick={(e) => e.stopPropagation()}>
             <h3 style={styles.modalTitle}>{selectedTemplate.name}</h3>
             <p style={styles.modalSubtitle}>
               {selectedTemplate.sessions_per_week}x/wk &middot; {selectedTemplate.duration_weeks} weeks
@@ -433,8 +435,6 @@ const styles: Record<string, React.CSSProperties> = {
   welcome: { marginBottom: '2rem' },
   welcomeTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.25rem' },
   welcomeText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
-  error: { background: 'var(--red-light)', color: 'var(--red-mid)', padding: '0.75rem', borderRadius: 'var(--radius)', fontSize: '0.875rem', marginBottom: '1rem' },
-
   // Quick Presets
   presetsSection: { marginBottom: '2rem' },
   presetsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' },

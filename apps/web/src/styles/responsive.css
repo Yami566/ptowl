@@ -1,0 +1,229 @@
+/* ==========================================================================
+   PTOWL Responsive Overrides
+   Uses CSS classes to override inline React styles at breakpoints.
+   Pages add className attributes — inline styles stay untouched.
+   ========================================================================== */
+
+/* ── Fluid Typography ── */
+.ptowl-page-title {
+  font-size: clamp(1.25rem, 3vw, 1.5rem) !important;
+}
+
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  .ptowl-header {
+    padding: 0.875rem 1.25rem !important;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  /* Headers */
+  .ptowl-header {
+    padding: 0.75rem 1rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .ptowl-header-actions {
+    flex-wrap: wrap !important;
+    gap: 0.375rem !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+
+  .ptowl-header-actions button,
+  .ptowl-header-actions a {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Main content */
+  .ptowl-main {
+    padding: 1.25rem 1rem !important;
+  }
+
+  /* ── LandingPage ── */
+  .landing-hero {
+    padding: 3rem 1rem 2rem !important;
+  }
+
+  .landing-auth-card {
+    padding: 1.5rem !important;
+    max-width: 100% !important;
+  }
+
+  .landing-how-section {
+    padding: 2rem 1rem !important;
+  }
+
+  .landing-steps {
+    gap: 0.375rem !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .landing-step-arrow {
+    display: none !important;
+  }
+
+  .landing-features {
+    padding: 1.5rem 1rem 3rem !important;
+    gap: 1rem !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .landing-feature-card {
+    padding: 1.5rem !important;
+  }
+
+  .landing-footer {
+    padding: 1.5rem 1rem !important;
+  }
+
+  /* ── DashboardPage ── */
+  .dash-presets-grid {
+    flex-direction: column !important;
+    overflow-x: visible !important;
+  }
+
+  .dash-preset-card {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    white-space: normal !important;
+  }
+
+  .dash-saved-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.375rem !important;
+  }
+
+  .dash-saved-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+
+  .dash-modal {
+    max-width: min(360px, 90vw) !important;
+    padding: 1.5rem !important;
+    margin: 1rem !important;
+  }
+
+  /* ── SchedulePage ── */
+  .schedule-info-bar {
+    flex-direction: column !important;
+    gap: 0.375rem !important;
+    align-items: flex-start !important;
+  }
+
+  .schedule-stats-bar {
+    gap: 0.5rem !important;
+  }
+
+  .schedule-stat-card {
+    min-width: 60px !important;
+    padding: 0.375rem 0.5rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .schedule-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    margin-left: -0.5rem !important;
+    margin-right: -0.5rem !important;
+    padding: 0 0.5rem !important;
+  }
+
+  .schedule-table-wrap table {
+    min-width: 580px !important;
+  }
+
+  /* ── AdminPage ── */
+  .admin-user-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+
+  .admin-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.375rem !important;
+  }
+
+  .admin-actions button {
+    flex: 1 !important;
+  }
+
+  /* ── ProfilePage ── */
+  .profile-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── SchedulePreviewOverlay ── */
+  .schedule-preview-modal {
+    max-height: 95dvh !important;
+    margin: 0.5rem !important;
+    width: calc(100% - 1rem) !important;
+  }
+
+  .schedule-preview-content {
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+/* ── Small Mobile (≤480px) ── */
+@media (max-width: 480px) {
+  .ptowl-main {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .ptowl-header {
+    padding: 0.625rem 0.75rem !important;
+  }
+
+  /* Cards (Pending, NotFound) */
+  .ptowl-center-card {
+    padding: 2rem 1.25rem !important;
+  }
+
+  /* TemplateEditor */
+  .template-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* PrintSettings actions */
+  .print-settings-actions {
+    flex-direction: column !important;
+  }
+
+  .print-settings-actions button {
+    width: 100% !important;
+  }
+
+  /* Landing specific */
+  .landing-hero {
+    padding: 2rem 0.75rem 1.5rem !important;
+  }
+
+  .landing-auth-card {
+    padding: 1.25rem !important;
+  }
+
+  .landing-phone-input {
+    font-size: 1rem !important;
+  }
+
+  .landing-code-input {
+    font-size: 1.5rem !important;
+    letter-spacing: 0.5rem !important;
+  }
+}
+
+/* ── Safe area for mobile notch/gesture bar ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .ptowl-main {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  }
+}

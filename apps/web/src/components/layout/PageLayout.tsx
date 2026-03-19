@@ -1,4 +1,5 @@
 import type { ReactNode, CSSProperties } from 'react';
+import { ThemeToggle } from '../common/ThemeToggle.js';
 
 /**
  * PageLayout — responsive wrapper that adds ad sidebar zones on wide screens.
@@ -26,6 +27,9 @@ export function PageLayout({ children }: PageLayoutProps) {
       </aside>
 
       <div style={styles.content}>
+        <div style={styles.themeToggleWrap} className="no-print">
+          <ThemeToggle />
+        </div>
         {children}
       </div>
 
@@ -102,6 +106,21 @@ const styles: Record<string, CSSProperties> = {
     minWidth: 0,
     display: 'flex',
     flexDirection: 'column' as const,
+    position: 'relative' as const,
+  },
+  themeToggleWrap: {
+    position: 'fixed' as const,
+    bottom: '1rem',
+    right: '1rem',
+    zIndex: 50,
+    background: 'var(--white)',
+    borderRadius: '50%',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+    width: '36px',
+    height: '36px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   adSlot: {
     // Managed by CSS media queries above

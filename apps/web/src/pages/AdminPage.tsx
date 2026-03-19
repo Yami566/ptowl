@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest, setCSRFToken } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -96,22 +97,22 @@ export function AdminPage() {
   }, [step]);
 
   const handleApprove = async (userId: string) => {
-    setError('');
     const result = await apiRequest(`/admin/users/${userId}/approve`, { method: 'POST' });
     if (result.ok) {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: 'approved' } : u)));
+      toast.success('User approved');
     } else {
-      setError(result.error?.message || 'Failed to approve user');
+      toast.error(result.error?.message || 'Failed to approve user');
     }
   };
 
   const handleDeny = async (userId: string) => {
-    setError('');
     const result = await apiRequest(`/admin/users/${userId}/deny`, { method: 'POST' });
     if (result.ok) {
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, status: 'denied' } : u)));
+      toast.success('User denied');
     } else {
-      setError(result.error?.message || 'Failed to deny user');
+      toast.error(result.error?.message || 'Failed to deny user');
     }
   };
 
@@ -186,21 +187,20 @@ export function AdminPage() {
   return (
     <PageLayout>
     <div style={styles.page}>
-      <header style={styles.header}>
+      <header style={styles.header} className="ptowl-header">
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><OwlLogo size="md" linkTo="/dashboard" /><span style={styles.adminLabel}>Admin</span></span>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
-      <main id="main-content" style={styles.main}>
-        {error && <div style={{ ...styles.error, marginBottom: '1rem' }}>{error}</div>}
+      <main id="main-content" style={styles.main} className="ptowl-main">
 
         {pending.length > 0 && (
           <>
             <h3 style={styles.sectionTitle}>Pending Approval ({pending.length})</h3>
             {pending.map((u) => (
-              <div key={u.id} style={styles.userRow}>
+              <div key={u.id} style={styles.userRow} className="admin-user-row">
                 <div>
                   <strong>{u.phone || u.email}</strong>
                   <span style={styles.userDate}> &middot; {new Date(u.created_at).toLocaleDateString()}</span>

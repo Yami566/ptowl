@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 import { apiRequest } from '../../api/client.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { useFocusTrap } from '../../hooks/useFocusTrap.js';
@@ -60,7 +62,6 @@ export function SchedulePreviewOverlay({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
-  const [copied, setCopied] = useState(false);
   const trapRef = useFocusTrap(true);
 
   // Lock body scroll
@@ -124,8 +125,7 @@ export function SchedulePreviewOverlay({
     if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success('Link copied!');
     } catch {
       // Fallback
       const input = document.createElement('input');
@@ -134,8 +134,7 @@ export function SchedulePreviewOverlay({
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success('Link copied!');
     }
   }, [shareUrl]);
 
@@ -416,7 +415,7 @@ export function SchedulePreviewOverlay({
                 onClick={(e) => (e.target as HTMLInputElement).select()}
               />
               <button style={s.copyBtn} onClick={handleCopyLink}>
-                {copied ? 'Copied!' : 'Copy'}
+                Copy
               </button>
             </div>
           </div>
@@ -425,7 +424,13 @@ export function SchedulePreviewOverlay({
         {/* ── Footer ── */}
         <div className="schedule-preview-footer" style={s.footer}>
           {printPreview ? (
-            <button style={s.confirmPrintBtn} onClick={() => window.print()}>
+            <button style={s.confirmPrintBtn} onClick={() => {
+              window.print();
+              window.dispatchEvent(new CustomEvent('ptowl-onboarding', { detail: 'print' }));
+              if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                confetti({ particleCount: 60, spread: 50, origin: { y: 0.6 } });
+              }
+            }}>
               Confirm &amp; Print
             </button>
           ) : (

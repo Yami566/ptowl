@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -15,8 +16,6 @@ export function TemplateEditorPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   // Editable state per template
   const [edits, setEdits] = useState<Record<string, Partial<Template>>>({});
@@ -48,8 +47,6 @@ export function TemplateEditorPage() {
     if (!changes || Object.keys(changes).length === 0) return;
 
     setSaving(id);
-    setError(null);
-    setSuccess(null);
 
     const result = await apiRequest<Template>(`/templates/${id}`, {
       method: 'PUT',
@@ -63,10 +60,10 @@ export function TemplateEditorPage() {
         delete next[id];
         return next;
       });
-      setSuccess(id);
-      setTimeout(() => setSuccess(null), 2000);
+      toast.success('Template saved!');
+      window.dispatchEvent(new CustomEvent('ptowl-onboarding', { detail: 'template' }));
     } else {
-      setError(result.error?.message || 'Failed to save');
+      toast.error(result.error?.message || 'Failed to save');
     }
     setSaving(null);
   };
@@ -93,30 +90,27 @@ export function TemplateEditorPage() {
   return (
     <PageLayout>
     <div style={s.page}>
-      <header style={s.header}>
+      <header style={s.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
           <button style={s.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
-      <main id="main-content" style={s.main}>
+      <main id="main-content" style={s.main} className="ptowl-main">
         <h1 style={s.title}>Edit Templates</h1>
         <p style={s.subtitle}>
           Customize your 6 schedule templates. Changes only affect new schedules.
         </p>
 
-        {error && <div style={s.error}>{error}</div>}
-
-        <div style={s.grid}>
+        <div style={s.grid} className="template-grid">
           {templates.map((template) => (
             <div
               key={template.id}
               style={{
                 ...s.card,
                 opacity: template.is_active ? 1 : 0.5,
-                borderColor: success === template.id ? 'var(--green-mid)' : 'var(--gray-mid)',
               }}
             >
               {/* Hotkey badge + active toggle */}
@@ -185,7 +179,7 @@ export function TemplateEditorPage() {
                 onClick={() => handleSave(template.id)}
                 disabled={!hasChanges(template.id) || saving === template.id}
               >
-                {saving === template.id ? 'Saving...' : success === template.id ? 'Saved!' : 'Save Changes'}
+                {saving === template.id ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           ))}
@@ -211,10 +205,6 @@ const s: Record<string, React.CSSProperties> = {
   main: { maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },
-  error: {
-    background: 'var(--red-light)', color: 'var(--red-dark)', padding: '0.75rem 1rem', borderRadius: 'var(--radius)',
-    marginBottom: '1rem', fontSize: '0.875rem',
-  },
   grid: {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem',
   },

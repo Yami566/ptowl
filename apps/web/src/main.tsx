@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App.js';
 import './styles/globals.css';
+import './styles/responsive.css';
+import './styles/dark-theme.css';
 
 // SECURITY: Disable React DevTools in production
 if (import.meta.env.PROD) {

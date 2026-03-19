@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -16,8 +17,6 @@ export function ProfilePage() {
   const [clinicPhone, setClinicPhone] = useState('');
   const [clinicEmail, setClinicEmail] = useState('');
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
 
   // MFA state
   const [mfaEnrolled, setMfaEnrolled] = useState(false);
@@ -46,8 +45,6 @@ export function ProfilePage() {
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage('');
-    setIsError(false);
 
     const result = await apiRequest('/profile', {
       method: 'PUT',
@@ -60,12 +57,11 @@ export function ProfilePage() {
     });
 
     if (result.ok) {
-      setMessage('Saved!');
-      setIsError(false);
+      toast.success('Profile saved!');
       await refreshUser();
+      window.dispatchEvent(new CustomEvent('ptowl-onboarding', { detail: 'profile' }));
     } else {
-      setMessage(result.error?.message || 'Save failed');
-      setIsError(true);
+      toast.error(result.error?.message || 'Save failed');
     }
     setSaving(false);
   };
@@ -75,27 +71,19 @@ export function ProfilePage() {
   return (
     <PageLayout>
     <div style={styles.page}>
-      <header style={styles.header}>
+      <header style={styles.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
-      <main id="main-content" style={styles.main}>
+      <main id="main-content" style={styles.main} className="ptowl-main">
         <h1 style={styles.title}>Profile & Clinic Info</h1>
         <p style={styles.subtitle}>This information appears on your printed schedules.</p>
 
         <form onSubmit={handleSave} style={styles.form}>
-          <div
-            style={message ? (isError ? styles.messageError : styles.messageSuccess) : { height: 0, overflow: 'hidden' }}
-            aria-live={isError ? 'assertive' : 'polite'}
-            role={isError ? 'alert' : 'status'}
-          >
-            {isError && message ? `Error: ${message}` : message}
-          </div>
-
           <div style={styles.infoRow}>
             <span style={styles.infoLabel}>Email</span>
             <span style={styles.infoValue}>{user.email}</span>

@@ -66,7 +66,7 @@ export function PendingPage() {
           <OwlLogo size="lg" linkTo="/" />
         </div>
 
-        <div style={styles.card}>
+        <div style={styles.card} className="ptowl-center-card">
           <InlineHourglass />
           <h1 style={styles.title}>Account Pending</h1>
           <p style={styles.text}>

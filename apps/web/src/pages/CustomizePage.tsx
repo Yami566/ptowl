@@ -14,14 +14,14 @@ export function CustomizePage() {
   return (
     <PageLayout>
     <div style={styles.page}>
-      <header style={styles.header}>
+      <header style={styles.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
-      <main id="main-content" style={styles.main}>
+      <main id="main-content" style={styles.main} className="ptowl-main">
         <h1 style={styles.title}>Customize</h1>
         <p style={styles.subtitle}>Personalize your templates, print settings, and clinic info.</p>
 

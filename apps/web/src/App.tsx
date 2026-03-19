@@ -1,9 +1,13 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import { AuthProvider, ProtectedRoute, AdminRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
+import { CommandPalette } from './components/CommandPalette.js';
+import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay.js';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60 * 1000, retry: 1 } },
@@ -27,10 +31,46 @@ const SecurityPage = lazy(() => import('./pages/SecurityPage.js').then(m => ({ d
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.js').then(m => ({ default: m.NotFoundPage })));
 
 export function App() {
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  const handleGlobalKeyDown = useCallback((e: KeyboardEvent) => {
+    const target = e.target as HTMLElement;
+    const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
+
+    // Ctrl+K / Cmd+K — open command palette
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      setCmdOpen((prev) => !prev);
+      return;
+    }
+
+    // ? — open keyboard shortcuts (only when not typing)
+    if (e.key === '?' && !isInput && !cmdOpen) {
+      e.preventDefault();
+      setShortcutsOpen(true);
+    }
+  }, [cmdOpen]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [handleGlobalKeyDown]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <CommandPalette
+            open={cmdOpen}
+            onOpenChange={setCmdOpen}
+            onShowShortcuts={() => { setCmdOpen(false); setShortcutsOpen(true); }}
+          />
+          <KeyboardShortcutsOverlay
+            open={shortcutsOpen}
+            onClose={() => setShortcutsOpen(false)}
+          />
           <a href="#main-content" className="skip-to-main">
             Skip to main content
           </a>

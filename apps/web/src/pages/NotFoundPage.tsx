@@ -11,7 +11,7 @@ export function NotFoundPage() {
           <OwlLogo size="lg" linkTo="/dashboard" />
         </div>
 
-        <div style={styles.card}>
+        <div style={styles.card} className="ptowl-center-card">
           <h1 style={styles.code}>404</h1>
           <p style={styles.title}>Page Not Found</p>
           <p style={styles.message}>

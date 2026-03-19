@@ -92,9 +92,9 @@ export function SchedulePage() {
     <div id="main-content" role="main" style={styles.page}>
       <h1 className="sr-only">Schedule Details</h1>
       {/* Screen header */}
-      <header style={styles.header} className="no-print">
+      <header style={styles.header} className="no-print ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={styles.headerActions}>
+        <div style={styles.headerActions} className="ptowl-header-actions">
           <button
             style={styles.viewToggle}
             onClick={() => setView(view === 'table' ? 'calendar' : 'table')}
@@ -128,7 +128,7 @@ export function SchedulePage() {
       </div>
 
       {/* Screen info bar */}
-      <div style={styles.infoBar} className="no-print">
+      <div style={styles.infoBar} className="no-print schedule-info-bar">
         <h2 style={styles.patientName}>{schedule.patient_alias || schedule.patient_initials}</h2>
         <span style={styles.dateRange}>
           {formatDate(schedule.start_date)} &ndash; {formatDate(schedule.end_date)}
@@ -137,7 +137,7 @@ export function SchedulePage() {
       </div>
 
       {/* Summary stats bar */}
-      <div style={styles.statsBar} className="no-print">
+      <div style={styles.statsBar} className="no-print schedule-stats-bar">
         <div style={styles.statCard}>
           <span style={styles.statNum}>{stats.total}</span>
           <span style={styles.statLabel}>Total</span>
@@ -168,6 +168,7 @@ export function SchedulePage() {
 
       {/* Table View */}
       {view === 'table' && (
+        <div className="schedule-table-wrap">
         <table style={styles.table} className="schedule-table">
           <thead>
             <tr>
@@ -215,6 +216,7 @@ export function SchedulePage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {/* Calendar View — full interactive FullCalendar (lazy loaded) */}

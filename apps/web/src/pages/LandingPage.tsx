@@ -183,7 +183,7 @@ export function LandingPage() {
   return (
     <main style={styles.page}>
       {/* Hero */}
-      <section style={styles.hero} className="landing-fade-in">
+      <section style={styles.hero} className="landing-fade-in landing-hero">
         <OwlLogo size="lg" linkTo="/" />
         <h1 style={styles.headline}>The fastest PT schedule generator on earth.</h1>
         <p style={styles.subheadline}>
@@ -192,7 +192,7 @@ export function LandingPage() {
         </p>
 
         {/* Phone Auth — clean, single-flow like Uber/WhatsApp */}
-        <div style={styles.authCard}>
+        <div style={styles.authCard} className="landing-auth-card">
           {step === 'mfa' ? (
             <>
               <div style={styles.stepBadge}>Security check</div>
@@ -311,29 +311,29 @@ export function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section style={styles.howSection} className="landing-fade-in landing-fade-in-delay-1">
+      <section style={styles.howSection} className="landing-fade-in landing-fade-in-delay-1 landing-how-section">
         <h2 style={styles.sectionTitle}>4 keypresses. That's it. <span style={{ opacity: 0.55, fontWeight: 400, fontStyle: 'italic' }}>Okay, maybe five.</span></h2>
-        <div style={styles.steps}>
+        <div style={styles.steps} className="landing-steps">
           <div style={styles.step}>
             <span style={styles.key} className="key-animate">1</span>
             <p style={styles.stepText}>Pick a template</p>
           </div>
-          <span style={styles.arrow}>&rarr;</span>
+          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
           <div style={styles.step}>
             <span style={styles.key} className="key-animate">AB</span>
             <p style={styles.stepText}>Patient initials</p>
           </div>
-          <span style={styles.arrow}>&rarr;</span>
+          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
           <div style={styles.step}>
             <span style={styles.key} className="key-animate">&#9166;</span>
             <p style={styles.stepText}>Generate</p>
           </div>
-          <span style={styles.arrow}>&rarr;</span>
+          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
           <div style={styles.step}>
             <span style={styles.key} className="key-animate">P</span>
             <p style={styles.stepText}>Print</p>
           </div>
-          <span style={{ ...styles.arrow, opacity: 0.4 }}>&rarr;</span>
+          <span style={{ ...styles.arrow, opacity: 0.4 }} className="landing-step-arrow">&rarr;</span>
           <div style={styles.step}>
             <span style={{ ...styles.key, borderStyle: 'dashed', opacity: 0.55, transform: 'rotate(-2deg)' }} className="key-animate">&#9749;</span>
             <p style={{ ...styles.stepText, fontStyle: 'italic' }}>Sip coffee</p>
@@ -342,8 +342,8 @@ export function LandingPage() {
       </section>
 
       {/* Features */}
-      <section style={styles.features} className="landing-fade-in landing-fade-in-delay-2">
-        <div style={styles.featureCard} className="feature-card-hover">
+      <section style={styles.features} className="landing-fade-in landing-fade-in-delay-2 landing-features">
+        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
           <div style={styles.featureIcon}>&#129668;</div>
           <h3 style={styles.featureTitle}>You're the wizard here</h3>
           <p style={styles.featureDesc}>
@@ -351,7 +351,7 @@ export function LandingPage() {
             Hotkeys, drag-and-drop, full control — your clinic runs your way.
           </p>
         </div>
-        <div style={styles.featureCard} className="feature-card-hover">
+        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
           <div style={styles.featureIcon}><span className="bee-container" role="img" aria-label="buzzing bee">&#128029;</span></div>
           <h3 style={styles.featureTitle}>Schedulize your life</h3>
           <p style={styles.featureDesc}>
@@ -359,7 +359,7 @@ export function LandingPage() {
             appointment to appointment. Let us handle the hive.
           </p>
         </div>
-        <div style={styles.featureCard} className="feature-card-hover">
+        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
           <div style={styles.featureIcon}>&#129300;</div>
           <h3 style={styles.featureTitle}>Who?</h3>
           <p style={styles.featureDesc}>

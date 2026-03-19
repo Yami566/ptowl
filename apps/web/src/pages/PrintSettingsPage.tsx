@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { PageLayout } from '../components/layout/PageLayout.js';
@@ -11,27 +11,25 @@ export function PrintSettingsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { settings, updateSettings, resetSettings } = usePrintSettings();
-  const [saved, setSaved] = useState(false);
 
   if (!user) return null;
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    toast.success('Settings saved!');
   };
 
   return (
     <PageLayout>
     <div style={s.page}>
-      <header style={s.header}>
+      <header style={s.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/dashboard" />
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
           <button style={s.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
-      <main id="main-content" style={s.main}>
+      <main id="main-content" style={s.main} className="ptowl-main">
         <h1 style={s.title}>Print Settings</h1>
         <p style={s.subtitle}>
           Customize how your schedules look when printed. Settings are saved to this device.
@@ -105,14 +103,14 @@ export function PrintSettingsPage() {
           </label>
         </div>
 
-        <div style={s.actions}>
+        <div style={s.actions} className="print-settings-actions">
           <button style={s.resetBtn} onClick={resetSettings}>Reset to Defaults</button>
           <button style={s.previewBtn} onClick={() => window.print()}>Print Preview</button>
           <button
-            style={saved ? s.savedBtn : s.saveBtn}
+            style={s.saveBtn}
             onClick={handleSave}
           >
-            {saved ? 'Saved!' : 'Save Settings'}
+            Save Settings
           </button>
         </div>
       </main>
@@ -167,10 +165,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   saveBtn: {
     padding: '0.5rem 1.25rem', background: 'var(--green-mid)', color: 'white',
-    borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
-  },
-  savedBtn: {
-    padding: '0.5rem 1.25rem', background: 'var(--green-dark)', color: 'white',
     borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
   },
 };
