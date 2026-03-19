@@ -198,7 +198,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2rem 1rem',
   },
   container: {
-    maxWidth: '760px',
+    maxWidth: 'clamp(600px, 50vw, 960px)',
     margin: '0 auto',
   },
   backLink: {

@@ -8,7 +8,7 @@ export function NotFoundPage() {
     <main id="main-content" style={styles.page}>
       <div style={styles.center}>
         <div style={styles.brand}>
-          <OwlLogo size="lg" linkTo="/dashboard" />
+          <OwlLogo size="lg" linkTo="/" />
         </div>
 
         <div style={styles.card} className="ptowl-center-card">

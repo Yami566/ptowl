@@ -72,7 +72,7 @@ export function ProfilePage() {
     <PageLayout>
     <div style={styles.page}>
       <header style={styles.header} className="ptowl-header">
-        <OwlLogo size="md" linkTo="/dashboard" />
+        <OwlLogo size="md" linkTo="/" />
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
@@ -287,7 +287,7 @@ const styles: Record<string, React.CSSProperties> = {
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
   backBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem' },
   logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
-  main: { maxWidth: '600px', margin: '0 auto', padding: '2rem 1.5rem' },
+  main: { maxWidth: 'clamp(480px, 45vw, 800px)', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },
   form: { display: 'flex', flexDirection: 'column' as const, gap: '1rem' },

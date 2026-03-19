@@ -261,7 +261,7 @@ export function DashboardPage() {
     <PageLayout>
     <div style={styles.page}>
       <header style={styles.header} className="ptowl-header">
-        <OwlLogo size="md" linkTo="/dashboard" />
+        <OwlLogo size="md" linkTo="/" />
         <div style={styles.headerRight} className="ptowl-header-actions">
           <button style={styles.headerBtn} onClick={() => navigate('/customize')}>Customize</button>
           <button style={styles.headerBtn} onClick={() => navigate('/profile')}>Profile</button>
@@ -431,7 +431,7 @@ const styles: Record<string, React.CSSProperties> = {
   headerRight: { display: 'flex', gap: '0.5rem' },
   headerBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)' },
   logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
-  main: { maxWidth: '960px', margin: '0 auto', padding: '2rem 1.5rem' },
+  main: { maxWidth: 'clamp(720px, 65vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
   welcome: { marginBottom: '2rem' },
   welcomeTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.25rem' },
   welcomeText: { color: 'var(--gray-text)', fontSize: '0.9rem' },

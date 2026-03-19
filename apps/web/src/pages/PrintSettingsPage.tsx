@@ -22,7 +22,7 @@ export function PrintSettingsPage() {
     <PageLayout>
     <div style={s.page}>
       <header style={s.header} className="ptowl-header">
-        <OwlLogo size="md" linkTo="/dashboard" />
+        <OwlLogo size="md" linkTo="/" />
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
           <button style={s.logoutBtn} onClick={logout}>Logout</button>
@@ -131,7 +131,7 @@ const s: Record<string, React.CSSProperties> = {
   logoutBtn: {
     padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
   },
-  main: { maxWidth: '640px', margin: '0 auto', padding: '2rem 1.5rem' },
+  main: { maxWidth: 'clamp(500px, 45vw, 840px)', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },
   card: {

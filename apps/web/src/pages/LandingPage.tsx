@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, Suspense, lazy } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
@@ -11,6 +12,62 @@ import {
   type ConfirmationResult,
   type MultiFactorResolver,
 } from '../firebase.js';
+
+// Lazy-load FullCalendar for demo section
+const LazyFullCalendar = lazy(() => import('@fullcalendar/react'));
+const dayGridPromise = import('@fullcalendar/daygrid');
+
+/** Generate sample Mon/Wed/Fri PT events for the current month */
+function generateSampleEvents() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const today = new Date(year, month, now.getDate());
+  const events: Array<{ title: string; date: string; color: string }> = [];
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dow = date.getDay();
+    // Mon=1, Wed=3, Fri=5
+    if (dow === 1 || dow === 3 || dow === 5) {
+      const iso = date.toISOString().split('T')[0]!;
+      events.push({
+        title: 'PT Session',
+        date: iso,
+        color: date < today ? 'var(--green-mid)' : 'var(--orange-mid)',
+      });
+    }
+  }
+  return events;
+}
+
+function DemoCalendarSection() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dayGridPlugin, setDayGridPlugin] = useState<any>(null);
+  const sampleEvents = useMemo(() => generateSampleEvents(), []);
+
+  useEffect(() => {
+    dayGridPromise.then((m) => setDayGridPlugin(m.default));
+  }, []);
+
+  if (!dayGridPlugin) return <div style={{ minHeight: '300px' }} />;
+
+  return (
+    <Suspense fallback={<div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-text)' }}>Loading calendar...</div>}>
+      <LazyFullCalendar
+        plugins={[dayGridPlugin]}
+        initialView="dayGridMonth"
+        events={sampleEvents}
+        headerToolbar={{ left: '', center: 'title', right: '' }}
+        height="auto"
+        editable={false}
+        selectable={false}
+        dayMaxEvents={2}
+      />
+    </Suspense>
+  );
+}
 
 export function LandingPage() {
   usePageTitle('Log In');
@@ -310,6 +367,35 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Demo Calendar */}
+      <section style={styles.demoSection} className="landing-fade-in landing-fade-in-delay-1">
+        <h2 style={styles.demoTitle}>What your patients get</h2>
+        <p style={styles.demoSubtitle}>A clean, organized schedule — generated in seconds, not minutes.</p>
+        <div style={styles.demoCard} className="landing-demo-card">
+          <DemoCalendarSection />
+        </div>
+      </section>
+
+      {/* Stats Row */}
+      <section style={styles.statsRow} className="landing-fade-in landing-fade-in-delay-1">
+        <div style={styles.statItem}>
+          <span style={styles.statValue}>&lt; 5 sec</span>
+          <span style={styles.statLabel}>Schedule creation</span>
+        </div>
+        <div style={styles.statItem}>
+          <span style={styles.statValue}>3–7x/wk</span>
+          <span style={styles.statLabel}>Flexible frequency</span>
+        </div>
+        <div style={styles.statItem}>
+          <span style={styles.statValue}>52 weeks</span>
+          <span style={styles.statLabel}>Max duration</span>
+        </div>
+        <div style={styles.statItem}>
+          <span style={styles.statValue}>QR + Print</span>
+          <span style={styles.statLabel}>Share options</span>
+        </div>
+      </section>
+
       {/* How it works */}
       <section style={styles.howSection} className="landing-fade-in landing-fade-in-delay-1 landing-how-section">
         <h2 style={styles.sectionTitle}>4 keypresses. That's it. <span style={{ opacity: 0.55, fontWeight: 400, fontStyle: 'italic' }}>Okay, maybe five.</span></h2>
@@ -367,11 +453,33 @@ export function LandingPage() {
             championship legends on screen. Your data stays invisible.
           </p>
         </div>
+        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
+          <div style={styles.featureIcon}>&#128197;</div>
+          <h3 style={styles.featureTitle}>Calendar View</h3>
+          <p style={styles.featureDesc}>
+            See schedules as a full interactive calendar. Month, week, or day —
+            drag appointments around and watch everything update.
+          </p>
+        </div>
+        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
+          <div style={styles.featureIcon}>&#128424;</div>
+          <h3 style={styles.featureTitle}>Share & Print</h3>
+          <p style={styles.featureDesc}>
+            QR codes, shareable links, and print-ready layouts with your clinic
+            branding. Hand it to patients or text them a link.
+          </p>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-3">
-        <OwlLogo size="sm" linkTo="/" />
+      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-3 landing-footer">
+        <div style={styles.footerTop}>
+          <OwlLogo size="sm" linkTo="/" />
+          <div style={styles.qrWrap}>
+            <QRCodeSVG value="https://ptowl.com" size={80} fgColor="var(--green-dark)" bgColor="transparent" />
+            <span style={styles.qrLabel}>Scan to try on mobile</span>
+          </div>
+        </div>
         <div style={styles.footerLinks}>
           <a href="/privacy" style={styles.footerLink}>Privacy</a>
           <a href="/terms" style={styles.footerLink}>Terms</a>
@@ -393,7 +501,7 @@ const styles: Record<string, React.CSSProperties> = {
   hero: {
     textAlign: 'center' as const,
     padding: '5rem 1.5rem 3rem',
-    maxWidth: '640px',
+    maxWidth: 'clamp(500px, 50vw, 800px)',
     margin: '0 auto',
   },
   headline: {
@@ -536,11 +644,67 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '0.75rem',
   },
 
+  // Demo Calendar
+  demoSection: {
+    textAlign: 'center' as const,
+    padding: '2rem 1.5rem 1rem',
+    maxWidth: 'clamp(600px, 55vw, 960px)',
+    margin: '0 auto',
+  },
+  demoTitle: {
+    fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+    fontWeight: 700,
+    color: 'var(--dark)',
+    marginBottom: '0.25rem',
+  },
+  demoSubtitle: {
+    fontSize: '0.95rem',
+    color: 'var(--gray-text)',
+    marginBottom: '1.5rem',
+  },
+  demoCard: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '1.25rem',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    border: '1px solid var(--green-bg)',
+  },
+
+  // Stats Row
+  statsRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: 'clamp(1rem, 3vw, 3rem)',
+    flexWrap: 'wrap' as const,
+    padding: '2rem 1.5rem',
+    maxWidth: 'clamp(600px, 55vw, 960px)',
+    margin: '0 auto',
+  },
+  statItem: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.25rem',
+  },
+  statValue: {
+    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+    fontWeight: 800,
+    fontFamily: 'var(--font-mono)',
+    color: 'var(--green-dark)',
+  },
+  statLabel: {
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    color: 'var(--gray-text)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
+  },
+
   // How it works
   howSection: {
     textAlign: 'center' as const,
     padding: '3rem 1.5rem',
-    maxWidth: '720px',
+    maxWidth: 'clamp(600px, 55vw, 960px)',
     margin: '0 auto',
   },
   sectionTitle: {
@@ -594,7 +758,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '1.5rem',
-    maxWidth: '900px',
+    maxWidth: 'clamp(700px, 65vw, 1200px)',
     margin: '0 auto',
     padding: '2rem 1.5rem 4rem',
   },
@@ -629,6 +793,24 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2rem 1.5rem',
     borderTop: '1px solid var(--green-bg)',
     background: 'var(--green-bg-footer)',
+  },
+  footerTop: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '2rem',
+    flexWrap: 'wrap' as const,
+  },
+  qrWrap: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.375rem',
+  },
+  qrLabel: {
+    fontSize: '0.7rem',
+    color: 'var(--gray-text)',
+    fontWeight: 500,
   },
   footerLinks: {
     display: 'flex',

@@ -188,7 +188,7 @@ export function AdminPage() {
     <PageLayout>
     <div style={styles.page}>
       <header style={styles.header} className="ptowl-header">
-        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><OwlLogo size="md" linkTo="/dashboard" /><span style={styles.adminLabel}>Admin</span></span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><OwlLogo size="md" linkTo="/" /><span style={styles.adminLabel}>Admin</span></span>
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
@@ -253,7 +253,7 @@ const styles: Record<string, React.CSSProperties> = {
   adminLabel: { fontFamily: 'var(--font-mono)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--gray-text)' },
   backBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', border: 'none', cursor: 'pointer' },
   logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, border: 'none', cursor: 'pointer' },
-  main: { maxWidth: '720px', margin: '0 auto', padding: '2rem 1.5rem', flex: 1 },
+  main: { maxWidth: 'clamp(600px, 50vw, 960px)', margin: '0 auto', padding: '2rem 1.5rem', flex: 1 },
   sectionTitle: { fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--dark)' },
   userRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', marginBottom: '0.5rem' },
   userDate: { color: 'var(--gray-text)', fontSize: '0.8rem' },
