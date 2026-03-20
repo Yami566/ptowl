@@ -5,6 +5,7 @@ export interface User {
   status: 'pending' | 'approved' | 'denied' | 'suspended';
   role: 'user' | 'admin';
   tier: 'free' | 'paid';
+  user_type: 'clinic' | 'patient';
   created_at: string;
   updated_at: string;
 }
@@ -105,4 +106,20 @@ export interface AliasRequest {
 export interface AliasResponse {
   alias: string;
   initials: string;
+}
+
+export interface PatientCode {
+  id: string;
+  schedule_id: string;
+  code: string;
+  created_by: string;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface PatientScheduleLink {
+  id: string;
+  patient_id: string;
+  schedule_id: string;
+  linked_at: string;
 }

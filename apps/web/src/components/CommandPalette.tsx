@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.js';
 import { useTheme } from '../hooks/useTheme.js';
+import { apiRequest } from '../api/client.js';
+import type { Schedule } from '@ptowl/shared';
 
 interface Props {
   open: boolean;
@@ -13,6 +16,15 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+
+  // Fetch schedules when palette opens (for search)
+  useEffect(() => {
+    if (!open || !user) return;
+    apiRequest<Schedule[]>('/schedules').then((r) => {
+      if (r.ok && r.data) setSchedules(r.data);
+    });
+  }, [open, user]);
 
   const go = (path: string) => {
     navigate(path);
@@ -76,6 +88,25 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
                 <span style={s.icon}>&#128682;</span> Log Out
               </Command.Item>
             </Command.Group>
+
+            {schedules.length > 0 && (
+              <Command.Group heading="Schedules" style={s.group}>
+                {schedules.map((sched) => (
+                  <Command.Item
+                    key={sched.id}
+                    value={`${sched.patient_alias} ${sched.patient_initials}`}
+                    onSelect={() => go(`/schedule/${sched.id}`)}
+                    style={s.item}
+                  >
+                    <span style={s.icon}>&#128197;</span>
+                    {sched.patient_alias}
+                    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--gray-text)' }}>
+                      {sched.patient_initials}
+                    </span>
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            )}
 
             <Command.Group heading="Help" style={s.group}>
               <Command.Item onSelect={() => action(onShowShortcuts)} style={s.item}>

@@ -136,6 +136,18 @@ export function useOwlVariant(): {
     return () => window.removeEventListener('ptowl-easter-egg', handler);
   }, [triggerEasterEgg]);
 
+  // Listen for contextual reaction events (temporary variant override)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const variant = (e as CustomEvent<OwlVariant>).detail;
+      if (variant && OWL_VARIANTS.includes(variant)) {
+        setRandomVariant(variant);
+      }
+    };
+    window.addEventListener('ptowl-owl-reaction', handler);
+    return () => window.removeEventListener('ptowl-owl-reaction', handler);
+  }, []);
+
   // Mobile 3s cycling: cycle through all variants on mobile viewports
   useEffect(() => {
     // SSR guard

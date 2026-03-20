@@ -5,16 +5,19 @@ import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { PageLayout } from '../components/layout/PageLayout.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { usePrintSettings } from '../hooks/usePrintSettings.js';
+import { useOwlReaction } from '../hooks/useOwlReaction.js';
 
 export function PrintSettingsPage() {
   usePageTitle('Print Settings');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { settings, updateSettings, resetSettings } = usePrintSettings();
+  const owlReaction = useOwlReaction();
 
   if (!user) return null;
 
   const handleSave = () => {
+    owlReaction.onSaveSuccess();
     toast.success('Settings saved!');
   };
 
@@ -101,6 +104,45 @@ export function PrintSettingsPage() {
               <span style={s.toggleDesc}>Show reminder sent/not sent status in table view</span>
             </span>
           </label>
+
+          <label style={s.toggle}>
+            <input
+              type="checkbox"
+              checked={settings.showQRCode}
+              onChange={(e) => updateSettings({ showQRCode: e.target.checked })}
+            />
+            <span style={s.toggleText}>
+              <strong>QR Code</strong>
+              <span style={s.toggleDesc}>Include a QR code on printouts linking to the digital schedule</span>
+            </span>
+          </label>
+        </div>
+
+        <div style={s.card}>
+          <h3 style={s.sectionTitle}>Language</h3>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--gray-text)', marginBottom: '0.75rem' }}>
+            Translate column headers on printed schedules.
+          </p>
+          <div style={s.radioGroup}>
+            <label style={s.radioLabel}>
+              <input
+                type="radio"
+                name="language"
+                checked={settings.language === 'en'}
+                onChange={() => updateSettings({ language: 'en' })}
+              />
+              <span style={s.radioText}>English</span>
+            </label>
+            <label style={s.radioLabel}>
+              <input
+                type="radio"
+                name="language"
+                checked={settings.language === 'es'}
+                onChange={() => updateSettings({ language: 'es' })}
+              />
+              <span style={s.radioText}>Espa&ntilde;ol</span>
+            </label>
+          </div>
         </div>
 
         <div style={s.actions} className="print-settings-actions">

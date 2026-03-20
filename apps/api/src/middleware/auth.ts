@@ -5,7 +5,7 @@ import { verifyCSRFToken } from '../crypto/csrf.js';
 import { getCookie } from 'hono/cookie';
 
 type Variables = {
-  user: { id: string; email: string; role: string; tier: string; admin_verified?: boolean } | null;
+  user: { id: string; email: string; role: string; tier: string; user_type?: string; admin_verified?: boolean } | null;
 };
 
 // Auth middleware: verifies JWT from httpOnly cookie
@@ -26,6 +26,7 @@ export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variable
       email: payload.email,
       role: payload.role,
       tier: payload.tier,
+      user_type: (payload as Record<string, unknown>).user_type as string | undefined,
       admin_verified: payload.admin_verified,
     });
 
@@ -76,6 +77,35 @@ export const requireAdmin = createMiddleware<{ Bindings: Env; Variables: Variabl
       .first<{ role: string; status: string }>();
     if (!dbUser || dbUser.role !== 'admin' || dbUser.status !== 'approved') {
       return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Admin access revoked' } }, 403);
+    }
+    await next();
+  },
+);
+
+// Clinic-only middleware: requires user_type === 'clinic'
+export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variables }>(
+  async (c, next) => {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
+    }
+    // Default to clinic for existing users who don't have user_type set
+    if (user.user_type && user.user_type !== 'clinic') {
+      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Clinic access required' } }, 403);
+    }
+    await next();
+  },
+);
+
+// Patient-only middleware: requires user_type === 'patient'
+export const requirePatient = createMiddleware<{ Bindings: Env; Variables: Variables }>(
+  async (c, next) => {
+    const user = c.get('user');
+    if (!user) {
+      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
+    }
+    if (user.user_type !== 'patient') {
+      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Patient access required' } }, 403);
     }
     await next();
   },

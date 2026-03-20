@@ -10,6 +10,8 @@ import { profileRoutes } from './routes/profile.js';
 import { adminRoutes } from './routes/admin.js';
 import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
+import { patientRoutes } from './routes/patient.js';
+import { codeRoutes } from './routes/codes.js';
 // Rate limiting moved to Cloudflare WAF Rules (dashboard config, edge-level).
 // Custom per-isolate rate limiting was unreliable on distributed Workers.
 
@@ -118,6 +120,8 @@ app.route('/api/v1/profile', profileRoutes);
 app.route('/api/v1/admin', adminRoutes);
 app.route('/api/v1/alias', aliasRoutes);
 app.route('/api/v1/cal', calendarRoutes);
+app.route('/api/v1/patient', patientRoutes);
+app.route('/api/v1/codes', codeRoutes);
 
 // 404 handler
 app.notFound((c) => c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404));

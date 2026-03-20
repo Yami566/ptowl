@@ -72,6 +72,7 @@ function DemoCalendarSection() {
 export function LandingPage() {
   usePageTitle('Log In');
   const { user, loading, login } = useAuth();
+  const [userType, setUserType] = useState<'clinic' | 'patient'>('clinic');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -223,7 +224,7 @@ export function LandingPage() {
     const idToken = await firebaseUser.getIdToken();
     const result = await apiRequest<{ user: { id: string; email: string; phone: string; display_name: string; role: string; tier: string }; csrfToken: string; isNewUser: boolean }>('/auth/firebase', {
       method: 'POST',
-      body: JSON.stringify({ idToken, rememberMe }),
+      body: JSON.stringify({ idToken, rememberMe, user_type: userType }),
     });
 
     if (result.ok && result.data) {
@@ -285,6 +286,17 @@ export function LandingPage() {
             </>
           ) : step === 'phone' ? (
             <>
+              {/* User type selector */}
+              <div style={styles.userTypeRow}>
+                <button
+                  style={{ ...styles.userTypeBtn, ...(userType === 'clinic' ? styles.userTypeBtnActive : {}) }}
+                  onClick={() => setUserType('clinic')}
+                >I'm a Provider</button>
+                <button
+                  style={{ ...styles.userTypeBtn, ...(userType === 'patient' ? styles.userTypeBtnActive : {}) }}
+                  onClick={() => setUserType('patient')}
+                >I'm a Patient</button>
+              </div>
               <div style={styles.stepBadge}>Step 1 of 2</div>
               <h2 style={styles.authTitle}>Enter your phone number</h2>
               <p style={styles.authSubtitle}>
@@ -527,6 +539,28 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid var(--green-bg)',
     maxWidth: '380px',
     margin: '0 auto',
+  },
+  userTypeRow: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '1rem',
+  },
+  userTypeBtn: {
+    flex: 1,
+    padding: '0.5rem',
+    border: '2px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    background: 'var(--white)',
+    color: 'var(--gray-text)',
+    fontSize: '0.8125rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  },
+  userTypeBtnActive: {
+    border: '2px solid var(--green-mid)',
+    background: 'var(--green-bg)',
+    color: 'var(--green-dark)',
   },
   authTitle: {
     fontSize: '1.25rem',

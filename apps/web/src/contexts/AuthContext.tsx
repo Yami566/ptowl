@@ -11,6 +11,7 @@ interface AuthUser {
   status?: string;
   role: string;
   tier: string;
+  user_type?: 'clinic' | 'patient';
   clinic_name?: string;
   clinic_address?: string;
   clinic_phone?: string;
@@ -29,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const PUBLIC_PATHS = ['/', '/pending', '/privacy', '/terms', '/security'];
+const PATIENT_PATHS = ['/my-schedules'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -72,7 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else if (user && user.status !== 'pending' && location.pathname === '/pending') {
       navigate('/dashboard', { replace: true });
     } else if (user && user.status !== 'pending' && location.pathname === '/') {
-      navigate('/dashboard', { replace: true });
+      const home = user.user_type === 'patient' ? '/my-schedules' : '/dashboard';
+      navigate(home, { replace: true });
     }
   }, [user, loading, location.pathname, navigate]);
 
@@ -133,6 +136,19 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   // Pending users can only see /pending
   if (user.status === 'pending') return <Navigate to="/pending" replace />;
+
+  return <>{children}</>;
+}
+
+/**
+ * PatientRoute — route guard that requires patient user_type.
+ */
+export function PatientRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingOverlay message="Verifying session..." />;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.user_type !== 'patient') return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 }

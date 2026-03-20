@@ -6,6 +6,8 @@ export interface PrintSettings {
   showClinicHeader: boolean;
   showNotesSection: boolean;
   showReminderColumn: boolean;
+  showQRCode: boolean;
+  language: 'en' | 'es';
 }
 
 const DEFAULT_SETTINGS: PrintSettings = {
@@ -13,6 +15,8 @@ const DEFAULT_SETTINGS: PrintSettings = {
   showClinicHeader: true,
   showNotesSection: true,
   showReminderColumn: true,
+  showQRCode: true,
+  language: 'en',
 };
 
 export function usePrintSettings() {

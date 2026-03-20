@@ -102,7 +102,7 @@ function normalizePhone(phone: string): string | null {
 // POST /firebase — Exchange Firebase ID token for session
 authRoutes.post('/firebase', async (c) => {
   try {
-    const body = await c.req.json<{ idToken?: string; rememberMe?: boolean }>();
+    const body = await c.req.json<{ idToken?: string; rememberMe?: boolean; user_type?: 'clinic' | 'patient' }>();
     if (!body.idToken) {
       return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'ID token required' } }, 400);
     }
@@ -125,10 +125,12 @@ authRoutes.post('/firebase', async (c) => {
       return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid phone number' } }, 400);
     }
 
+    const userType = body.user_type === 'patient' ? 'patient' : 'clinic';
+
     // Look up user by phone
     let user = await c.env.DB.prepare(
-      'SELECT id, email, phone, display_name, status, role, tier FROM users WHERE phone = ?',
-    ).bind(phone).first<{ id: string; email: string; phone: string; display_name: string; status: string; role: string; tier: string }>();
+      'SELECT id, email, phone, display_name, status, role, tier, user_type FROM users WHERE phone = ?',
+    ).bind(phone).first<{ id: string; email: string; phone: string; display_name: string; status: string; role: string; tier: string; user_type: string }>();
 
     let isNewUser = false;
 
@@ -143,8 +145,8 @@ authRoutes.post('/firebase', async (c) => {
       const teamAlias = getTeamAliasName(phone);
 
       await c.env.DB.prepare(
-        'INSERT INTO users (id, email, password_hash, phone, display_name, status, role, tier, user_alias) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      ).bind(userId, placeholderEmail, placeholderHash, phone, '', 'pending', 'user', 'free', teamAlias).run();
+        'INSERT INTO users (id, email, password_hash, phone, display_name, status, role, tier, user_alias, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ).bind(userId, placeholderEmail, placeholderHash, phone, '', 'pending', 'user', 'free', teamAlias, userType).run();
 
       // Create profile
       const profileId = crypto.randomUUID().replace(/-/g, '');
@@ -177,7 +179,7 @@ authRoutes.post('/firebase', async (c) => {
 
       // Re-fetch user
       user = await c.env.DB.prepare(
-        'SELECT id, email, phone, display_name, status, role, tier FROM users WHERE id = ?',
+        'SELECT id, email, phone, display_name, status, role, tier, user_type FROM users WHERE id = ?',
       ).bind(userId).first();
     }
 
@@ -199,7 +201,7 @@ authRoutes.post('/firebase', async (c) => {
 
     // Sign JWT (15 min token, refreshable for 14 days)
     const token = await signJWT(
-      { sub: user.id, email: user.email || '', role: user.role, tier: user.tier },
+      { sub: user.id, email: user.email || '', role: user.role, tier: user.tier, user_type: user.user_type || 'clinic' },
       c.env.JWT_SECRET,
       15 * 60,
     );
@@ -229,8 +231,10 @@ authRoutes.post('/firebase', async (c) => {
           email: user.email || '',
           phone: user.phone,
           display_name: user.display_name,
+          status: user.status,
           role: user.role,
           tier: user.tier,
+          user_type: user.user_type || 'clinic',
           clinic_name: profile?.clinic_name || '',
           clinic_address: profile?.clinic_address || '',
           clinic_phone: profile?.clinic_phone || '',
@@ -261,7 +265,7 @@ authRoutes.get('/me', requireAuth, async (c) => {
     const user = c.get('user')!;
 
     const userData = await c.env.DB.prepare(
-      'SELECT u.id, u.email, u.phone, u.display_name, u.role, u.tier, u.status, p.clinic_name, p.clinic_address, p.clinic_phone, p.clinic_email, p.logo_url FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = ?',
+      'SELECT u.id, u.email, u.phone, u.display_name, u.role, u.tier, u.status, u.user_type, p.clinic_name, p.clinic_address, p.clinic_phone, p.clinic_email, p.logo_url FROM users u LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = ?',
     )
       .bind(user.id)
       .first();
@@ -293,9 +297,9 @@ authRoutes.post('/refresh', async (c) => {
     }
 
     // Verify the user still exists and is approved
-    const user = await c.env.DB.prepare('SELECT id, email, role, tier, status FROM users WHERE id = ?')
+    const user = await c.env.DB.prepare('SELECT id, email, role, tier, status, user_type FROM users WHERE id = ?')
       .bind(payload.sub)
-      .first<{ id: string; email: string; role: string; tier: string; status: string }>();
+      .first<{ id: string; email: string; role: string; tier: string; status: string; user_type: string }>();
 
     if (!user || user.status === 'denied' || user.status === 'suspended') {
       deleteCookie(c, 'token', { path: '/' });
@@ -304,7 +308,7 @@ authRoutes.post('/refresh', async (c) => {
 
     // Issue new JWT
     const newJwt = await signJWT(
-      { sub: user.id, email: user.email || '', role: user.role, tier: user.tier },
+      { sub: user.id, email: user.email || '', role: user.role, tier: user.tier, user_type: user.user_type || 'clinic' },
       c.env.JWT_SECRET,
       900,
     );

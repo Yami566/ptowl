@@ -2,11 +2,12 @@ import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { AuthProvider, ProtectedRoute, AdminRoute } from './contexts/AuthContext.js';
+import { AuthProvider, ProtectedRoute, AdminRoute, PatientRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { CommandPalette } from './components/CommandPalette.js';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay.js';
+import { IdleTimeoutGuard } from './components/IdleTimeoutGuard.js';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 const queryClient = new QueryClient({
@@ -29,6 +30,8 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.js').then
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage.js').then(m => ({ default: m.TermsOfServicePage })));
 const SecurityPage = lazy(() => import('./pages/SecurityPage.js').then(m => ({ default: m.SecurityPage })));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.js').then(m => ({ default: m.NotFoundPage })));
+const PatientHomePage = lazy(() => import('./pages/PatientHomePage.js').then(m => ({ default: m.PatientHomePage })));
+const PatientSchedulePage = lazy(() => import('./pages/PatientSchedulePage.js').then(m => ({ default: m.PatientSchedulePage })));
 
 export function App() {
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -62,6 +65,7 @@ export function App() {
       <BrowserRouter>
         <AuthProvider>
           <Toaster position="top-right" richColors closeButton />
+          <IdleTimeoutGuard />
           <CommandPalette
             open={cmdOpen}
             onOpenChange={setCmdOpen}
@@ -91,6 +95,10 @@ export function App() {
               <Route path="/customize/templates" element={<ProtectedRoute><TemplateEditorPage /></ProtectedRoute>} />
               <Route path="/customize/print" element={<ProtectedRoute><PrintSettingsPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+              {/* Patient routes — require patient user_type */}
+              <Route path="/my-schedules" element={<PatientRoute><PatientHomePage /></PatientRoute>} />
+              <Route path="/my-schedules/:id" element={<PatientRoute><PatientSchedulePage /></PatientRoute>} />
 
               {/* Admin route — requires admin role */}
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

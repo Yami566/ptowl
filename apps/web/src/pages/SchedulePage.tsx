@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { apiRequest } from '../api/client.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -10,7 +11,14 @@ import { CalendarGrid } from '../components/schedule/CalendarGrid.js';
 import { formatDate, formatTime } from '@ptowl/shared';
 import type { Schedule, Appointment } from '@ptowl/shared';
 import { usePrintSettings } from '../hooks/usePrintSettings.js';
+import { useOwlReaction } from '../hooks/useOwlReaction.js';
+import { QRCodeSVG } from 'qrcode.react';
 import '../styles/print.css';
+
+const headerTranslations: Record<string, Record<string, string>> = {
+  en: { '#': '#', Date: 'Date', Time: 'Time', Provider: 'Provider', Status: 'Status', Reminder: 'Reminder', Week: 'Week' },
+  es: { '#': '#', Date: 'Fecha', Time: 'Hora', Provider: 'Proveedor', Status: 'Estado', Reminder: 'Recordatorio', Week: 'Semana' },
+};
 
 // Lazy-load the full interactive calendar (only loaded when user switches to calendar view)
 const PTCalendar = lazy(() => import('../components/schedule/PTCalendar.js').then(m => ({ default: m.PTCalendar })));
@@ -40,6 +48,27 @@ export function SchedulePage() {
   const [view, setView] = useState<'table' | 'calendar'>('table');
 
   const { settings: printSettings } = usePrintSettings();
+  const t = headerTranslations[printSettings.language] || headerTranslations.en!;
+  const owlReaction = useOwlReaction();
+
+  const handleNativeShare = useCallback(async () => {
+    const title = schedule ? `Schedule for ${schedule.patient_alias}` : 'PT Schedule';
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('Link copied!');
+      } catch {
+        toast.success('Copy this link: ' + url);
+      }
+    }
+  }, [schedule]);
 
   useEffect(() => {
     if (!id) return;
@@ -101,7 +130,8 @@ export function SchedulePage() {
           >
             {view === 'table' ? 'Calendar View' : 'Table View'}
           </button>
-          <button style={styles.printBtn} onClick={() => window.print()}>Print</button>
+          <button style={styles.printBtn} onClick={() => { owlReaction.onPrint(); window.print(); }}>Print</button>
+          <button style={styles.viewToggle} onClick={() => { owlReaction.onShare(); handleNativeShare(); }}>Share</button>
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Back</button>
           <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
@@ -122,7 +152,9 @@ export function SchedulePage() {
         </div>
       )}
 
-      <div className="print-only print-title">Appointment Schedule</div>
+      <div className="print-only print-title">
+        {printSettings.language === 'es' ? 'Horario de Citas' : 'Appointment Schedule'}
+      </div>
       <div className="print-only print-subtitle">
         {schedule.patient_alias || schedule.patient_initials} &middot; {formatDate(schedule.start_date)} &ndash; {formatDate(schedule.end_date)}
       </div>
@@ -172,19 +204,19 @@ export function SchedulePage() {
         <table style={styles.table} className="schedule-table">
           <thead>
             <tr>
-              <th scope="col" style={styles.th}>#</th>
-              <th scope="col" style={styles.th}>Date</th>
-              <th scope="col" style={styles.th}>Time</th>
-              <th scope="col" style={styles.th}>Provider</th>
-              <th scope="col" style={styles.th}>Status</th>
-              <th scope="col" style={styles.th}>Reminder</th>
+              <th scope="col" style={styles.th}>{t['#']}</th>
+              <th scope="col" style={styles.th}>{t['Date']}</th>
+              <th scope="col" style={styles.th}>{t['Time']}</th>
+              <th scope="col" style={styles.th}>{t['Provider']}</th>
+              <th scope="col" style={styles.th}>{t['Status']}</th>
+              <th scope="col" style={styles.th}>{t['Reminder']}</th>
             </tr>
           </thead>
           <tbody>
             {weekGroups.map((group) => (
               <React.Fragment key={`week-${group.week}`}>
                 <tr>
-                  <td colSpan={6} style={styles.weekHeader}>Week {group.week}</td>
+                  <td colSpan={6} style={styles.weekHeader}>{t['Week']} {group.week}</td>
                 </tr>
                 {group.appts.map(({ appt, index }) => {
                   const status = getAppointmentStatus(appt.appointment_date);
@@ -241,6 +273,20 @@ export function SchedulePage() {
             startDate={schedule.start_date}
             endDate={schedule.end_date}
           />
+        </div>
+      )}
+
+      {/* Print QR code */}
+      {printSettings.showQRCode && schedule.share_token && (
+        <div className="print-only" style={{ textAlign: 'center', margin: '1rem 0' }}>
+          <QRCodeSVG
+            value={`https://ptowl.com/s/${schedule.share_token}`}
+            size={96}
+            level="M"
+          />
+          <div style={{ fontSize: '0.65rem', color: '#666', marginTop: '0.25rem' }}>
+            Scan to view this schedule online
+          </div>
         </div>
       )}
 

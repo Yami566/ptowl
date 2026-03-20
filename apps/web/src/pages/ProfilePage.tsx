@@ -83,6 +83,34 @@ export function ProfilePage() {
         <h1 style={styles.title}>Profile & Clinic Info</h1>
         <p style={styles.subtitle}>This information appears on your printed schedules.</p>
 
+        {/* Profile completeness */}
+        {(() => {
+          const fields = [
+            { label: 'Clinic name', done: !!clinicName },
+            { label: 'Address', done: !!clinicAddress },
+            { label: 'Phone', done: !!clinicPhone },
+            { label: 'Email', done: !!clinicEmail },
+          ];
+          const done = fields.filter(f => f.done).length;
+          const pct = Math.round((done / fields.length) * 100);
+          return (
+            <div style={{ background: 'var(--green-bg)', borderRadius: 'var(--radius)', padding: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--green-dark)' }}>Profile {pct}% complete</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--gray-text)' }}>{done}/{fields.length}</span>
+              </div>
+              <div style={{ height: '6px', background: 'var(--gray-mid)', borderRadius: '999px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: 'var(--green-mid)', borderRadius: '999px', transition: 'width 0.3s' }} />
+              </div>
+              {pct < 100 && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', marginTop: '0.5rem' }}>
+                  Missing: {fields.filter(f => !f.done).map(f => f.label).join(', ')}
+                </p>
+              )}
+            </div>
+          );
+        })()}
+
         <form onSubmit={handleSave} style={styles.form}>
           <div style={styles.infoRow}>
             <span style={styles.infoLabel}>Email</span>

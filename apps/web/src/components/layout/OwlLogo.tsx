@@ -28,6 +28,7 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
   const oSize = size === 'sm' ? '1.3rem' : size === 'lg' ? '2.9rem' : '1.8rem';
   const gap = size === 'sm' ? '0.02em' : size === 'lg' ? '0.04em' : '0.03em';
   const wordGap = size === 'sm' ? '0.25em' : size === 'lg' ? '0.35em' : '0.3em';
+  const subtitleSize = size === 'sm' ? '0.5rem' : size === 'lg' ? '0.75rem' : '0.6rem';
 
   // Easter eggs can override the O color
   const oColor = easterEgg === 'halloween'
@@ -44,64 +45,78 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
       ? '0 0 20px rgba(220, 38, 38, 0.6)'
       : '0 0 8px rgba(255, 112, 67, 0.25)';
 
-  const logo = (
-    <span
-      className="ptowl-logo"
-      style={{ display: 'inline-flex', alignItems: 'baseline', letterSpacing: gap }}
-      aria-label="PT OWL"
-    >
-      {/* P — orange */}
-      <span style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize,
-        fontWeight: 700,
-        color: 'var(--orange-mid)',
-      }}>P</span>
-
-      {/* T — green */}
-      <span style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize,
-        fontWeight: 700,
-        color: 'var(--green-dark)',
-      }}>T</span>
-
-      {/* Space between PT and Owl */}
-      <span style={{ width: wordGap, display: 'inline-block' }} />
-
-      {/* O — orange, animated (the owl head) */}
+  const logoWithSubtitle = (
+    <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
       <span
-        className={className}
-        style={{
+        className="ptowl-logo"
+        style={{ display: 'inline-flex', alignItems: 'baseline', letterSpacing: gap }}
+        aria-label="PT OWL"
+      >
+        {/* P — orange */}
+        <span style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: oSize,
-          fontWeight: 800,
-          color: oColor,
-          display: 'inline-block',
-          lineHeight: 1,
-          position: 'relative',
-          top: size === 'lg' ? '-1px' : '0px',
-          textShadow: oShadow,
-        }}
-      >O</span>
+          fontSize,
+          fontWeight: 700,
+          color: 'var(--orange-mid)',
+        }}>P</span>
 
-      {/* WL — green, uppercase */}
+        {/* T — green */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize,
+          fontWeight: 700,
+          color: 'var(--green-dark)',
+        }}>T</span>
+
+        {/* Space between PT and Owl */}
+        <span style={{ width: wordGap, display: 'inline-block' }} />
+
+        {/* O — orange, animated (the owl head) */}
+        <span
+          className={className}
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: oSize,
+            fontWeight: 800,
+            color: oColor,
+            display: 'inline-block',
+            lineHeight: 1,
+            position: 'relative',
+            top: size === 'lg' ? '-1px' : '0px',
+            textShadow: oShadow,
+          }}
+        >O</span>
+
+        {/* WL — green, uppercase */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize,
+          fontWeight: 700,
+          color: 'var(--green-dark)',
+        }}>WL</span>
+      </span>
+
+      {/* Subtitle */}
       <span style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize,
-        fontWeight: 700,
-        color: 'var(--green-dark)',
-      }}>WL</span>
+        display: 'block',
+        fontSize: subtitleSize,
+        fontWeight: 500,
+        color: 'var(--gray-text)',
+        letterSpacing: '0.06em',
+        textAlign: 'center',
+        fontFamily: 'var(--font-body)',
+        marginTop: '-0.1em',
+      }}>Patient Owl</span>
     </span>
   );
 
   if (linkTo) {
     return (
       <Link to={linkTo} style={{ textDecoration: 'none', cursor: 'pointer' }} aria-label="Go to PT Owl">
-        {logo}
+        {logoWithSubtitle}
       </Link>
     );
   }
 
-  return logo;
+  return logoWithSubtitle;
 }

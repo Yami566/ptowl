@@ -62,6 +62,8 @@ export function SchedulePreviewOverlay({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
+  const [patientCode, setPatientCode] = useState<string | null>(null);
+  const [codeLoading, setCodeLoading] = useState(false);
   const trapRef = useFocusTrap(true);
 
   // Lock body scroll
@@ -137,6 +139,30 @@ export function SchedulePreviewOverlay({
       toast.success('Link copied!');
     }
   }, [shareUrl]);
+
+  const handleGeneratePatientCode = useCallback(async () => {
+    if (patientCode) return;
+    setCodeLoading(true);
+    try {
+      const result = await apiRequest<{ code: string }>(`/codes/${schedule.id}`, { method: 'POST' });
+      if (result.ok && result.data) {
+        setPatientCode(result.data.code);
+      }
+    } catch {
+      toast.error('Failed to generate code');
+    }
+    setCodeLoading(false);
+  }, [schedule.id, patientCode]);
+
+  const handleCopyCode = useCallback(async () => {
+    if (!patientCode) return;
+    try {
+      await navigator.clipboard.writeText(patientCode);
+      toast.success('Code copied!');
+    } catch {
+      toast.success('Code: ' + patientCode);
+    }
+  }, [patientCode]);
 
   // Week groupings for table view
   const weekGroups = useMemo(() => {
@@ -417,6 +443,30 @@ export function SchedulePreviewOverlay({
               <button style={s.copyBtn} onClick={handleCopyLink}>
                 Copy
               </button>
+            </div>
+
+            {/* Patient code sharing */}
+            <div style={{ borderTop: '1px solid var(--gray-mid)', marginTop: '1rem', paddingTop: '1rem' }}>
+              <strong style={{ fontSize: '0.8125rem', color: 'var(--dark)' }}>Patient Portal Code</strong>
+              <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', margin: '0.25rem 0 0.75rem', lineHeight: 1.4 }}>
+                Give this code to your patient so they can view their schedule.
+              </p>
+              {patientCode ? (
+                <div style={s.shareLinkRow}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--green-dark)', letterSpacing: '0.05em' }}>
+                    {patientCode}
+                  </span>
+                  <button style={s.copyBtn} onClick={handleCopyCode}>Copy</button>
+                </div>
+              ) : (
+                <button
+                  style={{ ...s.copyBtn, width: '100%' }}
+                  onClick={handleGeneratePatientCode}
+                  disabled={codeLoading}
+                >
+                  {codeLoading ? 'Generating...' : 'Generate Code'}
+                </button>
+              )}
             </div>
           </div>
         )}
