@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, Suspense, lazy } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { useAuth } from '../contexts/AuthContext.js';
@@ -85,6 +85,18 @@ export function LandingPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const codeInputRef = useRef<HTMLInputElement>(null);
   const mfaInputRef = useRef<HTMLInputElement>(null);
+  const [alienActive, setAlienActive] = useState(false);
+  const alienTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Alien easter egg — triggers when user highlights "until the aliens come."
+  const handleAlienSelect = useCallback(() => {
+    const sel = window.getSelection()?.toString().trim().toLowerCase();
+    if (sel && sel.includes('until the aliens come')) {
+      if (alienTimeoutRef.current) clearTimeout(alienTimeoutRef.current);
+      setAlienActive(true);
+      alienTimeoutRef.current = setTimeout(() => setAlienActive(false), 4000);
+    }
+  }, []);
 
   // Auto-focus code input when step changes
   useEffect(() => {
@@ -242,8 +254,22 @@ export function LandingPage() {
     <main style={styles.page}>
       {/* Hero */}
       <section style={styles.hero} className="landing-fade-in landing-hero">
-        <OwlLogo size="lg" linkTo="/" />
-        <h1 style={styles.headline}>The fastest PT schedule generator on earth.</h1>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <OwlLogo size="lg" linkTo="/" />
+          {alienActive && (
+            <div className="alien-easter-egg" aria-hidden="true">
+              <span className="alien-ufo">&#128760;</span>
+              <span className="alien-beam" />
+              <span className="alien-cow">&#128004;</span>
+            </div>
+          )}
+        </div>
+        <h1 style={styles.headline}>The fastest schedule assistant on earth.</h1>
+        <p
+          style={styles.alienSubtext}
+          onMouseUp={handleAlienSelect}
+          onTouchEnd={handleAlienSelect}
+        >until the aliens come.</p>
         <p style={styles.subheadline}>
           Create and print patient schedules in under <strong>5 keypresses</strong>.
           Built for physical therapists who value speed over clicks.
@@ -522,6 +548,16 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--dark)',
     lineHeight: 1.15,
     margin: '1.5rem 0 1rem',
+  },
+  alienSubtext: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    opacity: 0.5,
+    fontStyle: 'italic',
+    marginTop: '-0.5rem',
+    marginBottom: '0.75rem',
+    cursor: 'default',
+    userSelect: 'all' as const,
   },
   subheadline: {
     fontSize: '1.1rem',
