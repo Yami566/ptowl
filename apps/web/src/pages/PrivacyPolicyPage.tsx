@@ -10,13 +10,26 @@ export function PrivacyPolicyPage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Privacy Policy</h1>
-          <p style={styles.updated}>Last updated: March 10, 2026</p>
+          <p style={styles.updated}>Last updated: March 21, 2026</p>
 
           <p style={styles.intro}>
-            At PTOWL, we take your privacy seriously -- almost as seriously as we take
-            fast schedule printing. This policy explains what data we collect, how we
-            use it, and the lengths we go to so your information stays safe.
+            We keep it simple, Jack. Patient Owl was designed from day one so that sensitive
+            patient information never touches our servers. This policy explains exactly what
+            we collect, what we don't, and why our approach to privacy is different.
           </p>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>Our Privacy Philosophy: Privacy by Design</h2>
+            <div style={styles.highlight}>
+              <p style={styles.highlightText}>
+                Most healthcare tools collect sensitive data and then try to protect it.
+                We took the opposite approach: <strong>we designed Patient Owl so that
+                protected health information (PHI) is never stored in the first place.</strong>{' '}
+                You cannot breach what does not exist. This is the foundation of everything
+                we build.
+              </p>
+            </div>
+          </section>
 
           <section style={styles.section}>
             <h2 style={styles.h2}>1. What We Collect</h2>
@@ -25,16 +38,18 @@ export function PrivacyPolicyPage() {
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                <strong>Account information:</strong> Your name, email address, and phone number
-                provided during authentication via Google Sign-In or phone SMS (Firebase Auth).
+                <strong>Account information:</strong> Your phone number for authentication
+                via SMS verification (Firebase Auth). Optionally, your name and email if
+                you choose to provide them.
               </li>
               <li style={styles.listItem}>
                 <strong>Clinic details:</strong> Clinic name, address, phone, and email that you
-                choose to add to your profile for printed schedules.
+                choose to add to your profile for printed schedule headers.
               </li>
               <li style={styles.listItem}>
-                <strong>Schedule data:</strong> The schedules you create, including time slots,
-                template selections, and scheduling preferences.
+                <strong>Schedule data:</strong> Appointment dates, times, and scheduling preferences.
+                Patient identity is stored only as two-letter initials, which are immediately mapped
+                to our proprietary de-identification system.
               </li>
             </ul>
           </section>
@@ -42,99 +57,107 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>2. What We Do NOT Collect</h2>
             <div style={styles.highlight}>
-              <h3 style={styles.h3}>No Real Patient Names</h3>
-              <p style={styles.text}>
-                PTOWL uses a sports alias system for patient identification. Real patient names
-                are never stored in our database. Instead, patient initials are mapped to
-                sports figure aliases (e.g., "MJ" might display as "Michael Jordan"). This
-                design decision means that even in the unlikely event of a data breach, no
-                real patient names would be exposed.
+              <h3 style={styles.h3}>Proprietary De-Identification Methodology</h3>
+              <p style={styles.highlightText}>
+                Patient Owl uses a proprietary de-identification methodology that replaces
+                patient identities with sports figure aliases at the point of entry. When a
+                provider types two initials, the system immediately maps them to an alias
+                (e.g., "MJ" becomes "Michael Jordan"). The real patient name is never entered,
+                transmitted, or stored anywhere in our system. This methodology ensures that
+                even in the unlikely event of a data breach, no real patient identities would
+                be exposed — because they were never there.
               </p>
             </div>
+            <p style={styles.text}>We also do not collect:</p>
             <ul style={styles.list}>
-              <li style={styles.listItem}>We do not collect medical records, diagnoses, or treatment plans.</li>
-              <li style={styles.listItem}>We do not collect insurance or billing information.</li>
-              <li style={styles.listItem}>We do not collect Social Security numbers or government IDs.</li>
+              <li style={styles.listItem}>Real patient names — only two-letter initials, immediately de-identified</li>
+              <li style={styles.listItem}>Medical records, diagnoses, or treatment plans</li>
+              <li style={styles.listItem}>Insurance or billing information</li>
+              <li style={styles.listItem}>Social Security numbers or government IDs</li>
+              <li style={styles.listItem}>Any information that could identify a patient by name</li>
             </ul>
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>3. Authentication</h2>
+            <h2 style={styles.h2}>3. HIPAA & Healthcare Privacy</h2>
+            <div style={styles.hipaaBox}>
+              <h3 style={styles.h3}>Privacy by Design — Not Privacy by Compliance</h3>
+              <p style={styles.text}>
+                Patient Owl's architecture was built around a simple principle: the most secure
+                data is data you never collect. Because our proprietary de-identification
+                methodology ensures that real patient names and protected health information
+                are never stored in our system, the traditional HIPAA data protection requirements
+                that apply to systems holding PHI are largely not applicable to Patient Owl's
+                data layer.
+              </p>
+              <p style={styles.text}>
+                This is not a workaround — it is a deliberate design decision. We believe healthcare
+                tools should be simple, fast, and private by default. You should not need a
+                200-page compliance manual to print a schedule.
+              </p>
+              <p style={{ ...styles.text, marginBottom: 0 }}>
+                That said, healthcare providers are responsible for their own compliance with
+                applicable regulations. If you have specific compliance questions about your
+                use of Patient Owl, we are happy to discuss your needs at{' '}
+                <a href="mailto:help@ptowl.com" style={styles.inlineLink}>help@ptowl.com</a>.
+              </p>
+            </div>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>4. Authentication</h2>
             <p style={styles.text}>
-              PTOWL uses Firebase Authentication to manage sign-in. We support two methods:
-            </p>
-            <ul style={styles.list}>
-              <li style={styles.listItem}>
-                <strong>Google Sign-In:</strong> We receive your name, email, and profile photo
-                from Google. We do not receive or store your Google password.
-              </li>
-              <li style={styles.listItem}>
-                <strong>Phone SMS:</strong> We use your phone number to send a one-time
-                verification code. We do not store SMS message content.
-              </li>
-            </ul>
-            <p style={styles.text}>
-              PTOWL does not store passwords. Authentication tokens are managed securely
-              through industry-standard protocols.
+              Patient Owl uses passwordless authentication — you sign in with your phone number
+              and a one-time SMS code. We do not store passwords. Authentication is managed
+              through Firebase Auth with industry-standard security protocols. This eliminates
+              an entire class of security risks including credential stuffing, password leaks,
+              and weak-password attacks.
             </p>
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>4. Cookies & Tracking</h2>
+            <h2 style={styles.h2}>5. Cookies & Tracking</h2>
             <p style={styles.text}>
-              We keep it simple: PTOWL does not use cookies for tracking purposes. We do not
-              use third-party analytics services that track individual users. Session cookies
-              are used solely to keep you logged in, and they are httpOnly and secure --
-              meaning they cannot be accessed by JavaScript or sent over unencrypted connections.
+              We keep it simple: Patient Owl does not use tracking cookies. We do not use
+              third-party analytics that track individual users. Session cookies are used solely
+              to keep you logged in, and they are httpOnly and secure — meaning they cannot be
+              accessed by JavaScript or sent over unencrypted connections.
             </p>
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>5. Data Storage & Security</h2>
+            <h2 style={styles.h2}>6. Data Storage & Security</h2>
             <p style={styles.text}>
               Your data is stored on Cloudflare's global infrastructure, which provides:
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>Encryption in transit (TLS 1.3)</li>
               <li style={styles.listItem}>Encryption at rest (AES-256)</li>
-              <li style={styles.listItem}>Data distributed across Cloudflare's network of 300+ cities worldwide</li>
+              <li style={styles.listItem}>Global edge network across 300+ cities</li>
               <li style={styles.listItem}>Automatic DDoS protection and threat mitigation</li>
             </ul>
             <p style={styles.text}>
-              For more details on our security practices, see our{' '}
+              For a detailed breakdown of our security practices, see our{' '}
               <Link to="/security" style={styles.inlineLink}>Security page</Link>.
-            </p>
-          </section>
-
-          <section style={styles.section}>
-            <h2 style={styles.h2}>6. HIPAA Considerations</h2>
-            <p style={styles.text}>
-              PTOWL is designed from the ground up to minimize protected health information (PHI)
-              exposure. Our sports alias system means no real patient names are ever stored, and
-              we do not collect diagnoses, treatment plans, or insurance details.
-            </p>
-            <p style={styles.textNote}>
-              That said, PTOWL is not yet HIPAA certified. While our architecture is built with
-              healthcare privacy in mind, we have not completed formal HIPAA certification. If
-              your organization requires a Business Associate Agreement (BAA), please contact us
-              to discuss your needs.
             </p>
           </section>
 
           <section style={styles.section}>
             <h2 style={styles.h2}>7. Data Sharing</h2>
             <p style={styles.text}>
-              We do not sell, rent, or trade your personal information. Period. We may share
-              data only in the following limited circumstances:
+              We do not sell, rent, or trade your personal information. Period. We share data
+              only with the infrastructure providers necessary to operate the service:
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                <strong>Service providers:</strong> Cloudflare (hosting/infrastructure) and
-                Firebase (authentication) process data on our behalf under strict agreements.
+                <strong>Cloudflare</strong> — hosting and infrastructure
               </li>
               <li style={styles.listItem}>
-                <strong>Legal requirements:</strong> We may disclose information if required by
-                law, court order, or governmental regulation.
+                <strong>Firebase (Google)</strong> — authentication
+              </li>
+              <li style={styles.listItem}>
+                <strong>Legal requirements</strong> — we may disclose information if required by
+                law, court order, or governmental regulation
               </li>
             </ul>
           </section>
@@ -157,9 +180,8 @@ export function PrivacyPolicyPage() {
             <h2 style={styles.h2}>9. Changes to This Policy</h2>
             <p style={styles.text}>
               We may update this privacy policy from time to time. When we do, we will update the
-              "Last updated" date at the top of this page. We encourage you to review this policy
-              periodically. Continued use of PTOWL after changes constitutes acceptance of the
-              updated policy.
+              "Last updated" date at the top of this page. Continued use of Patient Owl after
+              changes constitutes acceptance of the updated policy.
             </p>
           </section>
 
@@ -172,7 +194,7 @@ export function PrivacyPolicyPage() {
               Email:{' '}
               <a href="mailto:help@ptowl.com" style={styles.inlineLink}>help@ptowl.com</a>
               <br />
-              PTOWL, LLC &middot; Virginia, USA
+              Patient Owl is a product of Moose Bay &amp; Company LLC &middot; Virginia, USA
             </p>
           </section>
         </div>
@@ -245,12 +267,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--dark-alt)',
     marginBottom: '0.75rem',
   },
-  textNote: {
+  highlightText: {
     fontSize: '0.9375rem',
     lineHeight: 1.7,
-    color: 'var(--orange-mid)',
-    fontWeight: 500,
-    marginBottom: '0.75rem',
+    color: 'var(--dark-alt)',
+    marginBottom: 0,
   },
   list: {
     paddingLeft: '1.5rem',
@@ -267,6 +288,13 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 'var(--radius)',
     padding: '1.25rem',
     marginBottom: '1rem',
+    borderLeft: '3px solid var(--green-mid)',
+  },
+  hipaaBox: {
+    background: 'var(--green-light)',
+    borderRadius: 'var(--radius)',
+    padding: '1.5rem',
+    borderLeft: '3px solid var(--green-dark)',
   },
   inlineLink: {
     color: 'var(--green-mid)',

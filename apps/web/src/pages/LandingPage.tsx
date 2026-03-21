@@ -484,11 +484,12 @@ export function LandingPage() {
           </p>
         </div>
         <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}>&#129300;</div>
-          <h3 style={styles.featureTitle}>Who?</h3>
+          <div style={styles.featureIcon}>&#128274;</div>
+          <h3 style={styles.featureTitle}>Private by Design</h3>
           <p style={styles.featureDesc}>
-            Stop stressing, this is just a game.. patient names become
-            championship legends on screen. Your data stays invisible.
+            Patient names never enter our system. Our proprietary de-identification
+            methodology turns initials into sports legends on screen. If the data
+            doesn't exist, it can't be breached.
           </p>
         </div>
         <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
@@ -509,6 +510,17 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Mission */}
+      <section style={styles.missionSection} className="landing-fade-in landing-fade-in-delay-2">
+        <p style={styles.missionText}>
+          Built to make healthcare more simple and fun.
+        </p>
+        <p style={styles.missionSub}>
+          Patient Owl exists for the people who show up every day to help others move
+          better. We keep the tools simple so you can focus on what matters.
+        </p>
+      </section>
+
       {/* Footer */}
       <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-3 landing-footer">
         <div style={styles.footerTop}>
@@ -523,7 +535,9 @@ export function LandingPage() {
           <a href="/terms" style={styles.footerLink}>Terms</a>
           <a href="/security" style={styles.footerLink}>Security</a>
         </div>
-        <p style={styles.footerCopy}>&copy; 2026 PT OWL. All rights reserved.</p>
+        <p style={styles.footerCopy}>
+          &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
+        </p>
       </footer>
     </main>
   );
@@ -854,6 +868,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.9rem',
     color: 'var(--gray-text)',
     lineHeight: 1.5,
+  },
+
+  // Mission
+  missionSection: {
+    textAlign: 'center' as const,
+    padding: '2.5rem 1.5rem 1rem',
+    maxWidth: 'clamp(500px, 45vw, 700px)',
+    margin: '0 auto',
+  },
+  missionText: {
+    fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
+    fontWeight: 700,
+    color: 'var(--green-dark)',
+    marginBottom: '0.5rem',
+  },
+  missionSub: {
+    fontSize: '0.9rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.6,
   },
 
   // Footer
