@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { apiRequest, setCSRFToken } from '../api/client.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
+import { waitForFirebaseUser, auth as firebaseAuth } from '../firebase.js';
+import { signOut } from 'firebase/auth';
 
 interface AuthUser {
   id: string;
@@ -53,13 +55,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // On mount: try to restore session from cookie
+  // On mount: check Firebase first, then try JWT cookie refresh
   useEffect(() => {
     (async () => {
-      await refreshUser();
+      // 1. Try JWT cookie refresh (fastest path — cookie may still be valid)
+      const refreshResult = await apiRequest<{ csrfToken: string }>('/auth/refresh', { method: 'POST' });
+      if (refreshResult.ok && refreshResult.data?.csrfToken) {
+        setCSRFToken(refreshResult.data.csrfToken);
+        const meResult = await apiRequest<AuthUser>('/auth/me');
+        if (meResult.ok && meResult.data) {
+          setUser(meResult.data);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Cookie expired — check if Firebase still has a session (localStorage persistence)
+      const firebaseUser = await waitForFirebaseUser();
+      if (firebaseUser) {
+        const idToken = await firebaseUser.getIdToken();
+        // Re-authenticate with backend using Firebase token
+        const authResult = await apiRequest<{ user: AuthUser; csrfToken: string }>('/auth/firebase', {
+          method: 'POST',
+          body: JSON.stringify({ idToken }),
+        });
+        if (authResult.ok && authResult.data) {
+          setCSRFToken(authResult.data.csrfToken);
+          setUser(authResult.data.user);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 3. No valid session anywhere
+      setUser(null);
       setLoading(false);
     })();
-  }, [refreshUser]);
+  }, []);
 
   // Redirect logic — runs AFTER loading completes
   useEffect(() => {
@@ -88,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await apiRequest('/auth/logout', { method: 'POST' });
+    await signOut(firebaseAuth).catch(() => {});
     setUser(null);
     navigate('/', { replace: true });
   }, [navigate]);

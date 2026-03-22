@@ -147,11 +147,11 @@ export function ProfilePage() {
 
         {/* MFA Section */}
         <div style={styles.mfaSection}>
-          <h3 style={styles.mfaSectionTitle}>Two-Factor Authentication</h3>
+          <h3 style={styles.mfaSectionTitle}>Login Verification</h3>
           <p style={styles.mfaDesc}>
             {mfaEnrolled
-              ? `SMS MFA is enabled. Second factor: ${mfaPhoneHint}`
-              : 'Add a second phone number for extra security. You\'ll need to verify it each time you sign in.'}
+              ? `SMS verification is enabled. We'll text a code to ${mfaPhoneHint} when you sign in.`
+              : 'Enable SMS verification for extra security. When you sign in, we\'ll text you a code to confirm it\'s really you.'}
           </p>
 
           {mfaMessage && (
@@ -171,25 +171,25 @@ export function ProfilePage() {
                   await unenrollMFA();
                   setMfaEnrolled(false);
                   setMfaPhoneHint('');
-                  setMfaMessage('MFA disabled');
+                  setMfaMessage('SMS verification disabled');
                 } catch {
                   setMfaMessage('Error: Failed to disable MFA');
                 }
                 setMfaLoading(false);
               }}
             >
-              {mfaLoading ? 'Disabling...' : 'Disable MFA'}
+              {mfaLoading ? 'Disabling...' : 'Disable SMS Verification'}
             </button>
           ) : mfaStep === 'idle' ? (
             <button
               style={styles.mfaEnableBtn}
               onClick={() => setMfaStep('phone')}
             >
-              Enable SMS MFA
+              Enable SMS Verification
             </button>
           ) : mfaStep === 'phone' ? (
             <div style={styles.mfaForm}>
-              <p style={styles.mfaFormLabel}>Enter a second phone number (different from your login number)</p>
+              <p style={styles.mfaFormLabel}>Enter your phone number for SMS verification codes</p>
               <div style={styles.mfaPhoneRow}>
                 <span style={styles.mfaCountryCode}>+1</span>
                 <input
@@ -239,7 +239,7 @@ export function ProfilePage() {
             </div>
           ) : (
             <div style={styles.mfaForm}>
-              <p style={styles.mfaFormLabel}>Enter the 6-digit code sent to your MFA phone</p>
+              <p style={styles.mfaFormLabel}>Enter the 6-digit code we just texted you</p>
               <input
                 type="text"
                 inputMode="numeric"
@@ -257,7 +257,7 @@ export function ProfilePage() {
                         setMfaStep('idle');
                         setMfaCode('');
                         setMfaPhone('');
-                        setMfaMessage('MFA enabled successfully!');
+                        setMfaMessage('SMS verification enabled!');
                       } catch {
                         setMfaMessage('Error: Invalid code. Try again.');
                       }
@@ -289,14 +289,14 @@ export function ProfilePage() {
                     setMfaStep('idle');
                     setMfaCode('');
                     setMfaPhone('');
-                    setMfaMessage('MFA enabled successfully!');
+                    setMfaMessage('SMS verification enabled!');
                   } catch {
                     setMfaMessage('Error: Invalid code. Try again.');
                   }
                   setMfaLoading(false);
                 }}
               >
-                {mfaLoading ? 'Verifying...' : 'Verify & Enable MFA'}
+                {mfaLoading ? 'Verifying...' : 'Verify & Enable'}
               </button>
               <button style={styles.mfaCancelBtn} onClick={() => { setMfaStep('phone'); setMfaCode(''); setMfaMessage(''); }}>
                 Back

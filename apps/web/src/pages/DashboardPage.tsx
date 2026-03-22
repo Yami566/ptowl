@@ -449,26 +449,45 @@ export function DashboardPage() {
           </div>
           <div style={styles.presetsGrid} className="dash-presets-grid">
             {templates.map((tmpl) => (
-              <button
-                key={tmpl.id}
-                style={styles.presetCard}
-                className="dash-preset-card"
-                onClick={() => {
-                  setSelectedTemplate(tmpl);
-                  setShowInitialsModal(true);
-                  setInitials('');
-                        }}
-                title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
-                aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
-              >
-                <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
-                <div style={styles.presetText}>
-                  <span style={styles.presetName}>{tmpl.name}</span>
-                  <span style={styles.presetInfo}>
-                    {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
-                  </span>
-                </div>
-              </button>
+              <div key={tmpl.id} style={styles.presetCardWrap}>
+                <button
+                  style={styles.presetCard}
+                  className="dash-preset-card"
+                  onClick={() => {
+                    setSelectedTemplate(tmpl);
+                    setShowInitialsModal(true);
+                    setInitials('');
+                  }}
+                  title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
+                  aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
+                >
+                  <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
+                  <div style={styles.presetText}>
+                    <span style={styles.presetName}>{tmpl.name}</span>
+                    <span style={styles.presetInfo}>
+                      {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
+                    </span>
+                  </div>
+                </button>
+                <button
+                  style={styles.deleteTemplateBtn}
+                  title="Delete template"
+                  aria-label={`Delete template ${tmpl.name}`}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Delete template "${tmpl.name}"?`)) return;
+                    const res = await apiRequest(`/templates/${tmpl.id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                      setTemplates((prev) => prev.filter((t) => t.id !== tmpl.id));
+                      toast.success('Template deleted');
+                    } else {
+                      toast.error('Failed to delete template');
+                    }
+                  }}
+                >
+                  &#10005;
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -709,6 +728,10 @@ const styles: Record<string, React.CSSProperties> = {
     overflowX: 'auto' as const,
     paddingBottom: '0.25rem',
   },
+  presetCardWrap: {
+    position: 'relative' as const,
+    flexShrink: 0,
+  },
   presetCard: {
     display: 'flex',
     alignItems: 'center',
@@ -720,7 +743,26 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     whiteSpace: 'nowrap' as const,
     transition: 'border-color 0.15s, box-shadow 0.15s',
-    flexShrink: 0,
+    width: '100%',
+  },
+  deleteTemplateBtn: {
+    position: 'absolute' as const,
+    top: '-6px',
+    right: '-6px',
+    width: '20px',
+    height: '20px',
+    borderRadius: '50%',
+    background: 'var(--red-light)',
+    color: 'var(--red-mid)',
+    border: '1px solid var(--red-mid)',
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    lineHeight: 1,
+    padding: 0,
   },
   presetHotkey: {
     display: 'inline-flex',

@@ -1,5 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <!-- PT Owl favicon — the letter O in orange, like the animated O in the logo -->
-  <!-- Bold monospace "O" character as the favicon -->
-  <text x="16" y="26" text-anchor="middle" font-family="monospace" font-weight="800" font-size="28" fill="#FF7043">O</text>
+  <!-- Owl body -->
+  <ellipse cx="16" cy="18" rx="11" ry="12" fill="#2E7D32"/>
+  <!-- Left eye -->
+  <circle cx="11" cy="14" r="5" fill="white"/>
+  <circle cx="12" cy="13.5" r="2.5" fill="#1B5E20"/>
+  <circle cx="12.8" cy="12.8" r="0.8" fill="white"/>
+  <!-- Right eye -->
+  <circle cx="21" cy="14" r="5" fill="white"/>
+  <circle cx="22" cy="13.5" r="2.5" fill="#1B5E20"/>
+  <circle cx="22.8" cy="12.8" r="0.8" fill="white"/>
+  <!-- Beak -->
+  <polygon points="16,17 14,20 18,20" fill="#FF7043"/>
+  <!-- Ear tufts -->
+  <polygon points="8,9 10,4 13,10" fill="#2E7D32"/>
+  <polygon points="24,9 22,4 19,10" fill="#2E7D32"/>
+  <!-- Chest -->
+  <ellipse cx="16" cy="23" rx="5" ry="4" fill="#4CAF50" opacity="0.6"/>
 </svg>

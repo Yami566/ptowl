@@ -1,6 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
+  browserLocalPersistence,
+  setPersistence,
+  onAuthStateChanged,
   RecaptchaVerifier,
   signInWithPhoneNumber,
   PhoneAuthProvider,
@@ -10,6 +13,7 @@ import {
   type ConfirmationResult,
   type MultiFactorResolver,
   type MultiFactorError,
+  type User,
 } from 'firebase/auth';
 export type { ConfirmationResult, MultiFactorResolver, MultiFactorError } from 'firebase/auth';
 
@@ -24,6 +28,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Persist Firebase auth across browser restarts (uses localStorage)
+setPersistence(auth, browserLocalPersistence);
+
+/** Returns a promise that resolves with the current Firebase user (or null) once auth state is ready */
+export function waitForFirebaseUser(): Promise<User | null> {
+  return new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      resolve(user);
+    });
+  });
+}
 
 // ── reCAPTCHA ──────────────────────────────────────────────────
 
