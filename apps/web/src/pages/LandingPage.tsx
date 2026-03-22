@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
@@ -83,6 +82,7 @@ export function LandingPage() {
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
   const mfaInputRef = useRef<HTMLInputElement>(null);
   const [alienActive, setAlienActive] = useState(false);
@@ -349,10 +349,21 @@ export function LandingPage() {
                   autoComplete="tel"
                 />
               </div>
+              <label style={styles.termsRow}>
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  style={styles.rememberCheck}
+                />
+                <span style={styles.termsText}>
+                  I agree to the <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>Terms of Service</a> and <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>Privacy Policy</a>
+                </span>
+              </label>
               <button
-                style={{ ...styles.authBtn, opacity: sending ? 0.6 : 1 }}
+                style={{ ...styles.authBtn, opacity: (sending || !agreedToTerms) ? 0.6 : 1 }}
                 onClick={handleSendCode}
-                disabled={sending}
+                disabled={sending || !agreedToTerms}
               >
                 {sending ? 'Sending code...' : 'Continue'}
               </button>
@@ -419,123 +430,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Row */}
-      <section style={styles.statsRow} className="landing-fade-in landing-fade-in-delay-1">
-        <div style={styles.statItem}>
-          <span style={styles.statValue}>&lt; 5 sec</span>
-          <span style={styles.statLabel}>Schedule creation</span>
-        </div>
-        <div style={styles.statItem}>
-          <span style={styles.statValue}>3–7x/wk</span>
-          <span style={styles.statLabel}>Flexible frequency</span>
-        </div>
-        <div style={styles.statItem}>
-          <span style={styles.statValue}>52 weeks</span>
-          <span style={styles.statLabel}>Max duration</span>
-        </div>
-        <div style={styles.statItem}>
-          <span style={styles.statValue}>QR + Print</span>
-          <span style={styles.statLabel}>Share options</span>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section style={styles.howSection} className="landing-fade-in landing-fade-in-delay-1 landing-how-section">
-        <h2 style={styles.sectionTitle}>4 keypresses. That's it. <span style={{ opacity: 0.55, fontWeight: 400, fontStyle: 'italic' }}>Okay, maybe five.</span></h2>
-        <div style={styles.steps} className="landing-steps">
-          <div style={styles.step}>
-            <span style={styles.key} className="key-animate">1</span>
-            <p style={styles.stepText}>Pick a template</p>
-          </div>
-          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
-          <div style={styles.step}>
-            <span style={styles.key} className="key-animate">AB</span>
-            <p style={styles.stepText}>Patient initials</p>
-          </div>
-          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
-          <div style={styles.step}>
-            <span style={styles.key} className="key-animate">&#9166;</span>
-            <p style={styles.stepText}>Generate</p>
-          </div>
-          <span style={styles.arrow} className="landing-step-arrow">&rarr;</span>
-          <div style={styles.step}>
-            <span style={styles.key} className="key-animate">P</span>
-            <p style={styles.stepText}>Print</p>
-          </div>
-          <span style={{ ...styles.arrow, opacity: 0.4 }} className="landing-step-arrow">&rarr;</span>
-          <div style={styles.step}>
-            <span style={{ ...styles.key, borderStyle: 'dashed', opacity: 0.55, transform: 'rotate(-2deg)' }} className="key-animate">&#9749;</span>
-            <p style={{ ...styles.stepText, fontStyle: 'italic' }}>Sip coffee</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section style={styles.features} className="landing-fade-in landing-fade-in-delay-2 landing-features">
-        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}>&#129668;</div>
-          <h3 style={styles.featureTitle}>You're the wizard here</h3>
-          <p style={styles.featureDesc}>
-            Make your own templates, use premade templates, switch your layout!
-            Hotkeys, drag-and-drop, full control — your clinic runs your way.
-          </p>
-        </div>
-        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}><span className="bee-container" role="img" aria-label="buzzing bee">&#128029;</span></div>
-          <h3 style={styles.featureTitle}>Schedulize your life</h3>
-          <p style={styles.featureDesc}>
-            Because life is a bee.. buzzing from patient to patient,
-            appointment to appointment. Let us handle the hive.
-          </p>
-        </div>
-        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}>&#128274;</div>
-          <h3 style={styles.featureTitle}>Private by Design</h3>
-          <p style={styles.featureDesc}>
-            Patient names never enter our system. Our proprietary de-identification
-            methodology turns initials into sports legends on screen. If the data
-            doesn't exist, it can't be breached.
-          </p>
-        </div>
-        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}>&#128197;</div>
-          <h3 style={styles.featureTitle}>Calendar View</h3>
-          <p style={styles.featureDesc}>
-            See schedules as a full interactive calendar. Month, week, or day —
-            drag appointments around and watch everything update.
-          </p>
-        </div>
-        <div style={styles.featureCard} className="feature-card-hover landing-feature-card">
-          <div style={styles.featureIcon}>&#128424;</div>
-          <h3 style={styles.featureTitle}>Share & Print</h3>
-          <p style={styles.featureDesc}>
-            QR codes, shareable links, and print-ready layouts with your clinic
-            branding. Hand it to patients or text them a link.
-          </p>
-        </div>
-      </section>
-
-      {/* Mission */}
-      <section style={styles.missionSection} className="landing-fade-in landing-fade-in-delay-2">
-        <p style={styles.missionText}>
-          Built to make healthcare more simple and fun.
-        </p>
-        <p style={styles.missionSub}>
-          Patient Owl exists for the people who show up every day to help others move
-          better. We keep the tools simple so you can focus on what matters.
-        </p>
-      </section>
-
-      {/* Footer */}
-      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-3 landing-footer">
-        <div style={styles.footerTop}>
-          <OwlLogo size="sm" linkTo="/" />
-          <div style={styles.qrWrap}>
-            <QRCodeSVG value="https://ptowl.com" size={80} fgColor="var(--green-dark)" bgColor="transparent" />
-            <span style={styles.qrLabel}>Scan to try on mobile</span>
-          </div>
-        </div>
+      {/* Footer — minimal */}
+      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-2 landing-footer">
         <div style={styles.footerLinks}>
+          <a href="/about" style={styles.footerLink}>About</a>
           <a href="/privacy" style={styles.footerLink}>Privacy</a>
           <a href="/terms" style={styles.footerLink}>Terms</a>
           <a href="/security" style={styles.footerLink}>Security</a>
@@ -641,6 +539,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     letterSpacing: '0.02em',
     marginBottom: '0.75rem',
+  },
+  termsRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.5rem',
+    marginBottom: '0.75rem',
+    cursor: 'pointer',
+  },
+  termsText: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.4,
   },
   rememberRow: {
     display: 'flex',
@@ -759,172 +669,19 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid var(--green-bg)',
   },
 
-  // Stats Row
-  statsRow: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: 'clamp(1rem, 3vw, 3rem)',
-    flexWrap: 'wrap' as const,
-    padding: '2rem 1.5rem',
-    maxWidth: 'clamp(320px, 90vw, 960px)',
-    margin: '0 auto',
-  },
-  statItem: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '0.25rem',
-  },
-  statValue: {
-    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-    fontWeight: 800,
-    fontFamily: 'var(--font-mono)',
-    color: 'var(--green-dark)',
-  },
-  statLabel: {
-    fontSize: '0.75rem',
-    fontWeight: 500,
-    color: 'var(--gray-text)',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.04em',
-  },
-
-  // How it works
-  howSection: {
-    textAlign: 'center' as const,
-    padding: '3rem 1.5rem',
-    maxWidth: 'clamp(320px, 90vw, 960px)',
-    margin: '0 auto',
-  },
-  sectionTitle: {
-    fontSize: '1.5rem',
-    fontWeight: 700,
-    color: 'var(--dark)',
-    marginBottom: '2rem',
-  },
-  steps: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap' as const,
-  },
-  step: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  key: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '3.5rem',
-    height: '3.5rem',
-    background: 'var(--white)',
-    border: '2px solid var(--green-mid)',
-    borderRadius: '10px',
-    fontFamily: 'var(--font-mono)',
-    fontWeight: 700,
-    fontSize: '1rem',
-    color: 'var(--green-dark)',
-    boxShadow: '0 3px 0 var(--green-mid)',
-  },
-  stepText: {
-    fontSize: '0.8rem',
-    color: 'var(--gray-text)',
-    fontWeight: 500,
-  },
-  arrow: {
-    fontSize: '1.5rem',
-    color: 'var(--green-mid)',
-    fontWeight: 700,
-    marginBottom: '1.5rem',
-  },
-
-  // Features
-  features: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '1.5rem',
-    maxWidth: 'clamp(320px, 92vw, 1200px)',
-    margin: '0 auto',
-    padding: '2rem 1.5rem 4rem',
-  },
-  featureCard: {
-    background: 'var(--white)',
-    borderRadius: 'var(--radius-lg)',
-    padding: '2rem',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-    border: '1px solid var(--green-bg)',
-    textAlign: 'center' as const,
-  },
-  featureIcon: {
-    fontSize: '2.5rem',
-    marginBottom: '0.75rem',
-  },
-  featureTitle: {
-    fontSize: '1.1rem',
-    fontWeight: 700,
-    color: 'var(--dark)',
-    marginBottom: '0.5rem',
-  },
-  featureDesc: {
-    fontSize: '0.9rem',
-    color: 'var(--gray-text)',
-    lineHeight: 1.5,
-  },
-
-  // Mission
-  missionSection: {
-    textAlign: 'center' as const,
-    padding: '2.5rem 1.5rem 1rem',
-    maxWidth: 'clamp(500px, 45vw, 700px)',
-    margin: '0 auto',
-  },
-  missionText: {
-    fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
-    fontWeight: 700,
-    color: 'var(--green-dark)',
-    marginBottom: '0.5rem',
-  },
-  missionSub: {
-    fontSize: '0.9rem',
-    color: 'var(--gray-text)',
-    lineHeight: 1.6,
-  },
-
   // Footer
   footer: {
     marginTop: 'auto',
     textAlign: 'center' as const,
-    padding: '2rem 1.5rem',
+    padding: '1.5rem',
     borderTop: '1px solid var(--green-bg)',
     background: 'var(--green-bg-footer)',
-  },
-  footerTop: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '2rem',
-    flexWrap: 'wrap' as const,
-  },
-  qrWrap: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '0.375rem',
-  },
-  qrLabel: {
-    fontSize: '0.7rem',
-    color: 'var(--gray-text)',
-    fontWeight: 500,
   },
   footerLinks: {
     display: 'flex',
     justifyContent: 'center',
     gap: '1.5rem',
-    margin: '1rem 0',
+    marginBottom: '0.75rem',
   },
   footerLink: {
     fontSize: '0.85rem',

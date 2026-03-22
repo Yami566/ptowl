@@ -45,6 +45,7 @@ const PrintSettingsPage = lazy(() => import('./pages/PrintSettingsPage.js').then
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage.js').then(m => ({ default: m.PrivacyPolicyPage })));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfServicePage.js').then(m => ({ default: m.TermsOfServicePage })));
 const SecurityPage = lazy(() => import('./pages/SecurityPage.js').then(m => ({ default: m.SecurityPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage.js').then(m => ({ default: m.AboutPage })));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.js').then(m => ({ default: m.NotFoundPage })));
 const PatientHomePage = lazy(() => import('./pages/PatientHomePage.js').then(m => ({ default: m.PatientHomePage })));
 const PatientSchedulePage = lazy(() => import('./pages/PatientSchedulePage.js').then(m => ({ default: m.PatientSchedulePage })));
@@ -101,6 +102,7 @@ export function App() {
               {/* Public routes — accessible without authentication */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/pending" element={<PendingPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/security" element={<SecurityPage />} />

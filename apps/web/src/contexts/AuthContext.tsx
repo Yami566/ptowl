@@ -31,7 +31,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const PUBLIC_PATHS = ['/', '/pending', '/privacy', '/terms', '/security'];
+const PUBLIC_PATHS = ['/', '/pending', '/about', '/privacy', '/terms', '/security'];
 const PATIENT_PATHS = ['/my-schedules'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
