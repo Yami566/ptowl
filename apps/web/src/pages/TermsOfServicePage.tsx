@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom';
+import { OwlLogo } from '../components/layout/OwlLogo.js';
 
 export function TermsOfServicePage() {
   return (
     <main id="main-content" style={styles.page}>
       <div style={styles.container}>
-        <Link to="/dashboard" style={styles.backLink}>
-          &larr; Back to Dashboard
-        </Link>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <OwlLogo size="sm" linkTo="/" />
+          <Link to="/dashboard" style={styles.backLink}>
+            &larr; Back to Dashboard
+          </Link>
+        </div>
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Terms of Service</h1>
@@ -205,7 +209,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '2rem 1rem',
   },
   container: {
-    maxWidth: 'clamp(600px, 50vw, 960px)',
+    maxWidth: 'clamp(320px, 92vw, 960px)',
     margin: '0 auto',
   },
   backLink: {

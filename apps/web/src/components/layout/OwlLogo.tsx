@@ -24,11 +24,12 @@ interface OwlLogoProps {
 export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
   const { className, easterEgg } = useOwlVariant();
 
-  const fontSize = size === 'sm' ? '1.1rem' : size === 'lg' ? '2.4rem' : '1.5rem';
-  const oSize = size === 'sm' ? '1.3rem' : size === 'lg' ? '2.9rem' : '1.8rem';
+  // Responsive: use clamp() so logo scales between mobile and desktop
+  const fontSize = size === 'sm' ? 'clamp(0.9rem, 2.5vw, 1.1rem)' : size === 'lg' ? 'clamp(1.5rem, 4vw, 2.4rem)' : 'clamp(1.1rem, 3vw, 1.5rem)';
+  const oSize = size === 'sm' ? 'clamp(1rem, 3vw, 1.3rem)' : size === 'lg' ? 'clamp(1.8rem, 5vw, 2.9rem)' : 'clamp(1.3rem, 3.5vw, 1.8rem)';
   const gap = size === 'sm' ? '0.02em' : size === 'lg' ? '0.04em' : '0.03em';
   const wordGap = size === 'sm' ? '0.25em' : size === 'lg' ? '0.35em' : '0.3em';
-  const subtitleSize = size === 'sm' ? '0.5rem' : size === 'lg' ? '0.75rem' : '0.6rem';
+  const subtitleSize = size === 'sm' ? 'clamp(0.4rem, 1.5vw, 0.5rem)' : size === 'lg' ? 'clamp(0.55rem, 1.5vw, 0.75rem)' : 'clamp(0.45rem, 1.5vw, 0.6rem)';
 
   // Easter eggs can override the O color
   const oColor = easterEgg === 'halloween'
