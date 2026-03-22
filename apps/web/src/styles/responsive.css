@@ -224,16 +224,15 @@
 
 /* ── Large screens (≥1200px) ── */
 @media (min-width: 1200px) {
-  .ptowl-main { max-width: clamp(960px, 70vw, 1200px) !important; }
+  .ptowl-main { max-width: clamp(960px, 85vw, 1400px) !important; }
   .ptowl-page-title { font-size: clamp(1.5rem, 2.5vw, 2rem) !important; }
 }
 
 /* ── Extra-large screens (≥1600px) ── */
 @media (min-width: 1600px) {
-  .ptowl-main { max-width: clamp(1200px, 72vw, 1440px) !important; }
+  .ptowl-main { max-width: clamp(1200px, 80vw, 1600px) !important; }
   .ptowl-page-title { font-size: clamp(1.75rem, 2.5vw, 2.25rem) !important; }
 
-  .landing-features { max-width: 1200px !important; }
   .dash-presets-grid { gap: 0.875rem !important; }
   .schedule-table-wrap table { font-size: 0.95rem !important; }
 }

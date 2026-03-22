@@ -59,7 +59,7 @@ html, body {
   font-family: var(--font-body);
   color: var(--dark);
   background: var(--off-white);
-  font-size: clamp(14px, 1vw + 12px, 16px);
+  font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,16 +69,12 @@ html, body {
 h1 { font-size: clamp(1.25rem, 2.5vw, 2rem); }
 h2 { font-size: clamp(1.1rem, 2vw, 1.5rem); }
 h3 { font-size: clamp(0.95rem, 1.5vw, 1.25rem); }
-p { font-size: clamp(0.85rem, 1vw + 0.5rem, 1rem); }
 
-/* Minimum touch targets (Apple 44x44px guideline) */
-button, a, input, textarea, select {
-  min-height: 44px;
-}
-
-/* Exclude inline/small elements from touch target rule */
-span, label, kbd {
-  min-height: unset;
+/* Minimum touch targets on mobile (Apple 44x44px guideline) */
+@media (max-width: 768px) {
+  button, a, input, textarea, select {
+    min-height: 44px;
+  }
 }
 
 a {
