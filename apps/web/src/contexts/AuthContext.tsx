@@ -141,6 +141,21 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 /**
+ * ClinicRoute — route guard that requires clinic user_type (or legacy users without user_type).
+ * Redirects patients to /my-schedules.
+ */
+export function ClinicRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingOverlay message="Verifying session..." />;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.status === 'pending') return <Navigate to="/pending" replace />;
+  if (user.user_type === 'patient') return <Navigate to="/my-schedules" replace />;
+
+  return <>{children}</>;
+}
+
+/**
  * PatientRoute — route guard that requires patient user_type.
  */
 export function PatientRoute({ children }: { children: ReactNode }) {

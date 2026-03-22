@@ -135,7 +135,7 @@ authRoutes.post('/firebase', async (c) => {
     let isNewUser = false;
 
     if (!user) {
-      // New user — create account (pending approval)
+      // New user — create account
       isNewUser = true;
       const userId = crypto.randomUUID().replace(/-/g, '');
       const placeholderHash = crypto.randomUUID() + crypto.randomUUID();
@@ -144,20 +144,24 @@ authRoutes.post('/firebase', async (c) => {
       // Assign a championship team alias for PII-safe admin notifications
       const teamAlias = getTeamAliasName(phone);
 
+      // Patients get instant access; clinic providers require admin approval
+      const initialStatus = userType === 'patient' ? 'approved' : 'pending';
+
       await c.env.DB.prepare(
         'INSERT INTO users (id, email, password_hash, phone, display_name, status, role, tier, user_alias, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      ).bind(userId, placeholderEmail, placeholderHash, phone, '', 'pending', 'user', 'free', teamAlias, userType).run();
+      ).bind(userId, placeholderEmail, placeholderHash, phone, '', initialStatus, 'user', 'free', teamAlias, userType).run();
 
-      // Create profile
-      const profileId = crypto.randomUUID().replace(/-/g, '');
-      await c.env.DB.prepare('INSERT INTO profiles (id, user_id) VALUES (?, ?)').bind(profileId, userId).run();
+      // Clinic users get a profile and default templates; patients don't need them
+      if (userType !== 'patient') {
+        const profileId = crypto.randomUUID().replace(/-/g, '');
+        await c.env.DB.prepare('INSERT INTO profiles (id, user_id) VALUES (?, ?)').bind(profileId, userId).run();
 
-      // Seed default templates (ready for when they're approved)
-      for (const tmpl of DEFAULT_TEMPLATES) {
-        const tmplId = crypto.randomUUID().replace(/-/g, '');
-        await c.env.DB.prepare(
-          'INSERT INTO templates (id, user_id, hotkey, name, sessions_per_week, duration_weeks, default_time, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        ).bind(tmplId, userId, tmpl.hotkey, tmpl.name, tmpl.sessions_per_week, tmpl.duration_weeks, tmpl.default_time, tmpl.hotkey).run();
+        for (const tmpl of DEFAULT_TEMPLATES) {
+          const tmplId = crypto.randomUUID().replace(/-/g, '');
+          await c.env.DB.prepare(
+            'INSERT INTO templates (id, user_id, hotkey, name, sessions_per_week, duration_weeks, default_time, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          ).bind(tmplId, userId, tmpl.hotkey, tmpl.name, tmpl.sessions_per_week, tmpl.duration_weeks, tmpl.default_time, tmpl.hotkey).run();
+        }
       }
 
       // Audit log
@@ -165,17 +169,18 @@ authRoutes.post('/firebase', async (c) => {
         .bind(crypto.randomUUID().replace(/-/g, ''), userId, 'register_phone', phone, c.req.header('cf-connecting-ip') || '')
         .run();
 
-      // Generate signed approval token (HMAC-SHA256, expires in 7 days)
-      const approvalPayload = `${userId}:${Date.now() + 7 * 24 * 60 * 60 * 1000}`;
-      const encoder = new TextEncoder();
-      const hmacKey = await crypto.subtle.importKey('raw', encoder.encode(c.env.JWT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const sig = await crypto.subtle.sign('HMAC', hmacKey, encoder.encode(approvalPayload));
-      const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-      const approvalToken = btoa(`${approvalPayload}:${sigHex}`).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      const approvalUrl = `${c.env.FRONTEND_URL}/api/v1/auth/approve/${approvalToken}`;
+      // Only notify admin and generate approval link for clinic providers
+      if (userType !== 'patient') {
+        const approvalPayload = `${userId}:${Date.now() + 7 * 24 * 60 * 60 * 1000}`;
+        const encoder = new TextEncoder();
+        const hmacKey = await crypto.subtle.importKey('raw', encoder.encode(c.env.JWT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        const sig = await crypto.subtle.sign('HMAC', hmacKey, encoder.encode(approvalPayload));
+        const sigHex = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+        const approvalToken = btoa(`${approvalPayload}:${sigHex}`).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const approvalUrl = `${c.env.FRONTEND_URL}/api/v1/auth/approve/${approvalToken}`;
 
-      // Notify admin with team alias + one-click approval link
-      notifyAdminNewRegistration(c.env.ADMIN_EMAIL || '', c.env.EMAIL_API_KEY || '', teamAlias, approvalUrl);
+        notifyAdminNewRegistration(c.env.ADMIN_EMAIL || '', c.env.EMAIL_API_KEY || '', teamAlias, approvalUrl);
+      }
 
       // Re-fetch user
       user = await c.env.DB.prepare(
@@ -213,7 +218,7 @@ authRoutes.post('/firebase', async (c) => {
     setCookie(c, 'token', token, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'Lax',
+      sameSite: isProduction ? 'Strict' : 'Lax',
       path: '/',
       ...(rememberMe ? { maxAge: SESSION_MAX_AGE } : {}),
     });

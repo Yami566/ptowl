@@ -64,12 +64,16 @@ codeRoutes.post('/:scheduleId', async (c) => {
 
   const id = crypto.randomUUID().replace(/-/g, '');
   await c.env.DB.prepare(
-    'INSERT INTO patient_codes (id, schedule_id, code, created_by) VALUES (?, ?, ?, ?)',
+    "INSERT INTO patient_codes (id, schedule_id, code, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, datetime('now'), datetime('now', '+7 days'))",
   ).bind(id, scheduleId, code, user.id).run();
+
+  const created = await c.env.DB.prepare(
+    'SELECT created_at, expires_at FROM patient_codes WHERE id = ?',
+  ).bind(id).first<{ created_at: string; expires_at: string }>();
 
   return c.json({
     ok: true,
-    data: { id, code, schedule_id: scheduleId, created_at: new Date().toISOString(), expires_at: null },
+    data: { id, code, schedule_id: scheduleId, created_at: created?.created_at ?? new Date().toISOString(), expires_at: created?.expires_at ?? null },
   });
 });
 

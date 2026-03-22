@@ -163,6 +163,7 @@
 
   /* ── SchedulePreviewOverlay ── */
   .schedule-preview-modal {
+    max-height: 95vh !important;
     max-height: 95dvh !important;
     margin: 0.5rem !important;
     width: calc(100% - 1rem) !important;

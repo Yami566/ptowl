@@ -15,9 +15,11 @@
     "db:migrate:remote": "wrangler d1 migrations apply ptowl-db --remote"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.7.6",
     "@ptowl/shared": "workspace:*",
     "hono": "^4.6.0",
-    "jose": "^6.2.1"
+    "jose": "^6.2.1",
+    "resend": "^6.9.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",

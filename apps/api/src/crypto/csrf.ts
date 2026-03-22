@@ -37,14 +37,6 @@ export async function verifyCSRFToken(
     return constantTimeEqual(expectedHmac, providedHmac);
   }
 
-  // Legacy 2-part format: random.hmac (backwards compatibility during rollout)
-  if (parts.length === 2) {
-    const [random, providedHmac] = parts;
-    if (!random || random.length < 32 || !providedHmac) return false;
-    const expectedHmac = await computeHMAC(`${random}:${userId}`, secret);
-    return constantTimeEqual(expectedHmac, providedHmac);
-  }
-
   return false;
 }
 

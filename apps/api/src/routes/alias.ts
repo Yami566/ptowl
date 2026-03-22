@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth } from '../middleware/auth.js';
-import { validateInitials, SPORTS_ALIASES } from '@ptowl/shared';
+import { requireAuth, requireClinic } from '../middleware/auth.js';
+import { zValidator } from '@hono/zod-validator';
+import { aliasRequestSchema, SPORTS_ALIASES } from '@ptowl/shared';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string } | null;
@@ -9,18 +10,19 @@ type Variables = {
 
 export const aliasRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-aliasRoutes.use('*', requireAuth);
+aliasRoutes.use('*', requireAuth, requireClinic);
 
 // POST / - Generate sports alias from initials
-aliasRoutes.post('/', async (c) => {
+aliasRoutes.post('/', zValidator('json', aliasRequestSchema, (result, c) => {
+  if (!result.success) {
+    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: result.error.issues[0]?.message || 'Invalid input' } }, 400);
+  }
+}), async (c) => {
   try {
     const user = c.get('user')!;
-    const body = await c.req.json<{ initials?: string }>();
+    const { initials: rawInitials } = c.req.valid('json');
 
-    const err = validateInitials(body.initials || '');
-    if (err) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: err } }, 400);
-
-    const initials = body.initials!.toUpperCase();
+    const initials = rawInitials.toUpperCase();
     const aliases = SPORTS_ALIASES[initials] || [`${initials[0]}. ${initials[1]}player`];
 
     // Deterministic but varied: hash user_id + initials + current hour to pick index

@@ -66,14 +66,13 @@ app.use('*', secureHeaders({
   xFrameOptions: 'DENY',
   xContentTypeOptions: 'nosniff',
   referrerPolicy: 'strict-origin-when-cross-origin',
+  strictTransportSecurity: 'max-age=63072000; includeSubDomains; preload',
 }));
 
-// Permissions-Policy: restrict browser feature access
-// H8 FIX: HSTS header — enforce HTTPS for 2 years with preload
+// Permissions-Policy: restrict browser feature access (no built-in Hono support for this header)
 app.use('*', async (c, next) => {
   await next();
   c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
 });
 
 // M5 FIX: Request body size limit (1MB) to prevent DoS via large payloads
@@ -158,7 +157,11 @@ async function cleanupExpiredData(db: D1Database): Promise<void> {
     `DELETE FROM sessions WHERE expires_at < datetime('now')`,
   ).run();
   await db.prepare(
-    `DELETE FROM audit_log WHERE created_at < datetime('now', '-90 days')`,
+    `DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`,
+  ).run();
+  // Clean up expired patient codes (7-day TTL)
+  await db.prepare(
+    `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
   ).run();
 }
 

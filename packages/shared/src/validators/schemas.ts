@@ -61,7 +61,35 @@ export const createScheduleRequestSchema = z.object({
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   sessions_per_week: z.number().int().min(1).max(7),
   duration_weeks: z.number().int().min(1).max(52),
-  notes: z.string().max(500).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+// ── Schemas for @hono/zod-validator middleware ──
+
+/** Strip HTML tags from a string (for profile/template text fields) */
+const stripHtml = (v: string) => v.replace(/<[^>]*>/g, '');
+
+export const updateProfileSchema = z.object({
+  clinic_name: z.string().max(100).transform(stripHtml).optional(),
+  clinic_address: z.string().max(200).transform(stripHtml).optional(),
+  clinic_phone: z.string().max(30).transform(stripHtml).optional(),
+  clinic_email: emailSchema.optional(),
+});
+
+export const updateTemplateSchema = z.object({
+  name: z.string().min(1).max(100).transform(stripHtml).optional(),
+  sessions_per_week: z.number().int().min(1).max(7).optional(),
+  duration_weeks: z.number().int().min(1).max(52).optional(),
+  default_time: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format').optional(),
+  is_active: z.union([z.boolean(), z.literal(0), z.literal(1)]).optional(),
+});
+
+export const linkCodeSchema = z.object({
+  code: z.string().min(4, 'Code is required'),
+});
+
+export const aliasRequestSchema = z.object({
+  initials: initialsSchema,
 });
 
 // ── Type inference exports ──

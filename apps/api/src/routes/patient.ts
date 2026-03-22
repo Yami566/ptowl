@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requirePatient } from '../middleware/auth.js';
+import { requireAuth, requirePatient, requireCSRF } from '../middleware/auth.js';
+import { zValidator } from '@hono/zod-validator';
+import { linkCodeSchema } from '@ptowl/shared';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string; user_type?: string } | null;
@@ -35,6 +37,10 @@ patientRoutes.get('/schedules/:id', async (c) => {
   const user = c.get('user')!;
   const scheduleId = c.req.param('id');
 
+  if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
+    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+  }
+
   // Verify patient has access to this schedule
   const link = await c.env.DB.prepare(
     'SELECT id FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',
@@ -66,16 +72,16 @@ patientRoutes.get('/schedules/:id', async (c) => {
 });
 
 // POST /link — Link a schedule to this patient via code
-patientRoutes.post('/link', async (c) => {
-  const user = c.get('user')!;
-  const body = await c.req.json<{ code?: string }>();
-
-  if (!body.code) {
-    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Code is required' } }, 400);
+patientRoutes.post('/link', requireCSRF, zValidator('json', linkCodeSchema, (result, c) => {
+  if (!result.success) {
+    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: result.error.issues[0]?.message || 'Code is required' } }, 400);
   }
+}), async (c) => {
+  const user = c.get('user')!;
+  const { code } = c.req.valid('json');
 
   // Normalize: strip prefix, uppercase
-  const rawCode = body.code.toUpperCase().replace(/^PTOWL-/, '');
+  const rawCode = code.toUpperCase().replace(/^PTOWL-/, '');
   const fullCode = `PTOWL-${rawCode}`;
 
   // Look up the code
@@ -111,9 +117,13 @@ patientRoutes.post('/link', async (c) => {
 });
 
 // DELETE /unlink/:scheduleId — Remove a linked schedule
-patientRoutes.delete('/unlink/:scheduleId', async (c) => {
+patientRoutes.delete('/unlink/:scheduleId', requireCSRF, async (c) => {
   const user = c.get('user')!;
   const scheduleId = c.req.param('scheduleId');
+
+  if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
+    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+  }
 
   const result = await c.env.DB.prepare(
     'DELETE FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',

@@ -15,5 +15,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // SECURITY: Never expose source maps in production
+    target: 'es2020', // Browser compat: Chrome 80+, Safari 14+, Firefox 80+
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/auth'],
+          calendar: ['@fullcalendar/core', '@fullcalendar/react', '@fullcalendar/daygrid', '@fullcalendar/timegrid', '@fullcalendar/interaction'],
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
   },
 });

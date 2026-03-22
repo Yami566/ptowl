@@ -1,4 +1,8 @@
 :root {
+  /* Mobile safe areas (iPhone notch, Android status bar) */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+
   /* Green (safe/OK) */
   --green-light: #AADFAA;
   --green-light-alt: #B4E9A9;
@@ -25,7 +29,7 @@
   --off-white: #FAFCFA;
   --gray-light: #F0F4F0;
   --gray-mid: #D0D8D0;
-  --gray-text: #6B7F73;
+  --gray-text: #4A5C50;
   --dark: #1A2E23;
   --dark-alt: #2D4A37;
 
@@ -727,5 +731,26 @@ button:disabled {
   }
   .ptowl-loading-overlay {
     backdrop-filter: none;
+  }
+}
+
+/* ── Capacitor / Native App safe areas ── */
+.ptowl-header {
+  padding-top: calc(1rem + var(--safe-top)) !important;
+}
+
+body {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ── Touch target minimums (Apple 44x44px guideline) ── */
+button, a, input, select, textarea, [role="button"] {
+  min-height: 44px;
+}
+
+/* Print: reset touch targets */
+@media print {
+  button, a, input, select, textarea, [role="button"] {
+    min-height: unset;
   }
 }

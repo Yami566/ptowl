@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import Cal from '@calcom/embed-react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
@@ -24,11 +26,14 @@ export function PatientHomePage() {
   const [schedules, setSchedules] = useState<PatientSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
 
   const fetchSchedules = useCallback(async () => {
     const result = await apiRequest<PatientSchedule[]>('/patient/schedules');
     if (result.ok && result.data) {
       setSchedules(result.data);
+    } else if (!result.ok) {
+      toast.error(result.error?.message || 'Failed to load schedules. Please try again.');
     }
     setLoading(false);
   }, []);
@@ -94,6 +99,25 @@ export function PatientHomePage() {
             </button>
           </>
         )}
+
+        {/* Book an Appointment — Cal.com embedded widget */}
+        <div style={styles.bookingSection}>
+          <button
+            onClick={() => setShowBooking(!showBooking)}
+            style={styles.bookBtn}
+          >
+            {showBooking ? 'Hide Booking' : 'Book an Appointment'}
+          </button>
+          {showBooking && (
+            <div style={styles.calContainer}>
+              <Cal
+                calLink="ptowl.com"
+                config={{ layout: 'month_view', theme: 'light' }}
+                style={{ width: '100%', height: '100%', overflow: 'auto' }}
+              />
+            </div>
+          )}
+        </div>
 
         {showCodeModal && (
           <PatientCodeModal
@@ -247,5 +271,27 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     cursor: 'pointer',
     textAlign: 'center',
+  },
+  bookingSection: {
+    marginTop: '1.5rem',
+  },
+  bookBtn: {
+    width: '100%',
+    padding: '0.875rem',
+    background: 'var(--green-mid)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  calContainer: {
+    marginTop: '1rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    border: '1px solid var(--gray-mid)',
+    overflow: 'hidden',
+    minHeight: '500px',
   },
 };

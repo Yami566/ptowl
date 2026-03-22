@@ -176,7 +176,8 @@ describe('HSTS and Security Headers', () => {
 
   it('HSTS header is set in index.ts (H8 FIX)', () => {
     const code = indexCode();
-    expect(code).toContain('Strict-Transport-Security');
+    // HSTS is set via hono/secure-headers strictTransportSecurity config
+    expect(code).toContain('strictTransportSecurity');
   });
 
   it('HSTS max-age is at least 1 year (31536000 seconds)', () => {
@@ -195,8 +196,8 @@ describe('HSTS and Security Headers', () => {
 
   it('HSTS includes preload directive', () => {
     const code = indexCode();
-    // The full HSTS header should contain preload
-    const hstsLine = code.match(/Strict-Transport-Security.*preload/);
+    // HSTS value is set via strictTransportSecurity in secureHeaders config
+    const hstsLine = code.match(/strictTransportSecurity.*preload/);
     expect(hstsLine).not.toBeNull();
   });
 

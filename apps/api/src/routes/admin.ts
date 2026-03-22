@@ -158,7 +158,7 @@ adminRoutes.post('/verify-code', requireAuth, async (c) => {
 adminRoutes.get('/users', requireAuth, requireAdmin, async (c) => {
   try {
     const users = await c.env.DB.prepare(
-      'SELECT id, email, phone, display_name, user_alias, status, role, tier, created_at FROM users ORDER BY created_at DESC',
+      'SELECT id, email, phone, display_name, user_alias, status, role, tier, user_type, created_at FROM users ORDER BY created_at DESC',
     ).all();
 
     return c.json({ ok: true, data: users.results });

@@ -1,5 +1,9 @@
 /**
- * Email service — sends transactional emails via Resend API.
+ * Email service — sends transactional emails via Resend SDK.
+ *
+ * Uses the official `resend` npm package (MIT, 500k+ weekly downloads)
+ * instead of raw fetch calls. The SDK provides TypeScript types,
+ * structured error handling, and receives security patches from Resend.
  *
  * Requires two secrets (set via `wrangler secret put`):
  *   ADMIN_EMAIL  — destination for admin notifications (e.g. help@ptowl.com)
@@ -10,37 +14,26 @@
  * because email delivery failed.
  */
 
-const RESEND_API = 'https://api.resend.com/emails';
+import { Resend } from 'resend';
+
 const FROM_ADDRESS = 'PTOWL <noreply@ptowl.com>';
 
-interface SendEmailParams {
-  to: string;
-  subject: string;
-  html: string;
-}
-
 /**
- * Low-level email sender via Resend.
+ * Low-level email sender via Resend SDK.
  * Returns true on success, false on failure (never throws).
  */
-async function sendEmail(apiKey: string, params: SendEmailParams): Promise<boolean> {
+async function sendEmail(apiKey: string, params: { to: string; subject: string; html: string }): Promise<boolean> {
   try {
-    const res = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FROM_ADDRESS,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-      }),
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
     });
 
-    if (!res.ok) {
-      console.error('Email send failed:', res.status);
+    if (error) {
+      console.error('Email send failed:', error.message);
       return false;
     }
 
@@ -158,7 +151,6 @@ export async function notifyUserDenied(
 
 /**
  * Send admin verification code via email.
- * Uses help@ptowl.com as the sender for admin security codes.
  */
 export async function sendAdminVerificationCode(
   apiKey: string,
@@ -193,28 +185,7 @@ export async function sendAdminVerificationCode(
     </div>
   `;
 
-  // All outbound emails use noreply@ptowl.com for consistency
-  try {
-    const res = await fetch(RESEND_API, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'PTOWL <noreply@ptowl.com>',
-        to: adminEmail,
-        subject,
-        html,
-      }),
-    });
-
-    if (!res.ok) {
-      console.error('Email send failed:', res.status);
-    }
-  } catch (err) {
-    console.error('Admin verification email error:', err instanceof Error ? err.message : 'Unknown error');
-  }
+  await sendEmail(apiKey, { to: adminEmail, subject, html });
 }
 
 /** Basic HTML entity escaping to prevent injection in email templates */

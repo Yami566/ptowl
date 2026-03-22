@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requireCSRF } from '../middleware/auth.js';
+import { requireAuth, requireCSRF, requireClinic } from '../middleware/auth.js';
 import { validateInitials, validateScheduleParams, generateSchedule } from '@ptowl/shared';
 import { TIER_LIMITS } from '@ptowl/shared';
 
@@ -11,7 +11,7 @@ type Variables = {
 export const scheduleRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // All routes require auth
-scheduleRoutes.use('*', requireAuth);
+scheduleRoutes.use('*', requireAuth, requireClinic);
 
 // GET / - List user's schedules
 scheduleRoutes.get('/', async (c) => {

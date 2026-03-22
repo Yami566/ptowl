@@ -2,13 +2,29 @@ import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { AuthProvider, ProtectedRoute, AdminRoute, PatientRoute } from './contexts/AuthContext.js';
+import { AuthProvider, ProtectedRoute, ClinicRoute, AdminRoute, PatientRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { CommandPalette } from './components/CommandPalette.js';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay.js';
 import { IdleTimeoutGuard } from './components/IdleTimeoutGuard.js';
+import { OfflineBanner } from './components/OfflineBanner.js';
+import { Capacitor } from '@capacitor/core';
 import 'react-loading-skeleton/dist/skeleton.css';
+
+// Initialize OneSignal push notifications on native platforms only
+if (Capacitor.isNativePlatform()) {
+  import('onesignal-cordova-plugin').then(({ default: OneSignal }) => {
+    // Replace with your OneSignal App ID after creating the app at onesignal.com
+    const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
+    if (ONESIGNAL_APP_ID) {
+      OneSignal.initialize(ONESIGNAL_APP_ID);
+      OneSignal.Notifications.requestPermission(true);
+    }
+  }).catch(() => {
+    // Silently fail if OneSignal isn't available (web build)
+  });
+}
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 5 * 60 * 1000, retry: 1 } },
@@ -65,6 +81,7 @@ export function App() {
       <BrowserRouter>
         <AuthProvider>
           <Toaster position="top-right" richColors closeButton />
+          <OfflineBanner />
           <IdleTimeoutGuard />
           <CommandPalette
             open={cmdOpen}
@@ -89,12 +106,12 @@ export function App() {
               <Route path="/security" element={<SecurityPage />} />
 
               {/* Protected routes — require authenticated + approved user */}
-              <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-              <Route path="/schedule/:id" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
-              <Route path="/customize" element={<ProtectedRoute><CustomizePage /></ProtectedRoute>} />
-              <Route path="/customize/templates" element={<ProtectedRoute><TemplateEditorPage /></ProtectedRoute>} />
-              <Route path="/customize/print" element={<ProtectedRoute><PrintSettingsPage /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ClinicRoute><DashboardPage /></ClinicRoute>} />
+              <Route path="/schedule/:id" element={<ClinicRoute><SchedulePage /></ClinicRoute>} />
+              <Route path="/customize" element={<ClinicRoute><CustomizePage /></ClinicRoute>} />
+              <Route path="/customize/templates" element={<ClinicRoute><TemplateEditorPage /></ClinicRoute>} />
+              <Route path="/customize/print" element={<ClinicRoute><PrintSettingsPage /></ClinicRoute>} />
+              <Route path="/profile" element={<ClinicRoute><ProfilePage /></ClinicRoute>} />
 
               {/* Patient routes — require patient user_type */}
               <Route path="/my-schedules" element={<PatientRoute><PatientHomePage /></PatientRoute>} />

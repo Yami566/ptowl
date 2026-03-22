@@ -45,7 +45,7 @@ function InlineHourglass() {
 
 export function PendingPage() {
   usePageTitle('Pending Approval');
-  const { refreshUser, logout } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -73,7 +73,9 @@ export function PendingPage() {
             Your registration was successful! An admin has been notified and will approve your account shortly.
           </p>
           <p style={styles.textSmall}>
-            Once approved, you'll have full access to create and print patient schedules.
+            {user?.user_type === 'patient'
+              ? "Once approved, you'll be able to view your schedules."
+              : "Once approved, you'll have full access to create and print patient schedules."}
           </p>
 
           <button

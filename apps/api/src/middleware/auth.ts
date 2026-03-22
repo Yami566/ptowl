@@ -89,8 +89,8 @@ export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variab
     if (!user) {
       return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
     }
-    // Default to clinic for existing users who don't have user_type set
-    if (user.user_type && user.user_type !== 'clinic') {
+    // Block patients explicitly; legacy users without user_type default to clinic
+    if (user.user_type === 'patient') {
       return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Clinic access required' } }, 403);
     }
     await next();

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requireCSRF } from '../middleware/auth.js';
+import { requireAuth, requireCSRF, requireClinic } from '../middleware/auth.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string } | null;
@@ -8,7 +8,7 @@ type Variables = {
 
 export const profileRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-profileRoutes.use('*', requireAuth);
+profileRoutes.use('*', requireAuth, requireClinic);
 
 // GET / - Get profile
 profileRoutes.get('/', async (c) => {
