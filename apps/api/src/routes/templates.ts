@@ -120,3 +120,28 @@ templateRoutes.put('/:id', requireCSRF, async (c) => {
     return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update template' } }, 500);
   }
 });
+
+// DELETE /:id - Delete a template
+templateRoutes.delete('/:id', requireCSRF, async (c) => {
+  try {
+    const user = c.get('user')!;
+    const templateId = c.req.param('id');
+
+    if (!/^[0-9a-f]{32}$/i.test(templateId)) {
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid template ID' } }, 400);
+    }
+
+    const result = await c.env.DB.prepare(
+      'DELETE FROM templates WHERE id = ? AND user_id = ?',
+    ).bind(templateId, user.id).run();
+
+    if (!result.meta.changes) {
+      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Template not found' } }, 404);
+    }
+
+    return c.json({ ok: true, data: { message: 'Template deleted' } });
+  } catch (err) {
+    console.error('Delete template error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to delete template' } }, 500);
+  }
+});

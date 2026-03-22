@@ -85,6 +85,20 @@ export function TemplateEditorPage() {
 
   const hasChanges = (id: string) => edits[id] && Object.keys(edits[id]).length > 0;
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    setSaving(id);
+
+    const result = await apiRequest(`/templates/${id}`, { method: 'DELETE' });
+    if (result.ok) {
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
+      toast.success('Template deleted');
+    } else {
+      toast.error(result.error?.message || 'Failed to delete');
+    }
+    setSaving(null);
+  };
+
   if (loading) return <LoadingOverlay message="Loading templates..." />;
 
   return (
@@ -173,14 +187,24 @@ export function TemplateEditorPage() {
                 onChange={(e) => setEditValue(template.id, 'default_time', e.target.value)}
               />
 
-              {/* Save button */}
-              <button
-                style={hasChanges(template.id) ? s.saveBtn : s.saveBtnDisabled}
-                onClick={() => handleSave(template.id)}
-                disabled={!hasChanges(template.id) || saving === template.id}
-              >
-                {saving === template.id ? 'Saving...' : 'Save Changes'}
-              </button>
+              {/* Save + Delete buttons */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button
+                  style={hasChanges(template.id) ? s.saveBtn : s.saveBtnDisabled}
+                  onClick={() => handleSave(template.id)}
+                  disabled={!hasChanges(template.id) || saving === template.id}
+                >
+                  {saving === template.id ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  style={s.deleteBtn}
+                  onClick={() => handleDelete(template.id, template.name)}
+                  disabled={saving === template.id}
+                  aria-label={`Delete template ${template.name}`}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -202,7 +226,7 @@ const s: Record<string, React.CSSProperties> = {
   logoutBtn: {
     padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
   },
-  main: { maxWidth: 'clamp(720px, 65vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
+  main: { maxWidth: 'clamp(320px, 92vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },
   grid: {
@@ -253,5 +277,10 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%', marginTop: '0.75rem', padding: '0.5rem',
     background: 'var(--gray-light)', color: 'var(--gray-text)', borderRadius: 'var(--radius)',
     fontSize: '0.875rem', fontWeight: 500, cursor: 'not-allowed',
+  },
+  deleteBtn: {
+    padding: '0.5rem 0.75rem', marginTop: '0.75rem',
+    background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)',
+    fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: 'none', whiteSpace: 'nowrap' as const,
   },
 };

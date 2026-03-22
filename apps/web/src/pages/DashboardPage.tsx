@@ -643,7 +643,7 @@ const styles: Record<string, React.CSSProperties> = {
   headerRight: { display: 'flex', gap: '0.5rem' },
   headerBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)' },
   logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
-  main: { maxWidth: 'clamp(720px, 65vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
+  main: { maxWidth: 'clamp(320px, 92vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
   welcome: { marginBottom: '1.5rem' },
   quickActionsRow: {
     display: 'flex',

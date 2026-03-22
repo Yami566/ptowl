@@ -281,7 +281,7 @@ export function LandingPage() {
             <>
               <div style={styles.stepBadge}>Security check</div>
               <h2 style={styles.authTitle}>MFA verification</h2>
-              <p style={styles.authSubtitle}>Enter the 6-digit code from your authenticator app.</p>
+              <p style={styles.authSubtitle}>Enter the 6-digit code texted to your phone.</p>
               <label htmlFor="mfa-input" className="sr-only">MFA code</label>
               <input
                 id="mfa-input"
@@ -553,7 +553,7 @@ const styles: Record<string, React.CSSProperties> = {
   hero: {
     textAlign: 'center' as const,
     padding: '5rem 1.5rem 3rem',
-    maxWidth: 'clamp(500px, 50vw, 800px)',
+    maxWidth: 'clamp(320px, 90vw, 800px)',
     margin: '0 auto',
   },
   headline: {
@@ -732,7 +732,7 @@ const styles: Record<string, React.CSSProperties> = {
   demoSection: {
     textAlign: 'center' as const,
     padding: '2rem 1.5rem 1rem',
-    maxWidth: 'clamp(600px, 55vw, 960px)',
+    maxWidth: 'clamp(320px, 90vw, 960px)',
     margin: '0 auto',
   },
   demoTitle: {
@@ -761,7 +761,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 'clamp(1rem, 3vw, 3rem)',
     flexWrap: 'wrap' as const,
     padding: '2rem 1.5rem',
-    maxWidth: 'clamp(600px, 55vw, 960px)',
+    maxWidth: 'clamp(320px, 90vw, 960px)',
     margin: '0 auto',
   },
   statItem: {
@@ -788,7 +788,7 @@ const styles: Record<string, React.CSSProperties> = {
   howSection: {
     textAlign: 'center' as const,
     padding: '3rem 1.5rem',
-    maxWidth: 'clamp(600px, 55vw, 960px)',
+    maxWidth: 'clamp(320px, 90vw, 960px)',
     margin: '0 auto',
   },
   sectionTitle: {
@@ -842,7 +842,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
     gap: '1.5rem',
-    maxWidth: 'clamp(700px, 65vw, 1200px)',
+    maxWidth: 'clamp(320px, 92vw, 1200px)',
     margin: '0 auto',
     padding: '2rem 1.5rem 4rem',
   },
