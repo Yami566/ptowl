@@ -1,20 +1,33 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
-// ── Coraline Color Palette ──
-const OWL = {
-  body: '#4A3B6B',        // deep purple
-  chest: '#6B5B95',       // muted lavender
-  pupil: '#2D1B4E',       // dark purple
-  pupilGlow: '#FFD700',   // golden glow (awake)
-  beak: '#C9A96E',        // muted gold/bronze
+// ── Daily Color Rotation — new owl color every day ──
+const DAILY_PALETTES = [
+  { body: '#5C3566', chest: '#7E5A8E', pupil: '#3A1F4A', name: 'Plum' },          // Sun
+  { body: '#4A3B6B', chest: '#6B5B95', pupil: '#2D1B4E', name: 'Purple' },        // Mon
+  { body: '#2B4570', chest: '#4A6B95', pupil: '#1B2D4E', name: 'Midnight Blue' }, // Tue
+  { body: '#2A5B5B', chest: '#4A8080', pupil: '#1B3D3D', name: 'Teal' },          // Wed
+  { body: '#5B2A3D', chest: '#8A4A60', pupil: '#3D1B28', name: 'Burgundy' },      // Thu
+  { body: '#3D3535', chest: '#5C5050', pupil: '#2A2222', name: 'Charcoal' },       // Fri
+  { body: '#2D4A3B', chest: '#4A7060', pupil: '#1B3028', name: 'Forest' },         // Sat
+];
+
+function getDailyPalette() {
+  const day = new Date().getDay(); // 0=Sun, 1=Mon, ...
+  return DAILY_PALETTES[day]!;
+}
+
+// ── Scene constants (don't change daily) ──
+const SCENE = {
+  beak: '#C9A96E',
   feet: '#C9A96E',
-  branch: '#2A1B3D',      // dark purple-brown
-  branchLight: '#3D2B55', // lighter branch accent
+  branch: '#2A1B3D',
+  branchLight: '#3D2B55',
   twig: '#3D2B55',
   fog: 'rgba(107, 91, 149, 0.15)',
-  star: '#E8D5B7',        // warm cream star
-  moon: '#F5E6C8',        // pale moonlight
+  star: '#E8D5B7',
+  moon: '#F5E6C8',
   moonGlow: 'rgba(245, 230, 200, 0.2)',
+  pupilGlow: '#FFD700',
 };
 
 // ── Time-of-day states (EST) ──
@@ -81,7 +94,6 @@ function getDailyTip() {
 
 // ── PT Exercise names for the owl ──
 const PT_EXERCISES = [
-  'wing-stretch',      // wings extend out
   'head-rotation',     // 180° head turn
   'shoulder-shrug',    // body lifts up
   'side-bend',         // lean left then right
@@ -122,6 +134,7 @@ function playHoot() {
 
 export function OwlMascot() {
   const { state: owlState, hour } = useMemo(() => getOwlState(), []);
+  const palette = useMemo(() => getDailyPalette(), []);
   const [time, setTime] = useState(getTimeString);
   const [disturbed, setDisturbed] = useState(false);
   const [eyeState, setEyeState] = useState<'closed' | 'opening' | 'open' | 'angry' | 'alert'>('closed');
@@ -208,22 +221,22 @@ export function OwlMascot() {
             {/* Gnarled main branch — Coraline twisted style */}
             <path
               d="M-30,30 C20,28 40,35 80,30 S130,22 160,28 S210,35 240,26 S270,22 300,28"
-              fill="none" stroke={OWL.branch} strokeWidth="9" strokeLinecap="round"
+              fill="none" stroke={SCENE.branch} strokeWidth="9" strokeLinecap="round"
             />
             {/* Branch texture — knots and bark */}
             <path
               d="M-30,30 C20,32 40,27 80,32 S130,26 160,30"
-              fill="none" stroke={OWL.branchLight} strokeWidth="3" strokeLinecap="round" opacity="0.4"
+              fill="none" stroke={SCENE.branchLight} strokeWidth="3" strokeLinecap="round" opacity="0.4"
             />
             {/* Twisted twigs — bare, no leaves (Coraline) */}
-            <path d="M60,30 Q55,15 65,8 Q70,5 68,2" fill="none" stroke={OWL.twig} strokeWidth="2.5" strokeLinecap="round" />
-            <path d="M100,28 Q110,18 105,10" fill="none" stroke={OWL.twig} strokeWidth="2" strokeLinecap="round" />
-            <path d="M200,26 Q215,14 210,6" fill="none" stroke={OWL.twig} strokeWidth="2" strokeLinecap="round" />
-            <path d="M240,28 Q248,20 252,18 Q256,22 254,28" fill="none" stroke={OWL.twig} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M60,30 Q55,15 65,8 Q70,5 68,2" fill="none" stroke={SCENE.twig} strokeWidth="2.5" strokeLinecap="round" />
+            <path d="M100,28 Q110,18 105,10" fill="none" stroke={SCENE.twig} strokeWidth="2" strokeLinecap="round" />
+            <path d="M200,26 Q215,14 210,6" fill="none" stroke={SCENE.twig} strokeWidth="2" strokeLinecap="round" />
+            <path d="M240,28 Q248,20 252,18 Q256,22 254,28" fill="none" stroke={SCENE.twig} strokeWidth="1.5" strokeLinecap="round" />
             {/* Purple wisps on branch tips */}
-            <circle cx="68" cy="2" r="3" fill={OWL.fog} className="owl-wisp-1" />
-            <circle cx="105" cy="10" r="2.5" fill={OWL.fog} className="owl-wisp-2" />
-            <circle cx="210" cy="6" r="3" fill={OWL.fog} className="owl-wisp-3" />
+            <circle cx="68" cy="2" r="3" fill={SCENE.fog} className="owl-wisp-1" />
+            <circle cx="105" cy="10" r="2.5" fill={SCENE.fog} className="owl-wisp-2" />
+            <circle cx="210" cy="6" r="3" fill={SCENE.fog} className="owl-wisp-3" />
           </svg>
 
           {/* The Owl */}
@@ -236,83 +249,79 @@ export function OwlMascot() {
             tabIndex={0}
           >
             <svg viewBox="0 0 120 130" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-              {/* Wing left (extends for wing-stretch exercise) */}
-              <ellipse cx="18" cy="65" rx="12" ry="22" fill={OWL.body} opacity="0.85"
-                className="owl-wing-left" transform="rotate(15 18 65)" />
-              {/* Wing right */}
-              <ellipse cx="102" cy="65" rx="12" ry="22" fill={OWL.body} opacity="0.85"
-                className="owl-wing-right" transform="rotate(-15 102 65)" />
-
-              {/* Body */}
-              <ellipse cx="60" cy="70" rx="30" ry="35" fill={OWL.body} />
+              {/* Body — single smooth shape, wings tucked in */}
+              <ellipse cx="60" cy="70" rx="32" ry="36" fill={palette.body} />
+              {/* Tucked wing contour lines — suggest folded wings on the body */}
+              <path d="M32,55 Q28,70 34,90" fill="none" stroke={palette.chest} strokeWidth="1.5" opacity="0.35" />
+              <path d="M88,55 Q92,70 86,90" fill="none" stroke={palette.chest} strokeWidth="1.5" opacity="0.35" />
               {/* Chest feather pattern */}
-              <ellipse cx="60" cy="80" rx="18" ry="22" fill={OWL.chest} opacity="0.4" />
+              <ellipse cx="60" cy="80" rx="18" ry="22" fill={palette.chest} opacity="0.35" />
               {/* Chest V-pattern (Victorian detail) */}
-              <path d="M48,65 L60,85 L72,65" fill="none" stroke={OWL.chest} strokeWidth="1" opacity="0.3" />
-              <path d="M50,70 L60,88 L70,70" fill="none" stroke={OWL.chest} strokeWidth="0.8" opacity="0.2" />
+              <path d="M48,65 L60,85 L72,65" fill="none" stroke={palette.chest} strokeWidth="1" opacity="0.25" />
+              <path d="M50,70 L60,88 L70,70" fill="none" stroke={palette.chest} strokeWidth="0.8" opacity="0.2" />
 
               {/* Ear tufts */}
-              <polygon points="35,38 40,20 48,40" fill={OWL.body} className="owl-ear-left" />
-              <polygon points="85,38 80,20 72,40" fill={OWL.body} className="owl-ear-right" />
+              <polygon points="35,38 40,20 48,40" fill={palette.body} className="owl-ear-left" />
+              <polygon points="85,38 80,20 72,40" fill={palette.body} className="owl-ear-right" />
 
               {/* Eye area — head group for rotation exercise */}
               <g className="owl-head">
                 {/* Eye circles background (slight glow for awake) */}
                 {(eyeState === 'open' || eyeState === 'alert') && isNight && (
                   <>
-                    <circle cx="45" cy="52" r="14" fill={OWL.moonGlow} />
-                    <circle cx="75" cy="52" r="14" fill={OWL.moonGlow} />
+                    <circle cx="45" cy="52" r="14" fill={SCENE.moonGlow} />
+                    <circle cx="75" cy="52" r="14" fill={SCENE.moonGlow} />
                   </>
                 )}
 
                 {eyeState === 'closed' ? (
                   <>
-                    <path d="M36,52 Q45,57 54,52" fill="none" stroke={OWL.star} strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M66,52 Q75,57 84,52" fill="none" stroke={OWL.star} strokeWidth="2.5" strokeLinecap="round" />
-                    <text x="82" y="35" fontSize="11" fill={OWL.star} opacity="0.6" fontWeight="bold" className="owl-zzz">z</text>
-                    <text x="90" y="28" fontSize="9" fill={OWL.star} opacity="0.4" fontWeight="bold" className="owl-zzz-2">z</text>
+                    <path d="M36,52 Q45,57 54,52" fill="none" stroke={SCENE.star} strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M66,52 Q75,57 84,52" fill="none" stroke={SCENE.star} strokeWidth="2.5" strokeLinecap="round" />
+                    <text x="82" y="35" fontSize="11" fill={SCENE.star} opacity="0.6" fontWeight="bold" className="owl-zzz">z</text>
+                    <text x="90" y="28" fontSize="9" fill={SCENE.star} opacity="0.4" fontWeight="bold" className="owl-zzz-2">z</text>
                   </>
                 ) : eyeState === 'angry' ? (
                   <>
                     <circle cx="45" cy="52" r="12" fill="white" />
                     <circle cx="75" cy="52" r="12" fill="white" />
-                    <circle cx="46" cy="51" r="7" fill={OWL.pupil} />
-                    <circle cx="76" cy="51" r="7" fill={OWL.pupil} />
+                    <circle cx="46" cy="51" r="7" fill={palette.pupil} />
+                    <circle cx="76" cy="51" r="7" fill={palette.pupil} />
                     <circle cx="47" cy="50" r="2.5" fill="white" />
                     <circle cx="77" cy="50" r="2.5" fill="white" />
-                    <line x1="34" y1="40" x2="50" y2="44" stroke={OWL.pupil} strokeWidth="3" strokeLinecap="round" />
-                    <line x1="86" y1="40" x2="70" y2="44" stroke={OWL.pupil} strokeWidth="3" strokeLinecap="round" />
-                    <text x="86" y="32" fontSize="16" fill={OWL.beak} fontWeight="bold">!</text>
+                    <line x1="34" y1="40" x2="50" y2="44" stroke={palette.pupil} strokeWidth="3" strokeLinecap="round" />
+                    <line x1="86" y1="40" x2="70" y2="44" stroke={palette.pupil} strokeWidth="3" strokeLinecap="round" />
+                    <text x="86" y="32" fontSize="16" fill={SCENE.beak} fontWeight="bold">!</text>
                   </>
                 ) : eyeState === 'opening' ? (
                   <>
                     <ellipse cx="45" cy="52" rx="11" ry="7" fill="white" />
                     <ellipse cx="75" cy="52" rx="11" ry="7" fill="white" />
-                    <circle cx="45" cy="53" r="5" fill={OWL.pupil} />
-                    <circle cx="75" cy="53" r="5" fill={OWL.pupil} />
+                    <circle cx="45" cy="53" r="5" fill={palette.pupil} />
+                    <circle cx="75" cy="53" r="5" fill={palette.pupil} />
                   </>
                 ) : (
                   <>
-                    <circle cx="45" cy="52" r="12" fill="white" stroke={OWL.pupil} strokeWidth="1.5" />
-                    <circle cx="75" cy="52" r="12" fill="white" stroke={OWL.pupil} strokeWidth="1.5" />
-                    <circle cx="46" cy="51" r={eyeState === 'alert' ? 8 : 7} fill={isNight ? OWL.pupilGlow : OWL.pupil} />
-                    <circle cx="76" cy="51" r={eyeState === 'alert' ? 8 : 7} fill={isNight ? OWL.pupilGlow : OWL.pupil} />
+                    <circle cx="45" cy="52" r="12" fill="white" stroke={palette.pupil} strokeWidth="1.5" />
+                    <circle cx="75" cy="52" r="12" fill="white" stroke={palette.pupil} strokeWidth="1.5" />
+                    <circle cx="46" cy="51" r={eyeState === 'alert' ? 8 : 7} fill={isNight ? SCENE.pupilGlow : palette.pupil} />
+                    <circle cx="76" cy="51" r={eyeState === 'alert' ? 8 : 7} fill={isNight ? SCENE.pupilGlow : palette.pupil} />
                     <circle cx="48" cy="49" r="3" fill="white" />
                     <circle cx="78" cy="49" r="3" fill="white" />
                   </>
                 )}
 
                 {/* Beak */}
-                <polygon points="60,62 55,70 65,70" fill={OWL.beak} />
+                <polygon points="60,62 55,70 65,70" fill={SCENE.beak} />
               </g>
 
               {/* Feet */}
-              <path d="M48,103 Q45,110 40,112" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M50,103 Q50,110 50,113" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M52,103 Q55,110 60,112" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M68,103 Q65,110 60,112" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M70,103 Q70,110 70,113" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M72,103 Q75,110 80,112" fill="none" stroke={OWL.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M48,103 Q45,110 40,112" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M50,103 Q50,110 50,113" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M52,103 Q55,110 60,112" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M68,103 Q65,110 60,112" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M70,103 Q70,110 70,113" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M72,103 Q75,110 80,112" fill="none" stroke={SCENE.feet} strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </div>
         </div>
@@ -408,7 +417,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--font-mono)',
     fontSize: '0.8rem',
     fontWeight: 600,
-    color: OWL.chest,
+    color: '#6B5B95',
     letterSpacing: '0.02em',
   },
   timeState: {
@@ -423,8 +432,8 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.875rem 1.25rem',
     background: 'var(--white)',
     borderRadius: 'var(--radius-lg)',
-    border: `1px solid ${OWL.chest}33`,
-    boxShadow: `0 2px 16px ${OWL.body}15`,
+    border: '1px solid rgba(107, 91, 149, 0.2)',
+    boxShadow: '0 2px 16px rgba(74, 59, 107, 0.08)',
     maxWidth: 'clamp(280px, 80vw, 480px)',
     width: '100%',
   },
@@ -440,7 +449,7 @@ const styles: Record<string, React.CSSProperties> = {
   tipLabel: {
     fontSize: '0.7rem',
     fontWeight: 700,
-    color: OWL.body,
+    color: '#4A3B6B',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.05em',
   },
@@ -451,7 +460,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tipLink: {
     fontSize: '0.75rem',
-    color: OWL.chest,
+    color: '#6B5B95',
     fontWeight: 600,
     textDecoration: 'none',
   },
@@ -460,8 +469,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '0.375rem',
     padding: '0.25rem 0.75rem',
-    background: OWL.body,
-    color: OWL.moon,
+    background: '#4A3B6B',
+    color: SCENE.moon,
     borderRadius: '999px',
     fontSize: '0.7rem',
     fontWeight: 600,

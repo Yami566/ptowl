@@ -486,22 +486,6 @@ button:disabled {
 
 /* ── PT EXERCISE ANIMATIONS ── */
 
-/* Wing Stretch — wings extend outward like a chest opener */
-.owl-exercise-wing-stretch .owl-wing-left {
-  animation: wingStretchLeft 3s ease-in-out;
-}
-.owl-exercise-wing-stretch .owl-wing-right {
-  animation: wingStretchRight 3s ease-in-out;
-}
-@keyframes wingStretchLeft {
-  0%, 100% { transform: rotate(15deg); }
-  30%, 70% { transform: rotate(15deg) translateX(-18px) scaleX(1.6); }
-}
-@keyframes wingStretchRight {
-  0%, 100% { transform: rotate(-15deg); }
-  30%, 70% { transform: rotate(-15deg) translateX(18px) scaleX(1.6); }
-}
-
 /* Head Rotation — 180° turn and back (classic owl move!) */
 .owl-exercise-head-rotation .owl-head {
   animation: headRotate 3s ease-in-out;
@@ -577,8 +561,6 @@ button:disabled {
   .owl-branch-enter, .owl-sleeping, .owl-disturbed, .owl-breathe,
   .owl-zzz, .owl-zzz-2, .owl-tip-enter, .owl-branch-sway,
   .owl-star, .owl-moon, .owl-fog, .owl-wisp-1, .owl-wisp-2, .owl-wisp-3,
-  .owl-exercise-wing-stretch .owl-wing-left,
-  .owl-exercise-wing-stretch .owl-wing-right,
   .owl-exercise-head-rotation .owl-head,
   .owl-exercise-shoulder-shrug,
   .owl-exercise-side-bend,
