@@ -324,11 +324,18 @@ export function LandingPage() {
                   onClick={() => setUserType('patient')}
                 >I'm a Patient</button>
               </div>
+              {userType === 'patient' && (
+                <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', marginBottom: '0.75rem', textAlign: 'center' as const }}>
+                  Your PT clinic will give you a code to view your schedule.
+                </p>
+              )}
               <div style={styles.stepBadge}>Step 1 of 2</div>
               <h2 style={styles.authTitle}>Enter your phone number</h2>
               <p style={styles.authSubtitle}>
-                New here? We'll create your account.<br />
-                Already registered? We'll log you right in.
+                {userType === 'patient'
+                  ? 'Sign up to view your PT schedule. Your clinic will text you a code to link it.'
+                  : <>New here? We&apos;ll create your account.<br />Already registered? We&apos;ll log you right in.</>
+                }
               </p>
               <label htmlFor="phone-input" className="sr-only">Phone number</label>
               <div style={styles.phoneRow}>

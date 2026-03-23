@@ -4,10 +4,11 @@ import { apiRequest } from '../api/client.js';
 interface PatientCodeModalProps {
   onClose: () => void;
   onLinked: () => void;
+  initialCode?: string;
 }
 
-export function PatientCodeModal({ onClose, onLinked }: PatientCodeModalProps) {
-  const [code, setCode] = useState('');
+export function PatientCodeModal({ onClose, onLinked, initialCode }: PatientCodeModalProps) {
+  const [code, setCode] = useState(initialCode?.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4) || '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

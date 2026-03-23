@@ -118,6 +118,7 @@ export function App() {
               {/* Patient routes — require patient user_type */}
               <Route path="/my-schedules" element={<PatientRoute><PatientHomePage /></PatientRoute>} />
               <Route path="/my-schedules/:id" element={<PatientRoute><PatientSchedulePage /></PatientRoute>} />
+              <Route path="/link/:code" element={<PatientRoute><PatientHomePage /></PatientRoute>} />
 
               {/* Admin route — requires admin role */}
               <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />

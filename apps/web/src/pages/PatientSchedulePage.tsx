@@ -135,9 +135,37 @@ export function PatientSchedulePage() {
           </table>
         </div>
 
+        {/* Calendar sync */}
+        <div style={styles.calendarActions}>
+          <button onClick={() => {
+            const lines = [
+              'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Patient Owl//PTOWL//EN', 'BEGIN:VEVENT',
+              `DTSTART:${schedule.start_date.replace(/-/g, '')}`,
+              `DTEND:${schedule.end_date.replace(/-/g, '')}`,
+              `SUMMARY:PT Schedule - ${schedule.clinic_name || 'Physical Therapy'}`,
+              `DESCRIPTION:${schedule.sessions_per_week}x/week for ${schedule.duration_weeks} weeks`,
+              'END:VEVENT', 'END:VCALENDAR',
+            ];
+            const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `pt-schedule.ics`; a.click();
+            URL.revokeObjectURL(url);
+          }} style={styles.calBtn}>
+            📅 Add to Calendar
+          </button>
+          <a
+            href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`PT Schedule - ${schedule.clinic_name || 'PT'}`)}&dates=${schedule.start_date.replace(/-/g, '')}/${schedule.end_date.replace(/-/g, '')}&details=${encodeURIComponent(`${schedule.sessions_per_week}x/week for ${schedule.duration_weeks} weeks`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.calBtn}
+          >
+            📆 Google Calendar
+          </a>
+        </div>
+
         {schedule.notes && (
           <div style={styles.notesBox}>
-            <strong>Notes:</strong> {schedule.notes}
+            <strong>Notes from your clinic:</strong> {schedule.notes}
           </div>
         )}
       </div>
@@ -258,6 +286,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.75rem',
     fontWeight: 600,
     color: 'var(--orange-mid)',
+  },
+  calendarActions: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '1.5rem',
+  },
+  calBtn: {
+    padding: '0.5rem 1rem',
+    background: 'var(--gray-light)',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.8rem',
+    fontWeight: 500,
+    color: 'var(--dark)',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-block',
   },
   notesBox: {
     background: 'var(--green-bg)',
