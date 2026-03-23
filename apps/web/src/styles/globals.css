@@ -352,6 +352,205 @@ button:disabled {
 }
 
 /* ==========================================================================
+   OWL SCENE — CSS-only landscape (no SVG shapes, no external assets)
+   Skyline via box-shadow, hill via border-radius, tree via clip-path
+   ========================================================================== */
+
+/* ── City Skyline — box-shadow buildings ── */
+.scene-skyline {
+  box-shadow:
+    /* Left side buildings */
+    -280px -30px 0 15px rgba(10,6,20,0.75),
+    -240px -55px 0 12px rgba(10,6,20,0.7),
+    -200px -40px 0 20px rgba(10,6,20,0.65),
+    -150px -70px 0 10px rgba(10,6,20,0.75),
+    -120px -35px 0 18px rgba(10,6,20,0.6),
+    -80px -60px 0 8px rgba(10,6,20,0.7),
+    -40px -45px 0 14px rgba(10,6,20,0.65),
+    /* Center buildings */
+    0px -80px 0 12px rgba(10,6,20,0.75),
+    30px -50px 0 16px rgba(10,6,20,0.65),
+    70px -65px 0 10px rgba(10,6,20,0.7),
+    /* Right side buildings */
+    120px -40px 0 18px rgba(10,6,20,0.65),
+    160px -75px 0 8px rgba(10,6,20,0.75),
+    200px -35px 0 15px rgba(10,6,20,0.6),
+    240px -55px 0 12px rgba(10,6,20,0.7),
+    280px -30px 0 20px rgba(10,6,20,0.65),
+    320px -60px 0 10px rgba(10,6,20,0.75);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── City windows — scattered glowing dots ── */
+.scene-windows {
+  position: absolute;
+  bottom: 33%;
+  left: 10%;
+  right: 10%;
+  height: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.scene-windows::before,
+.scene-windows::after {
+  content: '';
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+}
+.scene-windows::before {
+  box-shadow:
+    20px -10px 0 0 rgba(245,230,200,0.15),
+    50px -30px 0 0 rgba(245,230,200,0.1),
+    80px -20px 0 0 rgba(245,230,200,0.12),
+    120px -45px 0 0 rgba(245,230,200,0.08),
+    160px -15px 0 0 rgba(245,230,200,0.15),
+    200px -35px 0 0 rgba(245,230,200,0.1),
+    240px -25px 0 0 rgba(245,230,200,0.12),
+    280px -50px 0 0 rgba(245,230,200,0.08),
+    320px -18px 0 0 rgba(245,230,200,0.15),
+    360px -40px 0 0 rgba(245,230,200,0.1);
+  animation: windowFlicker 6s ease-in-out infinite;
+}
+.scene-windows::after {
+  box-shadow:
+    35px -22px 0 0 rgba(245,230,200,0.12),
+    70px -42px 0 0 rgba(245,230,200,0.08),
+    110px -12px 0 0 rgba(245,230,200,0.15),
+    150px -52px 0 0 rgba(245,230,200,0.1),
+    190px -28px 0 0 rgba(245,230,200,0.12),
+    230px -48px 0 0 rgba(245,230,200,0.08),
+    270px -16px 0 0 rgba(245,230,200,0.1),
+    310px -38px 0 0 rgba(245,230,200,0.15);
+  animation: windowFlicker 6s ease-in-out infinite 3s;
+}
+@keyframes windowFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── Car traffic lights — flowing red/white dots ── */
+.scene-traffic { overflow: hidden; z-index: 2; pointer-events: none; }
+
+.traffic-light {
+  position: absolute;
+  width: 8px; height: 2px;
+  border-radius: 4px;
+  top: 0;
+  filter: blur(1px);
+}
+
+/* Red taillights — moving right (cars going away) */
+.traffic-red {
+  background: #ff3333;
+  box-shadow: 0 0 4px #ff3333, 0 0 8px rgba(255,50,50,0.4);
+  animation: trafficFlowRight 4s linear infinite;
+}
+.traffic-red-1 { animation-delay: 0s; top: 0; }
+.traffic-red-2 { animation-delay: 1.3s; top: 0; width: 6px; }
+.traffic-red-3 { animation-delay: 2.8s; top: 0; width: 10px; }
+
+/* White headlights — moving left (cars coming toward) */
+.traffic-white {
+  background: #ffffff;
+  box-shadow: 0 0 4px #ffffff, 0 0 8px rgba(255,255,255,0.3);
+  animation: trafficFlowLeft 5s linear infinite;
+  top: 2px;
+}
+.traffic-white-1 { animation-delay: 0.5s; width: 6px; }
+.traffic-white-2 { animation-delay: 2s; }
+.traffic-white-3 { animation-delay: 3.5s; width: 10px; }
+
+@keyframes trafficFlowRight {
+  0% { left: -10px; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes trafficFlowLeft {
+  0% { left: 100%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { left: -10px; opacity: 0; }
+}
+
+/* ── Hilltop — organic rounded shape ── */
+.scene-hill {
+  background: radial-gradient(ellipse at 50% 100%, #0a0615 0%, #0f0a1a 40%, #150f22 80%);
+  border-radius: 60% 60% 0 0 / 40% 40% 0 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* ── Tree silhouette — CSS organic shapes ── */
+.scene-tree {
+  z-index: 4;
+  pointer-events: none;
+}
+.scene-tree-trunk {
+  width: 8px;
+  height: 60px;
+  background: #0a0615;
+  margin: 0 auto;
+  border-radius: 2px;
+  position: relative;
+}
+/* Branches via pseudo-elements */
+.scene-tree-trunk::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: -15px;
+  width: 20px;
+  height: 4px;
+  background: #0a0615;
+  border-radius: 4px;
+  transform: rotate(-30deg);
+}
+.scene-tree-trunk::after {
+  content: '';
+  position: absolute;
+  top: 25px;
+  right: -12px;
+  width: 16px;
+  height: 3px;
+  background: #0a0615;
+  border-radius: 4px;
+  transform: rotate(25deg);
+}
+.scene-tree-canopy {
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(ellipse at 50% 60%, #0f0a1a 0%, #0a0615 70%);
+  border-radius: 50% 50% 45% 45%;
+  position: relative;
+  top: -15px;
+  margin: 0 auto;
+}
+/* Extra canopy layer for organic feel */
+.scene-tree-canopy::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(ellipse, #0f0a1a 0%, #0a0615 70%);
+  border-radius: 50%;
+}
+.scene-tree-canopy::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 5px;
+  width: 40px;
+  height: 45px;
+  background: radial-gradient(ellipse, #0f0a1a 0%, #0a0615 70%);
+  border-radius: 50%;
+}
+
+/* ==========================================================================
    OWL MASCOT — Coraline-esque whimsical-dark scene
    ========================================================================== */
 
