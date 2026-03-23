@@ -137,10 +137,10 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
             tabIndex={0}
             style={{
               position: 'absolute' as const,
-              right: size === 'lg' ? '-2px' : '-1px',
-              top: '55%',
+              right: size === 'lg' ? '-4px' : '-2px',
+              top: size === 'lg' ? '-75%' : '-65%',
               cursor: 'pointer',
-              transformOrigin: 'top center',
+              transformOrigin: 'bottom center',
               display: 'inline-block',
               lineHeight: 1,
             }}
