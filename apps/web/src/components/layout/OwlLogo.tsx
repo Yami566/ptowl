@@ -110,66 +110,31 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
           }}
         >O</span>
 
-        {/* W — green */}
+        {/* WL — green */}
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize,
           fontWeight: 700,
           color: 'var(--green-dark)',
-        }}>W</span>
+        }}>WL</span>
 
-        {/* L — green, with owl hanging from the end */}
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize,
-          fontWeight: 700,
-          color: 'var(--green-dark)',
-          position: 'relative' as const,
-          display: 'inline-block',
-        }}>
-          L
-          {/* Mini owl hanging from the L */}
-          <span
-            className="owl-on-L"
-            onClick={handleOwlClick}
-            role="button"
-            aria-label="Click the owl for a surprise!"
-            tabIndex={0}
-            style={{
-              position: 'absolute' as const,
-              right: size === 'lg' ? '-4px' : '-2px',
-              top: size === 'lg' ? '-75%' : '-65%',
-              cursor: 'pointer',
-              transformOrigin: 'bottom center',
-              display: 'inline-block',
-              lineHeight: 1,
-            }}
-          >
-            <svg
-              viewBox="0 0 24 28"
-              style={{
-                width: size === 'lg' ? '22px' : size === 'sm' ? '12px' : '16px',
-                height: size === 'lg' ? '26px' : size === 'sm' ? '14px' : '18px',
-              }}
-            >
-              {/* Tiny owl body */}
-              <ellipse cx="12" cy="14" rx="9" ry="10" fill="var(--green-dark)" />
-              {/* Eyes */}
-              <circle cx="9" cy="11" r="3" fill="white" />
-              <circle cx="15" cy="11" r="3" fill="white" />
-              <circle cx="9.5" cy="10.5" r="1.8" fill="var(--dark)" />
-              <circle cx="15.5" cy="10.5" r="1.8" fill="var(--dark)" />
-              <circle cx="10" cy="10" r="0.6" fill="white" />
-              <circle cx="16" cy="10" r="0.6" fill="white" />
-              {/* Beak */}
-              <polygon points="12,13 10.5,16 13.5,16" fill="var(--orange-mid)" />
-              {/* Feet gripping the L */}
-              <path d="M9,23 Q7,25 5,25" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
-              <path d="M11,23 Q11,26 11,27" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
-              <path d="M15,23 Q17,25 19,25" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-          </span>
-        </span>
+        {/* Original v1.0 owl badge — inline next to text */}
+        <img
+          src="/logo-120.svg"
+          alt=""
+          className="owl-on-L"
+          onClick={handleOwlClick}
+          role="button"
+          aria-label="Click the owl for a surprise!"
+          tabIndex={0}
+          style={{
+            width: size === 'lg' ? '70px' : size === 'sm' ? '35px' : '50px',
+            height: 'auto',
+            marginLeft: size === 'lg' ? '0.4em' : '0.25em',
+            cursor: 'pointer',
+            verticalAlign: 'middle',
+          }}
+        />
       </span>
 
       {/* Subtitle */}
