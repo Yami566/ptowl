@@ -255,12 +255,7 @@ export function LandingPage() {
     <main style={styles.page}>
       {/* Hero */}
       <section style={styles.hero} className="landing-fade-in landing-hero">
-        <img
-          src="/logo-120.svg"
-          alt="Patient Owl"
-          style={{ width: 'clamp(64px, 15vw, 120px)', height: 'auto', marginBottom: '0.75rem' }}
-        />
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.5rem' }}>
           <OwlLogo size="lg" linkTo="/" />
           {alienActive && (
             <div className="alien-easter-egg" aria-hidden="true">

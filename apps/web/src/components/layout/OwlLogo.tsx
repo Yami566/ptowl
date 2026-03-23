@@ -13,7 +13,9 @@
  * 5-second animation loop on desktop, single play on mobile.
  */
 
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import { useOwlVariant } from '../../hooks/useOwlVariant.js';
 
 interface OwlLogoProps {
@@ -23,6 +25,26 @@ interface OwlLogoProps {
 
 export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
   const { className, easterEgg } = useOwlVariant();
+
+  // Feather burst when owl is clicked
+  const handleOwlClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    // canvas-confetti supports emoji shapes
+    confetti({
+      particleCount: 8,
+      spread: 50,
+      origin: { x, y },
+      gravity: 0.8,
+      ticks: 80,
+      shapes: ['circle'],
+      colors: ['#8B4513', '#A0522D', '#D2B48C', '#C9A96E', '#6B5B95'],
+      scalar: 0.8,
+    });
+  }, []);
 
   // Responsive: use clamp() so logo scales between mobile and desktop
   const fontSize = size === 'sm' ? 'clamp(0.9rem, 2.5vw, 1.1rem)' : size === 'lg' ? 'clamp(1.5rem, 4vw, 2.4rem)' : 'clamp(1.1rem, 3vw, 1.5rem)';
@@ -88,13 +110,66 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
           }}
         >O</span>
 
-        {/* WL — green, uppercase */}
+        {/* W — green */}
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize,
           fontWeight: 700,
           color: 'var(--green-dark)',
-        }}>WL</span>
+        }}>W</span>
+
+        {/* L — green, with owl hanging from the end */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize,
+          fontWeight: 700,
+          color: 'var(--green-dark)',
+          position: 'relative' as const,
+          display: 'inline-block',
+        }}>
+          L
+          {/* Mini owl hanging from the L */}
+          <span
+            className="owl-on-L"
+            onClick={handleOwlClick}
+            role="button"
+            aria-label="Click the owl for a surprise!"
+            tabIndex={0}
+            style={{
+              position: 'absolute' as const,
+              right: size === 'lg' ? '-2px' : '-1px',
+              top: '55%',
+              cursor: 'pointer',
+              transformOrigin: 'top center',
+              display: 'inline-block',
+              lineHeight: 1,
+            }}
+          >
+            <svg
+              viewBox="0 0 24 28"
+              style={{
+                width: size === 'lg' ? '22px' : size === 'sm' ? '12px' : '16px',
+                height: size === 'lg' ? '26px' : size === 'sm' ? '14px' : '18px',
+              }}
+            >
+              {/* Tiny owl body */}
+              <ellipse cx="12" cy="14" rx="9" ry="10" fill="var(--green-dark)" />
+              {/* Eyes */}
+              <circle cx="9" cy="11" r="3" fill="white" />
+              <circle cx="15" cy="11" r="3" fill="white" />
+              <circle cx="9.5" cy="10.5" r="1.8" fill="var(--dark)" />
+              <circle cx="15.5" cy="10.5" r="1.8" fill="var(--dark)" />
+              <circle cx="10" cy="10" r="0.6" fill="white" />
+              <circle cx="16" cy="10" r="0.6" fill="white" />
+              {/* Beak */}
+              <polygon points="12,13 10.5,16 13.5,16" fill="var(--orange-mid)" />
+              {/* Feet gripping the L */}
+              <path d="M9,23 Q7,25 5,25" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M11,23 Q11,26 11,27" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
+              <path d="M15,23 Q17,25 19,25" fill="none" stroke="var(--orange-mid)" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </span>
+        </span>
       </span>
 
       {/* Subtitle */}

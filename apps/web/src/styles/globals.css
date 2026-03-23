@@ -419,7 +419,22 @@ button:disabled {
   50% { opacity: 1; transform: scale(1.5); }
 }
 
-/* (Sun/Moon/Stars removed — keeping it simple) */
+/* ── Owl hanging from the L — pendulum swing ── */
+.owl-on-L {
+  animation: owlPendulum 3s ease-in-out infinite;
+}
+.owl-on-L:hover {
+  animation-play-state: paused;
+  transform: scale(1.15);
+}
+@keyframes owlPendulum {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owl-on-L { animation: none; }
+}
 
 /* Fog — drifting mist */
 .owl-fog {
