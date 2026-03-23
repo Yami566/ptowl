@@ -352,95 +352,240 @@ button:disabled {
 }
 
 /* ==========================================================================
-   OWL MASCOT ANIMATIONS — interactive owl on branch
+   OWL MASCOT — Coraline-esque whimsical-dark scene
    ========================================================================== */
 
-/* Branch slides in from left */
-.owl-branch-enter {
-  animation: branchSlideIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* ── Scene Elements ── */
+
+/* Stars — scattered twinkling dots */
+.owl-stars { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.owl-star {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: #E8D5B7;
+  border-radius: 50%;
+  animation: starTwinkle 3s ease-in-out infinite;
+}
+.owl-star-1 { top: 8%; left: 15%; animation-delay: 0s; }
+.owl-star-2 { top: 15%; left: 75%; animation-delay: 0.5s; width: 2px; height: 2px; }
+.owl-star-3 { top: 5%; left: 50%; animation-delay: 1s; }
+.owl-star-4 { top: 25%; left: 85%; animation-delay: 1.5s; width: 2px; height: 2px; }
+.owl-star-5 { top: 12%; left: 30%; animation-delay: 2s; width: 4px; height: 4px; }
+.owl-star-6 { top: 20%; left: 60%; animation-delay: 0.8s; }
+.owl-star-7 { top: 3%; left: 90%; animation-delay: 2.5s; width: 2px; height: 2px; }
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
 }
 
+/* Moon — pale glow */
+.owl-moon {
+  position: absolute;
+  top: 5%;
+  right: 12%;
+  width: 30px; height: 30px;
+  background: radial-gradient(circle, #F5E6C8 40%, transparent 70%);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(245,230,200,0.3), 0 0 40px rgba(245,230,200,0.1);
+  animation: moonGlow 4s ease-in-out infinite;
+  z-index: 0;
+}
+@keyframes moonGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(245,230,200,0.3); }
+  50% { box-shadow: 0 0 30px rgba(245,230,200,0.5), 0 0 60px rgba(245,230,200,0.15); }
+}
+
+/* Fog — drifting mist */
+.owl-fog {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40px;
+  background: linear-gradient(90deg, transparent 0%, rgba(107,91,149,0.08) 30%, rgba(107,91,149,0.12) 50%, rgba(107,91,149,0.08) 70%, transparent 100%);
+  animation: fogDrift 12s ease-in-out infinite;
+  pointer-events: none; z-index: 1;
+}
+@keyframes fogDrift {
+  0%, 100% { transform: translateX(-10%); }
+  50% { transform: translateX(10%); }
+}
+
+/* Purple wisps on branch tips */
+.owl-wisp-1, .owl-wisp-2, .owl-wisp-3 {
+  animation: wispFloat 4s ease-in-out infinite;
+}
+.owl-wisp-2 { animation-delay: 1.3s; }
+.owl-wisp-3 { animation-delay: 2.6s; }
+@keyframes wispFloat {
+  0%, 100% { opacity: 0.15; transform: translateY(0); }
+  50% { opacity: 0.35; transform: translateY(-3px); }
+}
+
+/* ── Branch ── */
+.owl-branch-enter { animation: branchSlideIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes branchSlideIn {
   from { transform: translateX(-60%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Sleeping owl gentle bob */
-.owl-sleeping {
-  animation: owlSleepBob 3s ease-in-out infinite;
+.owl-branch-sway { animation: branchSway 6s ease-in-out infinite; transform-origin: left center; }
+@keyframes branchSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.5deg); }
 }
 
+/* ── Owl Base Animations ── */
+
+/* Breathing — continuous gentle pulse */
+.owl-breathe { animation: owlBreathe 4s ease-in-out infinite; }
+@keyframes owlBreathe {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.02); }
+}
+
+/* Sleeping — gentle bob + breathe */
+.owl-sleeping { animation: owlSleepBob 3s ease-in-out infinite; }
 @keyframes owlSleepBob {
-  0%, 100% { transform: translateX(-50%) rotate(0deg); }
-  50% { transform: translateX(-50%) rotate(-3deg) translateY(2px); }
+  0%, 100% { transform: translateX(-50%) rotate(0deg) scale(1); }
+  50% { transform: translateX(-50%) rotate(-3deg) translateY(2px) scale(1.01); }
 }
 
-/* Disturbed owl shake */
-.owl-disturbed {
-  animation: owlShake 0.4s ease-in-out;
-}
-
+/* Disturbed — shake */
+.owl-disturbed { animation: owlShake 0.5s ease-in-out !important; }
 @keyframes owlShake {
   0%, 100% { transform: translateX(-50%) rotate(0deg); }
-  20% { transform: translateX(-50%) rotate(-8deg) scale(1.05); }
-  40% { transform: translateX(-50%) rotate(8deg) scale(1.1); }
-  60% { transform: translateX(-50%) rotate(-5deg) scale(1.05); }
-  80% { transform: translateX(-50%) rotate(3deg); }
+  20% { transform: translateX(-50%) rotate(-10deg) scale(1.08); }
+  40% { transform: translateX(-50%) rotate(10deg) scale(1.12); }
+  60% { transform: translateX(-50%) rotate(-6deg) scale(1.06); }
+  80% { transform: translateX(-50%) rotate(4deg); }
 }
 
-/* Zzz floating animation */
-.owl-zzz {
-  animation: zzzFloat 2s ease-in-out infinite;
-}
-.owl-zzz-2 {
-  animation: zzzFloat 2s ease-in-out infinite 0.5s;
-}
-
+/* Zzz */
+.owl-zzz { animation: zzzFloat 2s ease-in-out infinite; }
+.owl-zzz-2 { animation: zzzFloat 2s ease-in-out infinite 0.5s; }
 @keyframes zzzFloat {
   0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50% { opacity: 0.7; transform: translateY(-4px); }
+  50% { opacity: 0.7; transform: translateY(-5px); }
 }
 
-/* Ear tufts ruffle when disturbed */
-.owl-disturbed .owl-ear-left {
-  animation: earRuffleLeft 0.3s ease-in-out 2;
-}
-.owl-disturbed .owl-ear-right {
-  animation: earRuffleRight 0.3s ease-in-out 2;
-}
+/* Hover */
+.owl-mascot:hover { transform: translateX(-50%) translateY(-3px) scale(1.03) !important; }
 
-@keyframes earRuffleLeft {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-10deg) translateY(-2px); }
-}
-@keyframes earRuffleRight {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(10deg) translateY(-2px); }
-}
+/* Ear ruffle */
+.owl-disturbed .owl-ear-left { animation: earRuffleLeft 0.3s ease-in-out 2; }
+.owl-disturbed .owl-ear-right { animation: earRuffleRight 0.3s ease-in-out 2; }
+@keyframes earRuffleLeft { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg) translateY(-3px); } }
+@keyframes earRuffleRight { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(12deg) translateY(-3px); } }
 
-/* Tip card entrance */
-.owl-tip-enter {
-  animation: tipSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
-}
-
+/* Tip card */
+.owl-tip-enter { animation: tipSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both; }
 @keyframes tipSlideUp {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Owl hover — slight lift */
-.owl-mascot:hover {
-  transform: translateX(-50%) translateY(-3px) !important;
+/* ── PT EXERCISE ANIMATIONS ── */
+
+/* Wing Stretch — wings extend outward like a chest opener */
+.owl-exercise-wing-stretch .owl-wing-left {
+  animation: wingStretchLeft 3s ease-in-out;
+}
+.owl-exercise-wing-stretch .owl-wing-right {
+  animation: wingStretchRight 3s ease-in-out;
+}
+@keyframes wingStretchLeft {
+  0%, 100% { transform: rotate(15deg); }
+  30%, 70% { transform: rotate(15deg) translateX(-18px) scaleX(1.6); }
+}
+@keyframes wingStretchRight {
+  0%, 100% { transform: rotate(-15deg); }
+  30%, 70% { transform: rotate(-15deg) translateX(18px) scaleX(1.6); }
 }
 
-/* Reduced motion */
+/* Head Rotation — 180° turn and back (classic owl move!) */
+.owl-exercise-head-rotation .owl-head {
+  animation: headRotate 3s ease-in-out;
+  transform-origin: 60px 55px;
+}
+@keyframes headRotate {
+  0%, 100% { transform: rotateY(0deg); }
+  25% { transform: rotateY(180deg); }
+  50% { transform: rotateY(180deg); }
+  75% { transform: rotateY(0deg); }
+}
+
+/* Shoulder Shrug — body lifts up and down */
+.owl-exercise-shoulder-shrug {
+  animation: shoulderShrug 3s ease-in-out !important;
+}
+@keyframes shoulderShrug {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  25% { transform: translateX(-50%) translateY(-8px) scaleY(0.95); }
+  50% { transform: translateX(-50%) translateY(-8px) scaleY(0.95); }
+  75% { transform: translateX(-50%) translateY(0); }
+}
+
+/* Side Bend — lean left then right */
+.owl-exercise-side-bend {
+  animation: sideBend 3s ease-in-out !important;
+}
+@keyframes sideBend {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  25% { transform: translateX(-50%) rotate(-8deg); }
+  50% { transform: translateX(-50%) rotate(0deg); }
+  75% { transform: translateX(-50%) rotate(8deg); }
+}
+
+/* Deep Breath — body expands and contracts */
+.owl-exercise-deep-breath {
+  animation: deepBreath 3s ease-in-out !important;
+}
+@keyframes deepBreath {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  30% { transform: translateX(-50%) scale(1.1) translateY(-3px); }
+  60% { transform: translateX(-50%) scale(1.1) translateY(-3px); }
+  90% { transform: translateX(-50%) scale(1); }
+}
+
+/* Neck Retraction — head pulls back (cervical retraction) */
+.owl-exercise-neck-retract .owl-head {
+  animation: neckRetract 3s ease-in-out;
+}
+@keyframes neckRetract {
+  0%, 100% { transform: translateX(0); }
+  30%, 70% { transform: translateX(-3px) translateY(4px) scale(0.95); }
+}
+
+/* ── Utility Animation Classes ── */
+.hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.card-enter { animation: cardSlideUp 0.4s ease-out both; }
+@keyframes cardSlideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.pulse-subtle { animation: pulseSubtle 2s ease-in-out infinite; }
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
-  .owl-branch-enter,
-  .owl-sleeping,
-  .owl-disturbed,
-  .owl-zzz,
-  .owl-zzz-2,
-  .owl-tip-enter { animation: none !important; opacity: 1; }
+  .owl-branch-enter, .owl-sleeping, .owl-disturbed, .owl-breathe,
+  .owl-zzz, .owl-zzz-2, .owl-tip-enter, .owl-branch-sway,
+  .owl-star, .owl-moon, .owl-fog, .owl-wisp-1, .owl-wisp-2, .owl-wisp-3,
+  .owl-exercise-wing-stretch .owl-wing-left,
+  .owl-exercise-wing-stretch .owl-wing-right,
+  .owl-exercise-head-rotation .owl-head,
+  .owl-exercise-shoulder-shrug,
+  .owl-exercise-side-bend,
+  .owl-exercise-deep-breath,
+  .owl-exercise-neck-retract .owl-head,
+  .hover-lift, .card-enter, .pulse-subtle
+  { animation: none !important; opacity: 1; transform: none; }
 }
 
 /* Responsive breakpoints */

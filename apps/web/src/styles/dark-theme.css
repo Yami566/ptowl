@@ -7,35 +7,37 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* Green (safe/OK) */
-  --green-light: #2D4A37;
-  --green-light-alt: #345E40;
-  --green-mid: #66BB6A;
-  --green-dark: #A5D6A7;
+  /* Whimsical-dark Coraline palette — purples, indigos, moonlight */
+
+  /* Accent (replaces green in dark mode with purple tones) */
+  --green-light: #2A1F3D;
+  --green-light-alt: #352B4E;
+  --green-mid: #7C6BC4;
+  --green-dark: #B8A9E0;
 
   /* Red (error/danger) */
-  --red-light: #3D1F1F;
+  --red-light: #3D1F2A;
   --red-mid: #EF5350;
   --red-dark: #FFCDD2;
 
-  /* Orange (attention/action) */
-  --orange-light: #3D2A14;
-  --orange-light-alt: #CC8A2E;
-  --orange-mid: #FF8A65;
-  --orange-dark: #FFB74D;
+  /* Orange (attention — warm gold in Coraline world) */
+  --orange-light: #2D2314;
+  --orange-light-alt: #C9A96E;
+  --orange-mid: #D4A853;
+  --orange-dark: #E8C97A;
 
-  /* Backgrounds */
-  --green-bg: #1A2E23;
-  --green-bg-footer: #141E18;
+  /* Backgrounds — deep purple-black like Coraline's other world */
+  --green-bg: #150F22;
+  --green-bg-footer: #0F0A1A;
 
-  /* Neutrals */
-  --white: #1E1E2E;
-  --off-white: #181825;
-  --gray-light: #2A2A3C;
-  --gray-mid: #3A3A4C;
-  --gray-text: #9CA3AF;
-  --dark: #E8E8EC;
-  --dark-alt: #C8D0CE;
+  /* Neutrals — warm-tinted, not pure gray */
+  --white: #1A1228;
+  --off-white: #0F0A1A;
+  --gray-light: #231A35;
+  --gray-mid: #2D1F4E;
+  --gray-text: #A89BC2;
+  --dark: #E8E0F0;
+  --dark-alt: #C8BDD8;
 
   /* Print variables stay unchanged — handled by @media print below */
 }

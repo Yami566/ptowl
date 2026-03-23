@@ -680,7 +680,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '2px solid var(--gray-mid)',
     borderRadius: 'var(--radius-lg)',
     cursor: 'pointer',
-    transition: 'border-color 0.15s, box-shadow 0.15s',
+    transition: 'transform 0.2s, border-color 0.15s, box-shadow 0.2s',
     minWidth: '120px',
   },
   quickActionIcon: {
