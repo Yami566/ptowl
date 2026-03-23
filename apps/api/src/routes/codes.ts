@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
 import { requireAuth, requireCSRF, requireClinic } from '../middleware/auth.js';
+import { sendPatientCode } from '../services/email.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string; user_type?: string } | null;
@@ -71,9 +72,35 @@ codeRoutes.post('/:scheduleId', async (c) => {
     'SELECT created_at, expires_at FROM patient_codes WHERE id = ?',
   ).bind(id).first<{ created_at: string; expires_at: string }>();
 
+  // If patient email provided, send the code via email
+  let emailSent = false;
+  try {
+    const body = await c.req.json().catch(() => ({}));
+    const patientEmail = (body as { patientEmail?: string }).patientEmail;
+    if (patientEmail && typeof patientEmail === 'string' && patientEmail.includes('@')) {
+      // Get clinic name for the email
+      const profile = await c.env.DB.prepare(
+        'SELECT clinic_name FROM profiles WHERE user_id = ?',
+      ).bind(user.id).first<{ clinic_name: string }>();
+      const clinicName = profile?.clinic_name || '';
+
+      emailSent = await sendPatientCode(
+        c.env.EMAIL_API_KEY,
+        patientEmail,
+        code,
+        clinicName,
+      );
+    }
+  } catch { /* email is optional, never fail the code generation */ }
+
   return c.json({
     ok: true,
-    data: { id, code, schedule_id: scheduleId, created_at: created?.created_at ?? new Date().toISOString(), expires_at: created?.expires_at ?? null },
+    data: {
+      id, code, schedule_id: scheduleId,
+      created_at: created?.created_at ?? new Date().toISOString(),
+      expires_at: created?.expires_at ?? null,
+      email_sent: emailSent,
+    },
   });
 });
 

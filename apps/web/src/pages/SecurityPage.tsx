@@ -228,6 +228,35 @@ export function SecurityPage() {
           </section>
 
           <section style={styles.section}>
+            <h2 style={styles.h2}>Compliance Posture</h2>
+            <p style={styles.text}>
+              Patient Owl's architecture is designed to avoid storing Protected Health Information (PHI).
+              Our proprietary de-identification methodology replaces patient names with two-letter
+              initials mapped to sports figure aliases, ensuring that even if our database were
+              compromised, no patient-identifying information would be exposed.
+            </p>
+            <div style={styles.infoBox}>
+              <p style={styles.text}><strong>Infrastructure certifications:</strong></p>
+              <ul style={styles.list}>
+                <li><strong>Cloudflare</strong> (hosting + database): SOC 2 Type II, ISO 27001, PCI DSS Level 1</li>
+                <li><strong>Firebase / Google Cloud</strong> (authentication): SOC 2, SOC 3, ISO 27001, ISO 27017, ISO 27018</li>
+              </ul>
+              <p style={styles.text}><strong>Data protection:</strong></p>
+              <ul style={styles.list}>
+                <li>Encryption in transit: TLS 1.3 (all connections)</li>
+                <li>Encryption at rest: AES-256 (Cloudflare D1)</li>
+                <li>Audit logging: 6-year retention (meets HIPAA record-keeping requirements)</li>
+                <li>De-identification: Proprietary sports alias methodology</li>
+              </ul>
+              <p style={styles.text}>
+                <strong>Important:</strong> Patient Owl is not a HIPAA-covered entity and does not offer
+                Business Associate Agreements (BAAs). Healthcare providers are responsible for evaluating
+                whether Patient Owl is appropriate for their specific compliance requirements.
+              </p>
+            </div>
+          </section>
+
+          <section style={styles.section}>
             <h2 style={styles.h2}>Questions?</h2>
             <p style={styles.contactBlock}>
               For security questions or to report a concern, contact us at{' '}

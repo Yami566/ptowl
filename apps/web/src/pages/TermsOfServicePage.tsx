@@ -163,7 +163,42 @@ export function TermsOfServicePage() {
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>10. Limitation of Liability</h2>
+            <h2 style={styles.h2}>10. Healthcare Provider Responsibilities</h2>
+            <p style={styles.text}>
+              If you are a healthcare provider using Patient Owl, you acknowledge and agree that:
+            </p>
+            <ul style={styles.list}>
+              <li>You will <strong>not enter Protected Health Information (PHI)</strong> into any text field,
+                  including but not limited to patient names, medical record numbers, Social Security numbers,
+                  or clinical notes containing diagnoses or treatment details.</li>
+              <li>You are solely responsible for your own compliance with HIPAA, state privacy laws,
+                  and applicable professional licensing requirements.</li>
+              <li>Patient Owl is a scheduling tool and does not constitute a Business Associate as defined
+                  under HIPAA. No Business Associate Agreement (BAA) is required or offered.</li>
+              <li>The de-identification methodology used by Patient Owl (two-letter initials mapped to
+                  sports figure aliases) is your responsibility to evaluate for suitability in your practice.</li>
+              <li>Any notes entered into schedule text fields are <strong>unencrypted</strong> and should not
+                  contain personally identifiable information.</li>
+            </ul>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>11. Indemnification</h2>
+            <p style={styles.text}>
+              You agree to indemnify, defend, and hold harmless Moose Bay &amp; Company LLC, its officers,
+              directors, employees, and agents from and against any claims, damages, losses, liabilities,
+              costs, or expenses (including reasonable attorneys' fees) arising from:
+            </p>
+            <ul style={styles.list}>
+              <li>Your use of the Service in violation of these Terms;</li>
+              <li>Your entry of Protected Health Information or other regulated data into the Service;</li>
+              <li>Your violation of any applicable law, regulation, or third-party rights;</li>
+              <li>Any claim by a patient or third party arising from your use of the Service.</li>
+            </ul>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>12. Limitation of Liability</h2>
             <p style={styles.text}>
               To the maximum extent permitted by law, Moose Bay &amp; Company LLC and its officers, directors,
               employees, and agents shall not be liable for any indirect, incidental, special,
@@ -174,7 +209,7 @@ export function TermsOfServicePage() {
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>11. Governing Law</h2>
+            <h2 style={styles.h2}>13. Governing Law</h2>
             <p style={styles.text}>
               These Terms of Service are governed by and construed in accordance with the laws
               of the Commonwealth of Virginia, United States of America, without regard to its
@@ -184,7 +219,7 @@ export function TermsOfServicePage() {
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>12. Contact</h2>
+            <h2 style={styles.h2}>14. Contact</h2>
             <p style={styles.text}>
               Questions or concerns about these terms? Reach out -- we do not bite (the owl might,
               but we will keep it under control).

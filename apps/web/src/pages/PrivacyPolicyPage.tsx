@@ -181,7 +181,36 @@ export function PrivacyPolicyPage() {
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>9. Changes to This Policy</h2>
+            <h2 style={styles.h2}>9. Medical Information Disclaimer</h2>
+            <p style={styles.text}>
+              Patient Owl is a <strong>scheduling and organizational tool</strong>. It is not a medical
+              device, electronic health record (EHR), clinical decision support system, or
+              HIPAA-covered entity. We do not provide medical advice, diagnoses, or treatment recommendations.
+            </p>
+            <p style={styles.text}>
+              Our platform is architecturally designed so that Protected Health Information (PHI)
+              is never stored, processed, or transmitted through our systems. Patient names are
+              replaced with two-letter initials mapped to sports figure aliases through our
+              proprietary de-identification methodology. Schedule dates and appointment times,
+              when separated from patient identifiers, do not constitute PHI under HIPAA's
+              Safe Harbor de-identification standard (45 CFR §164.514(b)(2)).
+            </p>
+            <p style={styles.text}>
+              Healthcare providers using Patient Owl remain solely responsible for their own
+              regulatory compliance, including but not limited to HIPAA, state privacy laws,
+              and professional licensing requirements. Patient Owl makes no guarantees,
+              representations, or warranties regarding regulatory compliance.
+            </p>
+            <p style={styles.text}>
+              If you believe that Protected Health Information has been inadvertently entered
+              into any Patient Owl text field, please contact us immediately at{' '}
+              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>help@ptowl.com</a>{' '}
+              for prompt removal. We will process PHI removal requests within 24 hours.
+            </p>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>10. Changes to This Policy</h2>
             <p style={styles.text}>
               We may update this privacy policy from time to time. When we do, we will update the
               "Last updated" date at the top of this page. Continued use of Patient Owl after
@@ -190,7 +219,7 @@ export function PrivacyPolicyPage() {
           </section>
 
           <section style={styles.section}>
-            <h2 style={styles.h2}>10. Contact Us</h2>
+            <h2 style={styles.h2}>11. Contact Us</h2>
             <p style={styles.text}>
               Questions about this privacy policy? We are happy to help.
             </p>

@@ -188,6 +188,55 @@ export async function sendAdminVerificationCode(
   await sendEmail(apiKey, { to: adminEmail, subject, html });
 }
 
+/**
+ * Send a patient code via email so the patient can link their schedule.
+ * Includes both the code and a direct link.
+ */
+export async function sendPatientCode(
+  apiKey: string,
+  patientEmail: string,
+  code: string,
+  clinicName: string,
+): Promise<boolean> {
+  if (!apiKey) {
+    console.warn('EMAIL_API_KEY not set — skipping patient code email');
+    return false;
+  }
+
+  const linkCode = code.replace('PTOWL-', '');
+  const subject = `Your PT schedule is ready — ${clinicName || 'Patient Owl'}`;
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
+      <h2 style="color: #1B5E20; margin-bottom: 1rem;">Your Schedule is Ready! 🦉</h2>
+      <p style="color: #333; line-height: 1.6;">
+        ${escapeHtml(clinicName || 'Your PT clinic')} has shared a schedule with you on Patient Owl.
+      </p>
+      <p style="color: #333; line-height: 1.6;">
+        <strong>Option 1:</strong> Click the button below to view your schedule instantly:
+      </p>
+      <a href="https://ptowl.com/link/${escapeHtml(linkCode)}"
+         style="display: inline-block; margin: 1rem 0; padding: 0.875rem 2rem; background: #4CAF50; color: white; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 1.05rem;">
+        View My Schedule
+      </a>
+      <p style="color: #333; line-height: 1.6;">
+        <strong>Option 2:</strong> Go to <a href="https://ptowl.com" style="color: #4CAF50;">ptowl.com</a>,
+        sign up as a patient, and enter this code:
+      </p>
+      <div style="margin: 1rem 0; padding: 1rem; background: #F5F5F5; border-radius: 8px; text-align: center;">
+        <span style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 1.75rem; font-weight: 700; letter-spacing: 0.15rem; color: #1B5E20;">
+          ${escapeHtml(code)}
+        </span>
+      </div>
+      <p style="color: #999; font-size: 0.8rem; margin-top: 2rem;">
+        This code expires in 7 days.
+        <br/>Sent by Patient Owl &middot; <a href="https://ptowl.com" style="color: #999;">ptowl.com</a>
+      </p>
+    </div>
+  `;
+
+  return sendEmail(apiKey, { to: patientEmail, subject, html });
+}
+
 /** Basic HTML entity escaping to prevent injection in email templates */
 function escapeHtml(str: string): string {
   return str

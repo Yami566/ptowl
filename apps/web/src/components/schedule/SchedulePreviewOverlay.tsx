@@ -64,6 +64,8 @@ export function SchedulePreviewOverlay({
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [patientCode, setPatientCode] = useState<string | null>(null);
   const [codeLoading, setCodeLoading] = useState(false);
+  const [patientEmail, setPatientEmail] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
   const trapRef = useFocusTrap(true);
 
   // Lock body scroll
@@ -144,15 +146,26 @@ export function SchedulePreviewOverlay({
     if (patientCode) return;
     setCodeLoading(true);
     try {
-      const result = await apiRequest<{ code: string }>(`/codes/${schedule.id}`, { method: 'POST' });
+      const body: Record<string, string> = {};
+      if (patientEmail && patientEmail.includes('@')) {
+        body.patientEmail = patientEmail;
+      }
+      const result = await apiRequest<{ code: string; email_sent?: boolean }>(`/codes/${schedule.id}`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
       if (result.ok && result.data) {
         setPatientCode(result.data.code);
+        if (result.data.email_sent) {
+          setEmailSent(true);
+          toast.success(`Code sent to ${patientEmail}`);
+        }
       }
     } catch {
       toast.error('Failed to generate code');
     }
     setCodeLoading(false);
-  }, [schedule.id, patientCode]);
+  }, [schedule.id, patientCode, patientEmail]);
 
   const handleCopyCode = useCallback(async () => {
     if (!patientCode) return;
@@ -450,13 +463,32 @@ export function SchedulePreviewOverlay({
               <strong style={{ fontSize: '0.8125rem', color: 'var(--dark)' }}>Patient Portal Code</strong>
               <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', margin: '0.25rem 0 0.75rem', lineHeight: 1.4 }}>
                 Give this code to your patient so they can view their schedule.
+                {!patientCode && ' Optionally enter their email to send it automatically.'}
               </p>
+              {!patientCode && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <input
+                    type="email"
+                    value={patientEmail}
+                    onChange={(e) => setPatientEmail(e.target.value)}
+                    placeholder="Patient email (optional)"
+                    style={{ width: '100%', padding: '0.5rem', fontSize: '0.8125rem', border: '1px solid var(--gray-mid)', borderRadius: 'var(--radius)', outline: 'none' }}
+                  />
+                </div>
+              )}
               {patientCode ? (
-                <div style={s.shareLinkRow}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--green-dark)', letterSpacing: '0.05em' }}>
-                    {patientCode}
-                  </span>
-                  <button style={s.copyBtn} onClick={handleCopyCode}>Copy</button>
+                <div>
+                  <div style={s.shareLinkRow}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, color: 'var(--green-dark)', letterSpacing: '0.05em' }}>
+                      {patientCode}
+                    </span>
+                    <button style={s.copyBtn} onClick={handleCopyCode}>Copy</button>
+                  </div>
+                  {emailSent && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--green-mid)', marginTop: '0.5rem' }}>
+                      Sent to {patientEmail}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <button
