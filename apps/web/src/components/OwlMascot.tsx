@@ -143,6 +143,19 @@ export function OwlMascot() {
   const dailyTip = useMemo(() => getDailyTip(), []);
   const isNight = hour >= 20 || hour < 6;
 
+  // Sun/Moon arc progress (0 = horizon left, 0.5 = peak, 1 = horizon right)
+  // Sun: 6am (rise) → 1pm (peak) → 8pm (set)
+  // Moon: 8pm (rise) → 1am (peak) → 6am (set)
+  const sunProgress = useMemo(() => {
+    if (hour >= 6 && hour < 20) return (hour - 6) / 14; // 0.0 at 6am, 1.0 at 8pm
+    return -1; // below horizon
+  }, [hour]);
+  const moonProgress = useMemo(() => {
+    if (hour >= 20) return (hour - 20) / 10; // 0.0 at 8pm
+    if (hour < 6) return (hour + 4) / 10;    // continues to 1.0 at 6am
+    return -1; // below horizon
+  }, [hour]);
+
   // Update clock
   useEffect(() => {
     const interval = setInterval(() => setTime(getTimeString()), 30000);
@@ -209,8 +222,21 @@ export function OwlMascot() {
           <span className="owl-star owl-star-7" />
         </div>
 
-        {/* Moon */}
-        {isNight && <div className="owl-moon" />}
+        {/* Sun — arcs across sky during day */}
+        {sunProgress >= 0 && (
+          <div
+            className="owl-sun"
+            style={{ '--sky-progress': sunProgress } as React.CSSProperties}
+          />
+        )}
+
+        {/* Moon — arcs across sky at night */}
+        {moonProgress >= 0 && (
+          <div
+            className="owl-moon"
+            style={{ '--sky-progress': moonProgress } as React.CSSProperties}
+          />
+        )}
 
         {/* Fog layer */}
         <div className="owl-fog" />

@@ -379,21 +379,55 @@ button:disabled {
   50% { opacity: 1; transform: scale(1.5); }
 }
 
-/* Moon — pale glow */
-.owl-moon {
+/* Sun/Moon — arc across the sky based on --sky-progress (0=left horizon, 0.5=peak, 1=right horizon) */
+/* Parabolic arc: highest at progress=0.5, lowest at 0 and 1 */
+/* top = base - (1 - 4*(p-0.5)^2) * height */
+
+.owl-sun, .owl-moon {
   position: absolute;
-  top: 5%;
-  right: 12%;
-  width: 30px; height: 30px;
-  background: radial-gradient(circle, #F5E6C8 40%, transparent 70%);
   border-radius: 50%;
-  box-shadow: 0 0 20px rgba(245,230,200,0.3), 0 0 40px rgba(245,230,200,0.1);
-  animation: moonGlow 4s ease-in-out infinite;
   z-index: 0;
+  /* Horizontal: 5% to 85% of container width */
+  left: calc(var(--sky-progress) * 80% + 5%);
+  /* Vertical arc: quadratic approximation — peak at 50% progress */
+  /* At p=0: top=65%, at p=0.5: top=5%, at p=1: top=65% */
+  top: calc(65% - var(--sky-progress) * (1 - var(--sky-progress)) * 240%);
+  transition: left 30s linear, top 30s linear;
+  pointer-events: none;
+}
+
+/* Sun — warm golden orb with rays */
+.owl-sun {
+  width: 28px; height: 28px;
+  background: radial-gradient(circle, #FFD700 30%, #FFA500 60%, transparent 70%);
+  box-shadow: 0 0 16px rgba(255,215,0,0.5), 0 0 40px rgba(255,165,0,0.2);
+  animation: sunPulse 3s ease-in-out infinite;
+}
+@keyframes sunPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(255,215,0,0.5), 0 0 40px rgba(255,165,0,0.2); transform: scale(1); }
+  50% { box-shadow: 0 0 24px rgba(255,215,0,0.7), 0 0 50px rgba(255,165,0,0.3); transform: scale(1.08); }
+}
+
+/* Moon — pale crescent with glow */
+.owl-moon {
+  width: 24px; height: 24px;
+  background: radial-gradient(circle at 35% 40%, #F5E6C8 40%, transparent 70%);
+  box-shadow: 0 0 14px rgba(245,230,200,0.4), 0 0 30px rgba(245,230,200,0.15);
+  animation: moonGlow 4s ease-in-out infinite;
+}
+/* Crescent shadow — makes it look like a crescent moon */
+.owl-moon::after {
+  content: '';
+  position: absolute;
+  top: -3px; left: 5px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #0F0A1A;
+  opacity: 0.7;
 }
 @keyframes moonGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(245,230,200,0.3); }
-  50% { box-shadow: 0 0 30px rgba(245,230,200,0.5), 0 0 60px rgba(245,230,200,0.15); }
+  0%, 100% { box-shadow: 0 0 14px rgba(245,230,200,0.4); }
+  50% { box-shadow: 0 0 24px rgba(245,230,200,0.6), 0 0 50px rgba(245,230,200,0.2); }
 }
 
 /* Fog — drifting mist */
