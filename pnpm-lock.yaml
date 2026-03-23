@@ -90,6 +90,12 @@ importers:
       firebase:
         specifier: ^12.10.0
         version: 12.10.0
+      howler:
+        specifier: ^2.2.4
+        version: 2.2.4
+      lottie-react:
+        specifier: ^2.4.1
+        version: 2.4.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       onesignal-cordova-plugin:
         specifier: ^5.3.5
         version: 5.3.5
@@ -124,6 +130,9 @@ importers:
       '@types/canvas-confetti':
         specifier: ^1.9.0
         version: 1.9.0
+      '@types/howler':
+        specifier: ^2.2.12
+        version: 2.2.12
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
@@ -1692,6 +1701,9 @@ packages:
   '@types/fs-extra@8.1.5':
     resolution: {integrity: sha512-0dzKcwO+S8s2kuF5Z9oUWatQJj5Uq/iqphEtE3GQJVRRYm/tD1LglU2UnXi2A8jLq5umkGouOXOR9y0n613ZwQ==}
 
+  '@types/howler@2.2.12':
+    resolution: {integrity: sha512-hy769UICzOSdK0Kn1FBk4gN+lswcj1EKRkmiDtMkUGvFfYJzgaDXmVXkSShS2m89ERAatGIPnTUlp2HhfkVo5g==}
+
   '@types/node@25.4.0':
     resolution: {integrity: sha512-9wLpoeWuBlcbBpOY3XmzSTG3oscB6xjBEEtn+pYXTfhyXhIxC5FsBer2KTopBlvKEiW9l13po9fq+SJY/5lkhw==}
 
@@ -2090,6 +2102,9 @@ packages:
     resolution: {integrity: sha512-3qq+FUBtlTHhtYxbxheZgY8NIFnkkC/MR8u5TTsr7YZ3wixryQ3cCwn3iZbg8p8B88iDBBAYSfZDS75t8MN7Vg==}
     engines: {node: '>=16.9.0'}
 
+  howler@2.2.4:
+    resolution: {integrity: sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w==}
+
   html-encoding-sniffer@6.0.0:
     resolution: {integrity: sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
@@ -2182,6 +2197,15 @@ packages:
 
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
+  lottie-react@2.4.1:
+    resolution: {integrity: sha512-LQrH7jlkigIIv++wIyrOYFLHSKQpEY4zehPicL9bQsrt1rnoKRYCYgpCUe5maqylNtacy58/sQDZTkwMcTRxZw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  lottie-web@5.13.0:
+    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -4273,6 +4297,8 @@ snapshots:
     dependencies:
       '@types/node': 25.4.0
 
+  '@types/howler@2.2.12': {}
+
   '@types/node@25.4.0':
     dependencies:
       undici-types: 7.18.2
@@ -4722,6 +4748,8 @@ snapshots:
 
   hono@4.12.5: {}
 
+  howler@2.2.4: {}
+
   html-encoding-sniffer@6.0.0(@noble/hashes@2.0.1):
     dependencies:
       '@exodus/bytes': 1.15.0(@noble/hashes@2.0.1)
@@ -4815,6 +4843,14 @@ snapshots:
   lodash.camelcase@4.3.0: {}
 
   long@5.3.2: {}
+
+  lottie-react@2.4.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      lottie-web: 5.13.0
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  lottie-web@5.13.0: {}
 
   loupe@3.2.1: {}
 

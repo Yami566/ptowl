@@ -351,6 +351,98 @@ button:disabled {
   100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
 }
 
+/* ==========================================================================
+   OWL MASCOT ANIMATIONS — interactive owl on branch
+   ========================================================================== */
+
+/* Branch slides in from left */
+.owl-branch-enter {
+  animation: branchSlideIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes branchSlideIn {
+  from { transform: translateX(-60%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Sleeping owl gentle bob */
+.owl-sleeping {
+  animation: owlSleepBob 3s ease-in-out infinite;
+}
+
+@keyframes owlSleepBob {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(-3deg) translateY(2px); }
+}
+
+/* Disturbed owl shake */
+.owl-disturbed {
+  animation: owlShake 0.4s ease-in-out;
+}
+
+@keyframes owlShake {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  20% { transform: translateX(-50%) rotate(-8deg) scale(1.05); }
+  40% { transform: translateX(-50%) rotate(8deg) scale(1.1); }
+  60% { transform: translateX(-50%) rotate(-5deg) scale(1.05); }
+  80% { transform: translateX(-50%) rotate(3deg); }
+}
+
+/* Zzz floating animation */
+.owl-zzz {
+  animation: zzzFloat 2s ease-in-out infinite;
+}
+.owl-zzz-2 {
+  animation: zzzFloat 2s ease-in-out infinite 0.5s;
+}
+
+@keyframes zzzFloat {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 0.7; transform: translateY(-4px); }
+}
+
+/* Ear tufts ruffle when disturbed */
+.owl-disturbed .owl-ear-left {
+  animation: earRuffleLeft 0.3s ease-in-out 2;
+}
+.owl-disturbed .owl-ear-right {
+  animation: earRuffleRight 0.3s ease-in-out 2;
+}
+
+@keyframes earRuffleLeft {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg) translateY(-2px); }
+}
+@keyframes earRuffleRight {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg) translateY(-2px); }
+}
+
+/* Tip card entrance */
+.owl-tip-enter {
+  animation: tipSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+}
+
+@keyframes tipSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Owl hover — slight lift */
+.owl-mascot:hover {
+  transform: translateX(-50%) translateY(-3px) !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .owl-branch-enter,
+  .owl-sleeping,
+  .owl-disturbed,
+  .owl-zzz,
+  .owl-zzz-2,
+  .owl-tip-enter { animation: none !important; opacity: 1; }
+}
+
 /* Responsive breakpoints */
 @media (max-width: 768px) {
   html {
