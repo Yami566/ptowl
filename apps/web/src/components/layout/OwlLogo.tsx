@@ -110,31 +110,69 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
           }}
         >O</span>
 
-        {/* WL — green */}
+        {/* W — green */}
         <span style={{
           fontFamily: 'var(--font-mono)',
           fontSize,
           fontWeight: 700,
           color: 'var(--green-dark)',
-        }}>WL</span>
+        }}>W</span>
 
-        {/* Original v1.0 owl badge — inline next to text */}
-        <img
-          src="/logo-120.svg"
-          alt=""
-          className="owl-on-L"
-          onClick={handleOwlClick}
-          role="button"
-          aria-label="Click the owl for a surprise!"
-          tabIndex={0}
-          style={{
-            width: size === 'lg' ? '70px' : size === 'sm' ? '35px' : '50px',
-            height: 'auto',
-            marginLeft: size === 'lg' ? '0.4em' : '0.25em',
-            cursor: 'pointer',
-            verticalAlign: 'middle',
-          }}
-        />
+        {/* L — with owl perched on horizontal bar */}
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize,
+          fontWeight: 700,
+          color: 'var(--green-dark)',
+          position: 'relative' as const,
+          display: 'inline-block',
+        }}>
+          L
+          {/* Owl character (no circle) perched centered on L bar */}
+          <span
+            className="owl-on-L"
+            onClick={handleOwlClick}
+            role="button"
+            aria-label="Click the owl for a surprise!"
+            tabIndex={0}
+            style={{
+              position: 'absolute' as const,
+              left: '50%',
+              bottom: '80%',
+              transform: 'translateX(-50%)',
+              cursor: 'pointer',
+              display: 'inline-block',
+              lineHeight: 0,
+            }}
+          >
+            <svg viewBox="0 0 60 58" style={{ height: '1em', width: 'auto' }}>
+              {/* Owl body */}
+              <ellipse cx="30" cy="28" rx="18" ry="20" fill="#E8F5E9" opacity="0.95" />
+              {/* Ear tufts */}
+              <polygon points="15,12 18,2 23,14" fill="#E8F5E9" opacity="0.9" />
+              <polygon points="45,12 42,2 37,14" fill="#E8F5E9" opacity="0.9" />
+              {/* Left eye */}
+              <circle cx="23" cy="22" r="7" fill="white" stroke="#1B5E20" strokeWidth="1.2" />
+              <circle cx="24" cy="21" r="4" fill="#1B5E20" />
+              <circle cx="25.5" cy="19.5" r="1.5" fill="white" />
+              {/* Right eye */}
+              <circle cx="37" cy="22" r="7" fill="white" stroke="#1B5E20" strokeWidth="1.2" />
+              <circle cx="38" cy="21" r="4" fill="#1B5E20" />
+              <circle cx="39.5" cy="19.5" r="1.5" fill="white" />
+              {/* Beak */}
+              <polygon points="30,27 27,33 33,33" fill="#FF7043" />
+              {/* Chest */}
+              <ellipse cx="30" cy="38" rx="10" ry="8" fill="#C8E6C9" opacity="0.5" />
+              {/* Feet gripping the L bar */}
+              <path d="M24,47 Q21,52 18,53" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M26,47 Q26,52 26,54" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M28,47 Q31,52 34,53" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M34,47 Q31,52 28,53" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M36,47 Q36,52 36,54" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M38,47 Q41,52 44,53" fill="none" stroke="#FF7043" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </span>
+        </span>
       </span>
 
       {/* Subtitle */}
