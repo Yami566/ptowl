@@ -132,7 +132,12 @@ function playHoot() {
   } catch { /* Audio not supported */ }
 }
 
-export function OwlMascot() {
+interface OwlMascotProps {
+  embedded?: boolean;  // When true, skip scene wrapper (OwlScene provides it)
+  showTip?: boolean;   // Show daily tip card
+}
+
+export function OwlMascot({ embedded = false, showTip = true }: OwlMascotProps) {
   const { state: owlState, hour } = useMemo(() => getOwlState(), []);
   const palette = useMemo(() => getDailyPalette(), []);
   const [time, setTime] = useState(getTimeString);
@@ -206,42 +211,8 @@ export function OwlMascot() {
 
   const exerciseClass = exercise ? `owl-exercise-${exercise}` : '';
 
-  return (
-    <div style={styles.container}>
-      {/* Scene with moon, stars, fog */}
-      <div style={{ ...styles.scene, background: isNight ? 'radial-gradient(ellipse at 70% 20%, rgba(245,230,200,0.08) 0%, transparent 60%)' : undefined }}>
-
-        {/* Stars (visible in both modes, brighter at night) */}
-        <div className="owl-stars" style={{ opacity: isNight ? 0.9 : 0.3 }}>
-          <span className="owl-star owl-star-1" />
-          <span className="owl-star owl-star-2" />
-          <span className="owl-star owl-star-3" />
-          <span className="owl-star owl-star-4" />
-          <span className="owl-star owl-star-5" />
-          <span className="owl-star owl-star-6" />
-          <span className="owl-star owl-star-7" />
-        </div>
-
-        {/* Sun — arcs across sky during day */}
-        {sunProgress >= 0 && (
-          <div
-            className="owl-sun"
-            style={{ '--sky-progress': sunProgress } as React.CSSProperties}
-          />
-        )}
-
-        {/* Moon — arcs across sky at night */}
-        {moonProgress >= 0 && (
-          <div
-            className="owl-moon"
-            style={{ '--sky-progress': moonProgress } as React.CSSProperties}
-          />
-        )}
-
-        {/* Fog layer */}
-        <div className="owl-fog" />
-
-        {/* Branch + Owl */}
+  // Branch + Owl core (shared between embedded and standalone)
+  const branchAndOwl = (
         <div style={styles.branchWrap} className="owl-branch-enter">
           <svg viewBox="0 0 300 50" style={styles.branch} className="owl-branch-sway">
             {/* Gnarled main branch — Coraline twisted style */}
@@ -352,42 +323,74 @@ export function OwlMascot() {
           </div>
         </div>
 
-        {/* Time display */}
-        <div style={styles.timeWrap}>
-          <span style={styles.timeText}>{time}</span>
-          <span style={styles.timeState}>
-            {exercise && !disturbed && '(stretching...)'}
-            {!exercise && owlState === 'sleeping' && '(the owl is napping)'}
-            {!exercise && owlState === 'sleepy' && '(the owl is drowsy)'}
-            {!exercise && owlState === 'awake' && !disturbed && '(the owl is wide awake)'}
-            {disturbed && owlState === 'sleeping' && '(hey! I was sleeping!)'}
-            {disturbed && owlState === 'awake' && '(hoo hoo!)'}
-          </span>
-        </div>
-      </div>
+  );
 
-      {/* Daily PT Tip — Owl Messenger */}
+  const timeDisplay = (
+    <div style={styles.timeWrap}>
+      <span style={styles.timeText}>{time}</span>
+      <span style={styles.timeState}>
+        {exercise && !disturbed && '(stretching...)'}
+        {!exercise && owlState === 'sleeping' && '(the owl is napping)'}
+        {!exercise && owlState === 'sleepy' && '(the owl is drowsy)'}
+        {!exercise && owlState === 'awake' && !disturbed && '(the owl is wide awake)'}
+        {disturbed && owlState === 'sleeping' && '(hey! I was sleeping!)'}
+        {disturbed && owlState === 'awake' && '(hoo hoo!)'}
+      </span>
+    </div>
+  );
+
+  // When embedded in OwlScene, just return the branch + owl (no scene wrapper)
+  if (embedded) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '0.5rem' }}>
+        {branchAndOwl}
+        {timeDisplay}
+        {showTip && (
+          <div style={styles.tipWrap} className="owl-tip-enter">
+            <div style={styles.tipEnvelope}>&#128220;</div>
+            <div style={styles.tipContent}>
+              <span style={styles.tipLabel}>The owl delivers...</span>
+              <p style={styles.tipText}>{dailyTip.tip}</p>
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(dailyTip.search)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.tipLink}
+              >
+                Learn more &rarr;
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Standalone mode (fallback, includes own scene wrapper)
+  return (
+    <div style={styles.container}>
+      <div style={styles.scene}>
+        <div className="owl-stars" style={{ opacity: isNight ? 0.9 : 0.3 }}>
+          <span className="owl-star owl-star-1" />
+          <span className="owl-star owl-star-2" />
+          <span className="owl-star owl-star-3" />
+        </div>
+        {sunProgress >= 0 && <div className="owl-sun" style={{ '--sky-progress': sunProgress } as React.CSSProperties} />}
+        {moonProgress >= 0 && <div className="owl-moon" style={{ '--sky-progress': moonProgress } as React.CSSProperties} />}
+        <div className="owl-fog" />
+        {branchAndOwl}
+        {timeDisplay}
+      </div>
       <div style={styles.tipWrap} className="owl-tip-enter">
         <div style={styles.tipEnvelope}>&#128220;</div>
         <div style={styles.tipContent}>
           <span style={styles.tipLabel}>The owl delivers...</span>
           <p style={styles.tipText}>{dailyTip.tip}</p>
-          <a
-            href={`https://www.google.com/search?q=${encodeURIComponent(dailyTip.search)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={styles.tipLink}
-          >
+          <a href={`https://www.google.com/search?q=${encodeURIComponent(dailyTip.search)}`} target="_blank" rel="noopener noreferrer" style={styles.tipLink}>
             Learn more &rarr;
           </a>
         </div>
       </div>
-
-      {isNight && (
-        <div style={styles.nightBadge}>
-          <span>&#127769;</span> Night mode
-        </div>
-      )}
     </div>
   );
 }

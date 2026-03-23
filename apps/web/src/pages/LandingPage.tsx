@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
-import { OwlMascot } from '../components/OwlMascot.js';
+import { OwlScene } from '../components/OwlScene.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { apiRequest } from '../api/client.js';
@@ -255,7 +255,7 @@ export function LandingPage() {
     <main style={styles.page}>
       {/* Hero */}
       <section style={styles.hero} className="landing-fade-in landing-hero">
-        <OwlMascot />
+        <OwlScene size="hero" />
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <OwlLogo size="lg" linkTo="/" />
           {alienActive && (

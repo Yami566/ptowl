@@ -18,6 +18,7 @@ import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
 import { generateScheduleWithRRule } from '@ptowl/shared';
 import type { Template, Schedule, GeneratedAppointment } from '@ptowl/shared';
 import { useOwlReaction } from '../hooks/useOwlReaction.js';
+import { OwlScene } from '../components/OwlScene.js';
 
 interface EditorData {
   initials: string;
@@ -362,6 +363,7 @@ export function DashboardPage() {
   return (
     <PageLayout>
     <div style={styles.page}>
+      <OwlScene size="banner" />
       <header style={styles.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/" />
         <div style={styles.headerRight} className="ptowl-header-actions">
