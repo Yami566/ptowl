@@ -220,7 +220,7 @@ authRoutes.post('/firebase', async (c) => {
       secure: isProduction,
       sameSite: isProduction ? 'Strict' : 'Lax',
       path: '/',
-      ...(rememberMe ? { maxAge: SESSION_MAX_AGE } : {}),
+      maxAge: SESSION_MAX_AGE, // Always persist for 14 days (auto-login on return)
     });
 
     // Load profile

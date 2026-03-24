@@ -431,35 +431,16 @@ export function SchedulePreviewOverlay({
           )}
         </div>
 
-        {/* ── Share Panel ── */}
-        {showSharePanel && shareUrl && (
+        {/* ── Share Panel (simplified — patient code only) ── */}
+        {showSharePanel && (
           <div style={s.sharePanel}>
             <div style={s.sharePanelHeader}>
               <strong style={s.sharePanelTitle}>Share with Patient</strong>
               <button style={s.sharePanelClose} onClick={() => setShowSharePanel(false)}>&times;</button>
             </div>
-            <p style={s.shareText}>
-              Patient can open this link on their phone to add all appointments to their calendar automatically.
-            </p>
-            <div style={s.shareQRWrap}>
-              <QRCodeSVG value={shareUrl} size={160} level="M" />
-            </div>
-            <div style={s.shareLinkRow}>
-              <input
-                type="text"
-                readOnly
-                value={shareUrl}
-                style={s.shareLinkInput}
-                aria-label="Calendar share URL"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <button style={s.copyBtn} onClick={handleCopyLink}>
-                Copy
-              </button>
-            </div>
 
             {/* Patient code sharing */}
-            <div style={{ borderTop: '1px solid var(--gray-mid)', marginTop: '1rem', paddingTop: '1rem' }}>
+            <div>
               <strong style={{ fontSize: '0.8125rem', color: 'var(--dark)' }}>Patient Portal Code</strong>
               <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', margin: '0.25rem 0 0.75rem', lineHeight: 1.4 }}>
                 Give this code to your patient so they can view their schedule.
@@ -517,8 +498,8 @@ export function SchedulePreviewOverlay({
             </button>
           ) : (
             <>
-              <button style={s.shareBtn} onClick={handleShare} disabled={shareLoading}>
-                {shareLoading ? 'Generating...' : 'Share'}
+              <button style={s.shareBtn} onClick={() => setShowSharePanel(true)}>
+                Share
               </button>
               <button style={s.printPreviewBtn} onClick={() => setPrintPreview(true)}>
                 Print Preview
