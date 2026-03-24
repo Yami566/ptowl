@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
-// OwlMascot removed — back to simple static logo
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { apiRequest } from '../api/client.js';

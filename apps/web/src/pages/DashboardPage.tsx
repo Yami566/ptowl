@@ -18,7 +18,6 @@ import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
 import { generateScheduleWithRRule } from '@ptowl/shared';
 import type { Template, Schedule, GeneratedAppointment } from '@ptowl/shared';
 import { useOwlReaction } from '../hooks/useOwlReaction.js';
-// OwlScene removed — keeping dashboard clean
 
 interface EditorData {
   initials: string;
