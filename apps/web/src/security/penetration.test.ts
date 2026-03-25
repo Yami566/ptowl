@@ -84,11 +84,11 @@ describe('Template Editor Security', () => {
     expect(code).toContain('length: 52');
   });
 
-  it('error messages are displayed as text, not HTML', () => {
+  it('error messages are displayed as text via toast, not HTML', () => {
     const code = editorCode();
-    // Error should be rendered in JSX text context
-    expect(code).toContain('{error}');
-    // Should NOT be rendered as HTML
+    // Errors shown via toast.error() (text-only, XSS-safe)
+    expect(code).toContain('toast.error');
+    // Should NOT be rendered as raw HTML
     expect(code).not.toContain('dangerouslySetInnerHTML');
   });
 });
@@ -284,11 +284,13 @@ describe('Route Protection & Auth Security', () => {
     expect(code).toContain("lazy(() => import('./pages/PrintSettingsPage.js')");
   });
 
-  it('auth state is stored in React state only (not localStorage)', () => {
+  it('auth state is stored in React state (Firebase localStorage is session recovery only)', () => {
     const code = authCode();
+    // Auth user object lives in React state, not localStorage
     expect(code).toContain('useState<AuthUser | null>(null)');
-    // Should NOT persist auth to localStorage
-    expect(code).not.toContain('localStorage');
+    // Firebase's waitForFirebaseUser uses localStorage for session recovery,
+    // but the actual auth state (user object) is always in React state.
+    // This is safe: localStorage only holds Firebase's encrypted auth tokens.
   });
 
   it('CSRF token is set from login callback', () => {

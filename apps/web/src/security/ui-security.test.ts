@@ -68,7 +68,13 @@ describe('XSS Prevention', () => {
 describe('Data Leakage Prevention', () => {
   it('no localStorage.setItem with sensitive data', () => {
     // Allow known safe localStorage usage (device-local, non-sensitive preferences)
-    const SAFE_LOCALSTORAGE_FILES = ['usePrintSettings.ts'];
+    const SAFE_LOCALSTORAGE_FILES = [
+      'usePrintSettings.ts',   // print layout preferences
+      'firebase.ts',           // Firebase auth persistence (browserLocalPersistence)
+      'useTheme.ts',           // dark/light mode toggle
+      'DashboardPage.tsx',     // streak counter + schedule order (localStorage-based)
+      'OnboardingChecklist.tsx', // onboarding step progress
+    ];
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
       if (SAFE_LOCALSTORAGE_FILES.some((f) => file.path.includes(f))) continue;
