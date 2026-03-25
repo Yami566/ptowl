@@ -108,12 +108,12 @@ export function PatientSchedulePage() {
 
         {/* Appointment table */}
         <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+          <table style={styles.table} aria-label="Appointment schedule">
             <thead>
               <tr>
-                <th style={styles.th}>Date</th>
-                <th style={styles.th}>Time</th>
-                <th style={styles.th}>Status</th>
+                <th scope="col" style={styles.th}>Date</th>
+                <th scope="col" style={styles.th}>Time</th>
+                <th scope="col" style={styles.th}>Status</th>
               </tr>
             </thead>
             <tbody>

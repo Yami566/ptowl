@@ -125,7 +125,7 @@ export function ProfilePage() {
 
           <label htmlFor="clinic-name" style={styles.label}>
             Clinic Name
-            <input id="clinic-name" type="text" value={clinicName} onChange={(e) => setClinicName(e.target.value)} style={styles.input} maxLength={200} />
+            <input id="clinic-name" type="text" value={clinicName} onChange={(e) => setClinicName(e.target.value)} style={styles.input} maxLength={200} aria-required="true" />
           </label>
           <label htmlFor="clinic-address" style={styles.label}>
             Clinic Address

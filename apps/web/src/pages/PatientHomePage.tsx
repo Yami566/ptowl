@@ -102,7 +102,7 @@ export function PatientHomePage() {
             <p style={styles.emptySubtext}>
               Ask your provider for a code to link your schedule.
             </p>
-            <button onClick={() => setShowCodeModal(true)} style={styles.addBtn}>
+            <button onClick={() => setShowCodeModal(true)} style={styles.addBtn} aria-label="Enter a schedule code from your provider">
               Enter a code
             </button>
           </div>
@@ -119,7 +119,7 @@ export function PatientHomePage() {
 
             <div style={styles.scheduleList}>
               {schedules.map((s) => (
-                <div key={s.id} style={styles.scheduleCard}>
+                <div key={s.id} style={styles.scheduleCard} role="article" aria-label={`Schedule from ${s.clinic_name || 'clinic'}`}>
                   <Link to={`/my-schedules/${s.id}`} style={styles.cardLink}>
                     <div style={styles.cardTop}>
                       <span style={styles.clinicName}>{s.clinic_name || 'Unknown Clinic'}</span>
