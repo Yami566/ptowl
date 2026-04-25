@@ -11,6 +11,10 @@ export interface Env {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   EMAIL_QUEUE?: Queue<any>;
 
+  // Workers AI binding (optional — used to infer clinic timezone from
+  // clinic_address on profile update via @cf/meta/llama-3.1-8b-instruct).
+  AI?: Ai;
+
   // Secrets (set via `wrangler secret put`)
   JWT_SECRET: string;
   ADMIN_EMAIL: string;

@@ -214,7 +214,7 @@ describe('Schedule Page Security', () => {
 
   it('PTCalendar is lazy-loaded (no unnecessary code exposure)', () => {
     const code = scheduleCode();
-    expect(code).toContain('lazy(() => import');
+    expect(code).toMatch(/lazy\([\s\S]*?import/);
     expect(code).toContain('PTCalendar');
   });
 

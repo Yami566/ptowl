@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
 import { requireAuth, requireClinic } from '../middleware/auth.js';
+import { inferTimezoneFromAddress } from '../services/timezone.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string } | null;
@@ -86,6 +87,28 @@ profileRoutes.put('/', async (c) => {
 
     updates.push("updated_at = datetime('now')");
     values.push(user.id);
+
+    // If clinic_address changed, kick off async timezone inference via
+    // Workers AI. The reminder cron uses profiles.timezone to compute
+    // accurate 24h/1h send windows. Fire-and-forget — inference takes
+    // ~1s and we don't block the profile-save response on it.
+    if (body.clinic_address && c.env.AI) {
+      c.executionCtx.waitUntil(
+        (async () => {
+          const tz = await inferTimezoneFromAddress(c.env, body.clinic_address!);
+          if (tz) {
+            await c.env.DB.prepare('UPDATE profiles SET timezone = ? WHERE user_id = ?')
+              .bind(tz, user.id)
+              .run();
+          }
+        })().catch((err) =>
+          console.error(
+            'Timezone inference failed:',
+            err instanceof Error ? err.message : 'Unknown',
+          ),
+        ),
+      );
+    }
 
     await c.env.DB.prepare(`UPDATE profiles SET ${updates.join(', ')} WHERE user_id = ?`)
       .bind(...values)

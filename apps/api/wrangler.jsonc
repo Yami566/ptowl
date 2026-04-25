@@ -57,6 +57,12 @@
       "bucket_name": "ptowl-logos"
     }
   ],
+  // Workers AI for clinic-timezone inference from clinic_address.
+  // Cost: ~cents/year at the project's volume. No bucket creation
+  // needed — just the binding.
+  "ai": {
+    "binding": "AI"
+  },
   "vars": {
     "ENVIRONMENT": "production",
     "FRONTEND_URL": "https://ptowl.com",
@@ -87,6 +93,9 @@
           "bucket_name": "ptowl-logos-staging"
         }
       ],
+      "ai": {
+        "binding": "AI"
+      },
       "queues": {
         "producers": [
           {

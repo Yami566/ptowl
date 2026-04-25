@@ -1,6 +1,7 @@
 import type { Env } from '../types/env.js';
 import { decryptEmail, hashEmail } from '../crypto/email-cipher.js';
 import { signUnsubscribeToken } from '../crypto/unsubscribe-token.js';
+import { clinicLocalToUTC } from './timezone.js';
 
 /**
  * Email-reminder service. Two pieces:
@@ -51,6 +52,7 @@ interface DueRow {
   patient_email_encrypted: string | null;
   linked_patient_email: string | null;
   clinic_name: string | null;
+  clinic_timezone: string | null;
 }
 
 /**
@@ -71,8 +73,14 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
   const offsetMs = (type === '24h' ? 24 : 1) * 60 * 60 * 1000;
   const halfWindowMs = 7.5 * 60 * 1000;
   const center = Date.now() + offsetMs;
-  const windowStart = new Date(center - halfWindowMs).toISOString();
-  const windowEnd = new Date(center + halfWindowMs).toISOString();
+
+  // Widen the SQL window by ±14h to cover the worst-case clinic UTC
+  // offset. We then re-check each candidate with the clinic's actual
+  // timezone in JS — see clinicLocalToUTC. Without this widening, a
+  // clinic in Pacific time misses its window when the server is UTC.
+  const widenMs = 14 * 60 * 60 * 1000;
+  const widenedStart = new Date(center - halfWindowMs - widenMs).toISOString();
+  const widenedEnd = new Date(center + halfWindowMs + widenMs).toISOString();
 
   const sentColumn = type === '24h' ? 'reminder_24h_sent_at' : 'reminder_1h_sent_at';
 
@@ -95,7 +103,8 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
           AND u.email NOT LIKE '%@phone.ptowl.local'
         LIMIT 1
       ) AS linked_patient_email,
-      p.clinic_name
+      p.clinic_name,
+      p.timezone AS clinic_timezone
     FROM appointments a
     JOIN schedules s ON s.id = a.schedule_id
     LEFT JOIN profiles p ON p.user_id = s.user_id
@@ -104,11 +113,20 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
       AND datetime(a.appointment_date || 'T' || a.appointment_time) BETWEEN ? AND ?
   `;
 
-  const rows = await env.DB.prepare(sql).bind(windowStart, windowEnd).all<DueRow>();
+  const rows = await env.DB.prepare(sql).bind(widenedStart, widenedEnd).all<DueRow>();
   if (!rows.results.length) return 0;
 
   let count = 0;
   for (const row of rows.results) {
+    // Tighten window using clinic's actual timezone. Without an inferred
+    // timezone we fall back to UTC math (the SQL widening still allows
+    // the row through; this check just makes it consistent).
+    const tz = row.clinic_timezone || 'UTC';
+    const apptUtc = clinicLocalToUTC(row.appointment_date, row.appointment_time, tz);
+    const targetUtc = center;
+    const drift = Math.abs(apptUtc.getTime() - targetUtc);
+    if (drift > halfWindowMs) continue;
+
     // Resolve email: prefer linked-user, fall back to clinic-entered.
     let email: string | null = row.linked_patient_email;
     if (!email && row.patient_email_encrypted) {
