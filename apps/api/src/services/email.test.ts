@@ -4,14 +4,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * Email service tests — validates notification templates,
  * HTML escaping, and graceful degradation.
  *
- * These tests mock the fetch API to avoid hitting the real Resend API.
+ * Tests mock the fetch API to avoid hitting the real MailChannels endpoint.
  */
 
-// Mock fetch globally
+const MAILCHANNELS_URL = 'https://api.mailchannels.net/tx/v1/send';
+
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-// Import after mocking
 import {
   notifyAdminNewRegistration,
   notifyUserApproved,
@@ -25,9 +25,36 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
+/**
+ * Helper: extract MailChannels payload (which uses personalizations[].to[].email
+ * for recipients and content[].value for HTML).
+ */
+function getMcPayload(call: unknown[]): {
+  url: string;
+  to: string;
+  subject: string;
+  html: string;
+  apiKeyHeader: string | undefined;
+} {
+  const [url, options] = call as [string, { headers: Record<string, string>; body: string }];
+  const body = JSON.parse(options.body);
+  return {
+    url,
+    to: body.personalizations[0].to[0].email,
+    subject: body.subject,
+    html: body.content[0].value,
+    apiKeyHeader: options.headers['X-API-Key'],
+  };
+}
+
 describe('notifyAdminNewRegistration', () => {
   it('skips when API key is missing', async () => {
-    await notifyAdminNewRegistration('admin@test.com', '', 'Kansas City Chiefs', 'https://example.com/approve/token');
+    await notifyAdminNewRegistration(
+      'admin@test.com',
+      '',
+      'Kansas City Chiefs',
+      'https://example.com/approve/token',
+    );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -42,18 +69,17 @@ describe('notifyAdminNewRegistration', () => {
     );
 
     expect(mockFetch).toHaveBeenCalledOnce();
-    const [url, options] = mockFetch.mock.calls[0]!;
-    expect(url).toBe('https://api.resend.com/emails');
-
-    const body = JSON.parse(options.body);
-    expect(body.to).toBe('admin@test.com');
-    expect(body.subject).toContain('Tampa Bay Buccaneers');
-    expect(body.html).toContain('Tampa Bay Buccaneers');
-    expect(body.html).toContain('https://ptowl.com/api/v1/auth/approve/abc123');
-    expect(body.html).toContain('Approve');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.url).toBe(MAILCHANNELS_URL);
+    expect(payload.apiKeyHeader).toBe('test-api-key');
+    expect(payload.to).toBe('admin@test.com');
+    expect(payload.subject).toContain('Tampa Bay Buccaneers');
+    expect(payload.html).toContain('Tampa Bay Buccaneers');
+    expect(payload.html).toContain('https://ptowl.com/api/v1/auth/approve/abc123');
+    expect(payload.html).toContain('Approve');
     // Should NOT contain any real user info (PII protection)
-    expect(body.html).not.toContain('phone');
-    expect(body.html).not.toContain('+1');
+    expect(payload.html).not.toContain('phone');
+    expect(payload.html).not.toContain('+1');
   });
 
   it('escapes HTML in team alias to prevent XSS', async () => {
@@ -66,22 +92,18 @@ describe('notifyAdminNewRegistration', () => {
       'https://ptowl.com/approve/token',
     );
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.html).not.toContain('<script>');
-    expect(body.html).toContain('&lt;script&gt;');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.html).not.toContain('<script>');
+    expect(payload.html).toContain('&lt;script&gt;');
   });
 
   it('handles fetch failure gracefully', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
-
-    // Should not throw
     await notifyAdminNewRegistration('admin@test.com', 'key', 'Team', 'https://example.com');
   });
 
   it('handles network error gracefully', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-    // Should not throw
     await notifyAdminNewRegistration('admin@test.com', 'key', 'Team', 'https://example.com');
   });
 });
@@ -97,11 +119,11 @@ describe('notifyUserApproved', () => {
 
     await notifyUserApproved('test-key', 'user@test.com', 'Jane');
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.to).toBe('user@test.com');
-    expect(body.subject).toContain('approved');
-    expect(body.html).toContain('Jane');
-    expect(body.html).toContain('ptowl.com');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.to).toBe('user@test.com');
+    expect(payload.subject).toContain('approved');
+    expect(payload.html).toContain('Jane');
+    expect(payload.html).toContain('ptowl.com');
   });
 
   it('uses fallback name when display name is empty', async () => {
@@ -109,8 +131,8 @@ describe('notifyUserApproved', () => {
 
     await notifyUserApproved('test-key', 'user@test.com', '');
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.html).toContain('there');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.html).toContain('there');
   });
 });
 
@@ -125,9 +147,9 @@ describe('notifyUserDenied', () => {
 
     await notifyUserDenied('test-key', 'user@test.com');
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.to).toBe('user@test.com');
-    expect(body.html).toContain('not approved');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.to).toBe('user@test.com');
+    expect(payload.html).toContain('not approved');
   });
 });
 
@@ -142,10 +164,10 @@ describe('sendAdminVerificationCode', () => {
 
     await sendAdminVerificationCode('test-key', 'admin@test.com', '789012');
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.to).toBe('admin@test.com');
-    expect(body.html).toContain('789012');
-    expect(body.subject).toContain('verification code');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.to).toBe('admin@test.com');
+    expect(payload.html).toContain('789012');
+    expect(payload.subject).toContain('verification code');
   });
 
   it('escapes HTML in verification code', async () => {
@@ -153,8 +175,8 @@ describe('sendAdminVerificationCode', () => {
 
     await sendAdminVerificationCode('test-key', 'admin@test.com', '<img src=x>');
 
-    const body = JSON.parse(mockFetch.mock.calls[0]![1].body);
-    expect(body.html).not.toContain('<img');
-    expect(body.html).toContain('&lt;img');
+    const payload = getMcPayload(mockFetch.mock.calls[0]!);
+    expect(payload.html).not.toContain('<img');
+    expect(payload.html).toContain('&lt;img');
   });
 });

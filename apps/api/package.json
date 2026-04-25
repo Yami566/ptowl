@@ -19,8 +19,7 @@
     "@ptowl/shared": "workspace:*",
     "hono": "^4.6.0",
     "ical-generator": "^8.1.1",
-    "jose": "^6.2.1",
-    "resend": "^6.9.4"
+    "jose": "^6.2.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",
