@@ -10,6 +10,7 @@ export interface Env {
   JWT_SECRET: string;
   ADMIN_EMAIL: string;
   EMAIL_API_KEY: string;
+  EMAIL_ENCRYPTION_KEY: string; // base64-encoded 32 bytes for AES-GCM
   TURNSTILE_SECRET_KEY: string;
   FIREBASE_PROJECT_ID: string;
 
