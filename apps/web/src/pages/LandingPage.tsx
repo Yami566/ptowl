@@ -86,7 +86,13 @@ export function LandingPage() {
   usePageTitle('Log In');
   const { user, loading, login } = useAuth();
   const [userType, setUserType] = useState<'clinic' | 'patient'>('clinic');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(() => {
+    // Remember last-used phone across sessions for one-tap return.
+    // Phone alone is not a secret — it's the address, not the credential.
+    // Cleared on /auth/logout (see AuthContext).
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('ptowl-last-phone') || '';
+  });
   const [code, setCode] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [step, setStep] = useState<'phone' | 'code' | 'mfa'>('phone');
@@ -101,6 +107,12 @@ export function LandingPage() {
   const mfaInputRef = useRef<HTMLInputElement>(null);
   const [alienActive, setAlienActive] = useState(false);
   const alienTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // True iff we restored a phone from localStorage on first render.
+  const [hadSavedPhone] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!localStorage.getItem('ptowl-last-phone');
+  });
 
   // Alien easter egg — triggers when user highlights "until the aliens come."
   const handleAlienSelect = useCallback(() => {
@@ -163,6 +175,12 @@ export function LandingPage() {
       const result = await sendPhoneCode(e164, 'recaptcha-container');
       setConfirmationResult(result);
       setStep('code');
+      // Persist the validated phone for one-tap return next visit.
+      try {
+        localStorage.setItem('ptowl-last-phone', phone);
+      } catch {
+        /* localStorage may be disabled / quota exceeded — non-fatal */
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to send code';
       if (msg.includes('too-many-requests')) {
@@ -406,9 +424,27 @@ export function LandingPage() {
                   placeholder="(555) 123-4567"
                   style={styles.phoneInput}
                   autoFocus
-                  autoComplete="tel"
+                  autoComplete="tel-national"
+                  inputMode="numeric"
+                  aria-label="Phone number, 10 digits"
                 />
               </div>
+              {hadSavedPhone && phone && (
+                <button
+                  type="button"
+                  style={styles.useDifferent}
+                  onClick={() => {
+                    setPhone('');
+                    try {
+                      localStorage.removeItem('ptowl-last-phone');
+                    } catch {
+                      /* non-fatal */
+                    }
+                  }}
+                >
+                  Use a different number
+                </button>
+              )}
               <label style={styles.termsRow}>
                 <input
                   type="checkbox"
@@ -555,9 +591,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   hero: {
     textAlign: 'center' as const,
-    padding: '5rem 1.5rem 3rem',
+    // Padding tightened so the auth card sits closer to the optical center
+    // of the viewport on first paint. Was 5rem 1.5rem 3rem.
+    padding: '2.5rem 1.5rem 2rem',
     maxWidth: 'clamp(320px, 90vw, 800px)',
     margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box' as const,
   },
   headline: {
     fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
@@ -583,15 +623,29 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '2.5rem',
   },
 
-  // Phone Auth Card
+  // Phone Auth Card — promoted to be the visual centerpiece on first paint.
   authCard: {
     background: 'var(--white)',
     borderRadius: 'var(--radius-lg)',
-    padding: '2rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    padding: '2.5rem 2rem',
+    boxShadow: '0 12px 32px rgba(27, 94, 32, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
     border: '1px solid var(--green-bg)',
-    maxWidth: '380px',
+    maxWidth: '420px',
     margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  },
+  useDifferent: {
+    display: 'block',
+    width: '100%',
+    marginTop: '0.5rem',
+    padding: '0.375rem',
+    background: 'transparent',
+    color: 'var(--gray-text)',
+    fontSize: '0.8rem',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'underline',
   },
   userTypeRow: {
     display: 'flex',

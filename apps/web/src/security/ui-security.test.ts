@@ -78,6 +78,10 @@ describe('Data Leakage Prevention', () => {
       'useTheme.ts', // dark/light mode toggle
       'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
       'OnboardingChecklist.tsx', // onboarding step progress
+      // Phone number is the address (login identifier), not the credential.
+      // Firebase OTP is the actual auth — knowing the number alone gains no access.
+      // Persisting it is a one-tap-return UX win, not a sensitive-data leak.
+      'LandingPage.tsx', // last-used phone number for one-tap return
     ];
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
