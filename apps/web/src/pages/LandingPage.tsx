@@ -53,7 +53,21 @@ function DemoCalendarSection() {
   if (!dayGridPlugin) return <div style={{ minHeight: '300px' }} />;
 
   return (
-    <Suspense fallback={<div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-text)' }}>Loading calendar...</div>}>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--gray-text)',
+          }}
+        >
+          Loading calendar...
+        </div>
+      }
+    >
       <LazyFullCalendar
         plugins={[dayGridPlugin]}
         initialView="dayGridMonth"
@@ -112,7 +126,9 @@ export function LandingPage() {
     return (
       <main style={{ ...styles.page, justifyContent: 'center', alignItems: 'center' }}>
         <OwlLogo size="lg" linkTo="/" />
-        <p style={{ ...styles.subheadline, marginTop: '2rem' }}>Welcome back — restoring your session...</p>
+        <p style={{ ...styles.subheadline, marginTop: '2rem' }}>
+          Welcome back — restoring your session...
+        </p>
       </main>
     );
   }
@@ -234,13 +250,23 @@ export function LandingPage() {
   /** Exchange a Firebase user's ID token for our backend session */
   const exchangeTokenWithBackend = async (firebaseUser: { getIdToken: () => Promise<string> }) => {
     const idToken = await firebaseUser.getIdToken();
-    const result = await apiRequest<{ user: { id: string; email: string; phone: string; display_name: string; role: string; tier: string }; csrfToken: string; isNewUser: boolean }>('/auth/firebase', {
+    const result = await apiRequest<{
+      user: {
+        id: string;
+        email: string;
+        phone: string;
+        display_name: string;
+        role: string;
+        tier: string;
+      };
+      isNewUser: boolean;
+    }>('/auth/firebase', {
       method: 'POST',
       body: JSON.stringify({ idToken, rememberMe, user_type: userType }),
     });
 
     if (result.ok && result.data) {
-      login(result.data.user, result.data.csrfToken);
+      login(result.data.user);
     } else {
       setError(result.error?.message || 'Authentication failed');
     }
@@ -265,14 +291,12 @@ export function LandingPage() {
           )}
         </div>
         <h1 style={styles.headline}>The fastest schedule assistant on earth.</h1>
-        <p
-          style={styles.alienSubtext}
-          onMouseUp={handleAlienSelect}
-          onTouchEnd={handleAlienSelect}
-        >until the aliens come.</p>
+        <p style={styles.alienSubtext} onMouseUp={handleAlienSelect} onTouchEnd={handleAlienSelect}>
+          until the aliens come.
+        </p>
         <p style={styles.subheadline}>
-          Create and print patient schedules in under <strong>5 keypresses</strong>.
-          Built for physical therapists who value speed over clicks.
+          Create and print patient schedules in under <strong>5 keypresses</strong>. Built for
+          physical therapists who value speed over clicks.
         </p>
 
         {/* Phone Auth — clean, single-flow like Uber/WhatsApp */}
@@ -282,14 +306,19 @@ export function LandingPage() {
               <div style={styles.stepBadge}>Security check</div>
               <h2 style={styles.authTitle}>MFA verification</h2>
               <p style={styles.authSubtitle}>Enter the 6-digit code texted to your phone.</p>
-              <label htmlFor="mfa-input" className="sr-only">MFA code</label>
+              <label htmlFor="mfa-input" className="sr-only">
+                MFA code
+              </label>
               <input
                 id="mfa-input"
                 ref={mfaInputRef}
                 type="text"
                 inputMode="numeric"
                 value={mfaCode}
-                onChange={(e) => { setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                onChange={(e) => {
+                  setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setError('');
+                }}
                 onKeyDown={(e) => handleKeyDown(e, handleMfaVerify)}
                 placeholder="000000"
                 style={styles.codeInput}
@@ -305,7 +334,12 @@ export function LandingPage() {
               </button>
               <button
                 style={styles.backBtn}
-                onClick={() => { setStep('phone'); setMfaCode(''); setError(''); setMfaResolver(null); }}
+                onClick={() => {
+                  setStep('phone');
+                  setMfaCode('');
+                  setError('');
+                  setMfaResolver(null);
+                }}
               >
                 Start over
               </button>
@@ -315,28 +349,52 @@ export function LandingPage() {
               {/* User type selector */}
               <div style={styles.userTypeRow}>
                 <button
-                  style={{ ...styles.userTypeBtn, ...(userType === 'clinic' ? styles.userTypeBtnActive : {}) }}
+                  style={{
+                    ...styles.userTypeBtn,
+                    ...(userType === 'clinic' ? styles.userTypeBtnActive : {}),
+                  }}
                   onClick={() => setUserType('clinic')}
-                >I'm a Provider</button>
+                >
+                  I'm a Provider
+                </button>
                 <button
-                  style={{ ...styles.userTypeBtn, ...(userType === 'patient' ? styles.userTypeBtnActive : {}) }}
+                  style={{
+                    ...styles.userTypeBtn,
+                    ...(userType === 'patient' ? styles.userTypeBtnActive : {}),
+                  }}
                   onClick={() => setUserType('patient')}
-                >I'm a Patient</button>
+                >
+                  I'm a Patient
+                </button>
               </div>
               {userType === 'patient' && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', marginBottom: '0.75rem', textAlign: 'center' as const }}>
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--gray-text)',
+                    marginBottom: '0.75rem',
+                    textAlign: 'center' as const,
+                  }}
+                >
                   Your PT clinic will give you a code to view your schedule.
                 </p>
               )}
               <div style={styles.stepBadge}>Step 1 of 2</div>
               <h2 style={styles.authTitle}>Enter your phone number</h2>
               <p style={styles.authSubtitle}>
-                {userType === 'patient'
-                  ? 'Sign up to view your PT schedule. Your clinic will text you a code to link it.'
-                  : <>New here? We&apos;ll create your account.<br />Already registered? We&apos;ll log you right in.</>
-                }
+                {userType === 'patient' ? (
+                  'Sign up to view your PT schedule. Your clinic will text you a code to link it.'
+                ) : (
+                  <>
+                    New here? We&apos;ll create your account.
+                    <br />
+                    Already registered? We&apos;ll log you right in.
+                  </>
+                )}
               </p>
-              <label htmlFor="phone-input" className="sr-only">Phone number</label>
+              <label htmlFor="phone-input" className="sr-only">
+                Phone number
+              </label>
               <div style={styles.phoneRow}>
                 <span style={styles.countryCode}>+1</span>
                 <input
@@ -359,11 +417,18 @@ export function LandingPage() {
                   style={styles.rememberCheck}
                 />
                 <span style={styles.termsText}>
-                  I agree to the <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>Terms of Service</a> and <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>Privacy Policy</a>
+                  I agree to the{' '}
+                  <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                    Privacy Policy
+                  </a>
                 </span>
               </label>
               <button
-                style={{ ...styles.authBtn, opacity: (sending || !agreedToTerms) ? 0.6 : 1 }}
+                style={{ ...styles.authBtn, opacity: sending || !agreedToTerms ? 0.6 : 1 }}
                 onClick={handleSendCode}
                 disabled={sending || !agreedToTerms}
               >
@@ -378,7 +443,9 @@ export function LandingPage() {
                 />
                 <span style={styles.rememberText}>Keep me signed in for 14 days</span>
               </label>
-              <p style={styles.authFootnote}>We'll text you a verification code. Standard rates apply.</p>
+              <p style={styles.authFootnote}>
+                We'll text you a verification code. Standard rates apply.
+              </p>
             </>
           ) : (
             <>
@@ -387,14 +454,19 @@ export function LandingPage() {
               <p style={styles.authSubtitle}>
                 We sent a 6-digit code to <strong>{phone}</strong>
               </p>
-              <label htmlFor="code-input" className="sr-only">Verification code</label>
+              <label htmlFor="code-input" className="sr-only">
+                Verification code
+              </label>
               <input
                 id="code-input"
                 ref={codeInputRef}
                 type="text"
                 inputMode="numeric"
                 value={code}
-                onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                onChange={(e) => {
+                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setError('');
+                }}
                 onKeyDown={(e) => handleKeyDown(e, handleVerifyCode)}
                 placeholder="000000"
                 style={styles.codeInput}
@@ -410,13 +482,26 @@ export function LandingPage() {
               </button>
               <button
                 style={styles.backBtn}
-                onClick={() => { setStep('phone'); setCode(''); setError(''); setConfirmationResult(null); }}
+                onClick={() => {
+                  setStep('phone');
+                  setCode('');
+                  setError('');
+                  setConfirmationResult(null);
+                }}
               >
                 Use a different number
               </button>
             </>
           )}
-          <p style={{ ...styles.authError, visibility: error ? 'visible' : 'hidden', margin: error ? undefined : 0 }} aria-live="assertive" role="alert">
+          <p
+            style={{
+              ...styles.authError,
+              visibility: error ? 'visible' : 'hidden',
+              margin: error ? undefined : 0,
+            }}
+            aria-live="assertive"
+            role="alert"
+          >
             {error ? `Error: ${error}` : '\u00A0'}
           </p>
           <div id="recaptcha-container" />
@@ -426,19 +511,32 @@ export function LandingPage() {
       {/* Demo Calendar */}
       <section style={styles.demoSection} className="landing-fade-in landing-fade-in-delay-1">
         <h2 style={styles.demoTitle}>What your patients get</h2>
-        <p style={styles.demoSubtitle}>A clean, organized schedule — generated in seconds, not minutes.</p>
+        <p style={styles.demoSubtitle}>
+          A clean, organized schedule — generated in seconds, not minutes.
+        </p>
         <div style={styles.demoCard} className="landing-demo-card">
           <DemoCalendarSection />
         </div>
       </section>
 
       {/* Footer — minimal */}
-      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-2 landing-footer">
+      <footer
+        style={styles.footer}
+        className="landing-fade-in landing-fade-in-delay-2 landing-footer"
+      >
         <div style={styles.footerLinks}>
-          <a href="/about" style={styles.footerLink}>About</a>
-          <a href="/privacy" style={styles.footerLink}>Privacy</a>
-          <a href="/terms" style={styles.footerLink}>Terms</a>
-          <a href="/security" style={styles.footerLink}>Security</a>
+          <a href="/about" style={styles.footerLink}>
+            About
+          </a>
+          <a href="/privacy" style={styles.footerLink}>
+            Privacy
+          </a>
+          <a href="/terms" style={styles.footerLink}>
+            Terms
+          </a>
+          <a href="/security" style={styles.footerLink}>
+            Security
+          </a>
         </div>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { apiRequest, setCSRFToken } from '../api/client.js';
+import { apiRequest } from '../api/client.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
 import { waitForFirebaseUser, auth as firebaseAuth } from '../firebase.js';
 import { signOut } from 'firebase/auth';
@@ -24,7 +24,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (user: AuthUser, csrf: string) => void;
+  login: (user: AuthUser) => void;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -41,11 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   const refreshUser = useCallback(async () => {
-    // Refresh JWT + CSRF token (restores CSRF after page reload)
-    const refreshResult = await apiRequest<{ csrfToken: string }>('/auth/refresh', { method: 'POST' });
-    if (refreshResult.ok && refreshResult.data?.csrfToken) {
-      setCSRFToken(refreshResult.data.csrfToken);
-    }
+    // Refresh JWT cookie if it's near expiry (CSRF is now origin-based, no token to manage)
+    await apiRequest('/auth/refresh', { method: 'POST' });
 
     const result = await apiRequest<AuthUser>('/auth/me');
     if (result.ok && result.data) {
@@ -59,9 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       // 1. Try JWT cookie refresh (fastest path — cookie may still be valid)
-      const refreshResult = await apiRequest<{ csrfToken: string }>('/auth/refresh', { method: 'POST' });
-      if (refreshResult.ok && refreshResult.data?.csrfToken) {
-        setCSRFToken(refreshResult.data.csrfToken);
+      const refreshResult = await apiRequest('/auth/refresh', { method: 'POST' });
+      if (refreshResult.ok) {
         const meResult = await apiRequest<AuthUser>('/auth/me');
         if (meResult.ok && meResult.data) {
           setUser(meResult.data);
@@ -75,12 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
         // Re-authenticate with backend using Firebase token
-        const authResult = await apiRequest<{ user: AuthUser; csrfToken: string }>('/auth/firebase', {
+        const authResult = await apiRequest<{ user: AuthUser }>('/auth/firebase', {
           method: 'POST',
           body: JSON.stringify({ idToken }),
         });
         if (authResult.ok && authResult.data) {
-          setCSRFToken(authResult.data.csrfToken);
           setUser(authResult.data.user);
           setLoading(false);
           return;
@@ -112,8 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loading, location.pathname, navigate]);
 
   // Called by the phone auth form after successful verification
-  const login = useCallback((userData: AuthUser, csrf: string) => {
-    setCSRFToken(csrf);
+  const login = useCallback((userData: AuthUser) => {
     setUser(userData);
     // Navigation handled by redirect logic above
   }, []);

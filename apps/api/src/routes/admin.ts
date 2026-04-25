@@ -1,10 +1,13 @@
 import { Hono } from 'hono';
 import { setCookie } from 'hono/cookie';
 import type { Env } from '../types/env.js';
-import { requireAuth, requireAdmin, requireCSRF } from '../middleware/auth.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { signJWT } from '../crypto/jwt.js';
-import { generateSignedCSRFToken } from '../crypto/csrf.js';
-import { notifyUserApproved, notifyUserDenied, sendAdminVerificationCode } from '../services/email.js';
+import {
+  notifyUserApproved,
+  notifyUserDenied,
+  sendAdminVerificationCode,
+} from '../services/email.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string; admin_verified?: boolean } | null;
@@ -33,7 +36,10 @@ adminRoutes.post('/send-code', requireAuth, async (c) => {
 
     if (recentCodes && recentCodes.cnt >= 3) {
       return c.json(
-        { ok: false, error: { code: 'RATE_LIMITED', message: 'Too many codes requested. Wait a few minutes.' } },
+        {
+          ok: false,
+          error: { code: 'RATE_LIMITED', message: 'Too many codes requested. Wait a few minutes.' },
+        },
         429,
       );
     }
@@ -73,14 +79,25 @@ adminRoutes.post('/send-code', requireAuth, async (c) => {
     );
 
     // Audit log
-    await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)')
-      .bind(crypto.randomUUID().replace(/-/g, ''), user.id, 'admin_code_sent', adminEmail, c.req.header('cf-connecting-ip') || '')
+    await c.env.DB.prepare(
+      'INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)',
+    )
+      .bind(
+        crypto.randomUUID().replace(/-/g, ''),
+        user.id,
+        'admin_code_sent',
+        adminEmail,
+        c.req.header('cf-connecting-ip') || '',
+      )
       .run();
 
     return c.json({ ok: true, data: { message: 'Verification code sent' } });
   } catch (err) {
     console.error('Send code error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to send code' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to send code' } },
+      500,
+    );
   }
 });
 
@@ -95,7 +112,10 @@ adminRoutes.post('/verify-code', requireAuth, async (c) => {
     const body = await c.req.json<{ code?: string }>();
 
     if (!body.code || body.code.length !== 6 || !/^\d{6}$/.test(body.code)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Enter a 6-digit code' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Enter a 6-digit code' } },
+        400,
+      );
     }
 
     // Hash the submitted code
@@ -117,10 +137,24 @@ adminRoutes.post('/verify-code', requireAuth, async (c) => {
 
     if (!record) {
       // Log failed attempt
-      await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)')
-        .bind(crypto.randomUUID().replace(/-/g, ''), user.id, 'admin_code_failed', user.email, c.req.header('cf-connecting-ip') || '')
+      await c.env.DB.prepare(
+        'INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)',
+      )
+        .bind(
+          crypto.randomUUID().replace(/-/g, ''),
+          user.id,
+          'admin_code_failed',
+          user.email,
+          c.req.header('cf-connecting-ip') || '',
+        )
         .run();
-      return c.json({ ok: false, error: { code: 'INVALID_CODE', message: 'Invalid or expired code. Request a new one.' } }, 400);
+      return c.json(
+        {
+          ok: false,
+          error: { code: 'INVALID_CODE', message: 'Invalid or expired code. Request a new one.' },
+        },
+        400,
+      );
     }
 
     // Mark code as used
@@ -137,20 +171,35 @@ adminRoutes.post('/verify-code', requireAuth, async (c) => {
       1800, // 30 minutes
     );
 
-    const csrfToken = await generateSignedCSRFToken(c.env.JWT_SECRET, user.id);
-
     const isProduction = c.env.ENVIRONMENT === 'production';
-    setCookie(c, 'token', jwt, { httpOnly: true, secure: isProduction, sameSite: isProduction ? 'Strict' : 'Lax', path: '/', maxAge: 1800 });
+    setCookie(c, 'token', jwt, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'Strict' : 'Lax',
+      path: '/',
+      maxAge: 1800,
+    });
 
     // Audit log
-    await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)')
-      .bind(crypto.randomUUID().replace(/-/g, ''), user.id, 'admin_verified', user.email, c.req.header('cf-connecting-ip') || '')
+    await c.env.DB.prepare(
+      'INSERT INTO audit_log (id, user_id, action, detail, ip_address) VALUES (?, ?, ?, ?, ?)',
+    )
+      .bind(
+        crypto.randomUUID().replace(/-/g, ''),
+        user.id,
+        'admin_verified',
+        user.email,
+        c.req.header('cf-connecting-ip') || '',
+      )
       .run();
 
-    return c.json({ ok: true, data: { csrfToken } });
+    return c.json({ ok: true, data: { verified: true } });
   } catch (err) {
     console.error('Verify code error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Verification failed' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Verification failed' } },
+      500,
+    );
   }
 });
 
@@ -164,16 +213,22 @@ adminRoutes.get('/users', requireAuth, requireAdmin, async (c) => {
     return c.json({ ok: true, data: users.results });
   } catch (err) {
     console.error('List users error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch users' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch users' } },
+      500,
+    );
   }
 });
 
 // POST /users/:id/approve - Approve user (CSRF required)
-adminRoutes.post('/users/:id/approve', requireAuth, requireAdmin, requireCSRF, async (c) => {
+adminRoutes.post('/users/:id/approve', requireAuth, requireAdmin, async (c) => {
   try {
     const userId = c.req.param('id');
     if (!/^[0-9a-f]{32}$/i.test(userId)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid user ID' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid user ID' } },
+        400,
+      );
     }
 
     const result = await c.env.DB.prepare(
@@ -183,37 +238,54 @@ adminRoutes.post('/users/:id/approve', requireAuth, requireAdmin, requireCSRF, a
       .run();
 
     if (!result.meta.changes) {
-      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'User not found or not pending' } }, 404);
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'User not found or not pending' } },
+        404,
+      );
     }
 
     const admin = c.get('user')!;
-    await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail) VALUES (?, ?, ?, ?)')
+    await c.env.DB.prepare(
+      'INSERT INTO audit_log (id, user_id, action, detail) VALUES (?, ?, ?, ?)',
+    )
       .bind(crypto.randomUUID().replace(/-/g, ''), admin.id, 'approve_user', userId)
       .run();
 
     // Notify user their account was approved (fire-and-forget)
-    const approvedUser = await c.env.DB.prepare('SELECT email, display_name FROM users WHERE id = ?')
+    const approvedUser = await c.env.DB.prepare(
+      'SELECT email, display_name FROM users WHERE id = ?',
+    )
       .bind(userId)
       .first<{ email: string; display_name: string }>();
     if (approvedUser) {
       c.executionCtx.waitUntil(
-        notifyUserApproved(c.env.EMAIL_API_KEY || '', approvedUser.email, approvedUser.display_name),
+        notifyUserApproved(
+          c.env.EMAIL_API_KEY || '',
+          approvedUser.email,
+          approvedUser.display_name,
+        ),
       );
     }
 
     return c.json({ ok: true, data: { message: 'User approved' } });
   } catch (err) {
     console.error('Approve user error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to approve user' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to approve user' } },
+      500,
+    );
   }
 });
 
 // POST /users/:id/deny - Deny user (CSRF required)
-adminRoutes.post('/users/:id/deny', requireAuth, requireAdmin, requireCSRF, async (c) => {
+adminRoutes.post('/users/:id/deny', requireAuth, requireAdmin, async (c) => {
   try {
     const userId = c.req.param('id');
     if (!/^[0-9a-f]{32}$/i.test(userId)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid user ID' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid user ID' } },
+        400,
+      );
     }
 
     const result = await c.env.DB.prepare(
@@ -223,11 +295,16 @@ adminRoutes.post('/users/:id/deny', requireAuth, requireAdmin, requireCSRF, asyn
       .run();
 
     if (!result.meta.changes) {
-      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'User not found or not pending' } }, 404);
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'User not found or not pending' } },
+        404,
+      );
     }
 
     const admin = c.get('user')!;
-    await c.env.DB.prepare('INSERT INTO audit_log (id, user_id, action, detail) VALUES (?, ?, ?, ?)')
+    await c.env.DB.prepare(
+      'INSERT INTO audit_log (id, user_id, action, detail) VALUES (?, ?, ?, ?)',
+    )
       .bind(crypto.randomUUID().replace(/-/g, ''), admin.id, 'deny_user', userId)
       .run();
 
@@ -236,14 +313,15 @@ adminRoutes.post('/users/:id/deny', requireAuth, requireAdmin, requireCSRF, asyn
       .bind(userId)
       .first<{ email: string }>();
     if (deniedUser) {
-      c.executionCtx.waitUntil(
-        notifyUserDenied(c.env.EMAIL_API_KEY || '', deniedUser.email),
-      );
+      c.executionCtx.waitUntil(notifyUserDenied(c.env.EMAIL_API_KEY || '', deniedUser.email));
     }
 
     return c.json({ ok: true, data: { message: 'User denied' } });
   } catch (err) {
     console.error('Deny user error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to deny user' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to deny user' } },
+      500,
+    );
   }
 });

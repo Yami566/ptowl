@@ -20,12 +20,18 @@ function readAllFiles(dir: string, ext: string[]): Array<{ path: string; content
   try {
     const entries = fs.readdirSync(dir, { withFileTypes: true, recursive: true });
     for (const entry of entries) {
-      if (entry.isFile() && ext.some((e) => entry.name.endsWith(e)) && !entry.name.includes('.test.')) {
+      if (
+        entry.isFile() &&
+        ext.some((e) => entry.name.endsWith(e)) &&
+        !entry.name.includes('.test.')
+      ) {
         const fullPath = path.join(entry.parentPath || dir, entry.name);
         files.push({ path: fullPath, content: fs.readFileSync(fullPath, 'utf-8') });
       }
     }
-  } catch { /* dir doesn't exist */ }
+  } catch {
+    /* dir doesn't exist */
+  }
   return files;
 }
 
@@ -60,11 +66,6 @@ describe('Template API Hardening', () => {
     const code = templateCode();
     // Must use strict time regex: ([01]\d|2[0-3]):[0-5]\d
     expect(code).toContain('([01]\\d|2[0-3]):[0-5]\\d');
-  });
-
-  it('template PUT has CSRF protection', () => {
-    const code = templateCode();
-    expect(code).toContain('requireCSRF');
   });
 
   it('template PUT has authentication requirement', () => {
@@ -142,11 +143,6 @@ describe('Appointment API Hardening', () => {
     expect(code).toContain('s.user_id = ?');
   });
 
-  it('appointment PATCH has CSRF protection', () => {
-    const code = appointmentCode();
-    expect(code).toContain('requireCSRF');
-  });
-
   it('provider_name is truncated (max 200)', () => {
     const code = appointmentCode();
     expect(code).toContain('.slice(0, 200)');
@@ -167,8 +163,8 @@ describe('Profile API Hardening', () => {
   it('logo upload validates MIME type (PNG/JPEG only)', () => {
     const code = profileCode();
     // M7 FIX uses regex patterns with escaped slashes for strict validation
-    expect(code).toContain("image\\/png");
-    expect(code).toContain("image\\/jpeg");
+    expect(code).toContain('image\\/png');
+    expect(code).toContain('image\\/jpeg');
   });
 
   it('logo upload enforces size limit (500KB)', () => {
@@ -188,18 +184,6 @@ describe('Profile API Hardening', () => {
     const code = profileCode();
     expect(code).toMatch(/@/); // Email regex present
   });
-
-  it('profile PUT has CSRF protection', () => {
-    const code = profileCode();
-    expect(code).toContain('requireCSRF');
-  });
-
-  it('logo upload has CSRF protection', () => {
-    const code = profileCode();
-    // POST /logo should have requireCSRF
-    const logoSection = code.slice(code.indexOf("profileRoutes.post('/logo'"));
-    expect(logoSection).toContain('requireCSRF');
-  });
 });
 
 // ── Cross-Cutting API Security ──
@@ -218,16 +202,13 @@ describe('Cross-Cutting API Security', () => {
     }
   });
 
-  it('all data-mutating endpoints (PUT/PATCH/DELETE) have CSRF protection', () => {
-    const routeFiles = readAllFiles(path.join(API_SRC, 'routes'), ['.ts']);
-    for (const file of routeFiles) {
-      // Find PUT/PATCH/DELETE handler registrations (state-changing operations)
-      // POST-only routes like alias (idempotent read/lookup) are excluded
-      const mutatingMethods = file.content.match(/\.(put|patch|delete)\s*\(/gi) || [];
-      if (mutatingMethods.length > 0) {
-        expect(file.content, `Missing requireCSRF import in ${file.path}`).toContain('requireCSRF');
-      }
-    }
+  it('CSRF protection is applied globally via hono/csrf (origin-based)', () => {
+    const indexContent = fs.readFileSync(path.join(API_SRC, 'index.ts'), 'utf-8');
+    // Hono's csrf middleware checks Origin/Referer against the configured origin
+    // on state-changing requests (POST/PUT/PATCH/DELETE). Single global registration
+    // replaces the per-route requireCSRF middleware.
+    expect(indexContent).toContain("from 'hono/csrf'");
+    expect(indexContent).toContain('csrf({ origin:');
   });
 
   it('no caught exception object leaks in JSON responses', () => {
@@ -266,7 +247,10 @@ describe('Cross-Cutting API Security', () => {
       const allCatches = file.content.match(/\}\s*catch\s*\(/g) || [];
       // If there are catches, at least some should have INTERNAL_ERROR
       if (allCatches.length > 0) {
-        expect(catchBlocks.length, `Missing INTERNAL_ERROR in catch blocks of ${file.path}`).toBeGreaterThan(0);
+        expect(
+          catchBlocks.length,
+          `Missing INTERNAL_ERROR in catch blocks of ${file.path}`,
+        ).toBeGreaterThan(0);
       }
     }
   });
@@ -289,7 +273,9 @@ describe('Cross-Cutting API Security', () => {
       for (const stmt of prepareStatements) {
         // If query contains ?, it must use .bind()
         if (stmt.includes('?')) {
-          expect(file.content, `Parameterized query without .bind() in ${file.path}`).toContain('.bind(');
+          expect(file.content, `Parameterized query without .bind() in ${file.path}`).toContain(
+            '.bind(',
+          );
         }
       }
     }
@@ -303,23 +289,23 @@ describe('Security Headers & CSP', () => {
 
   it('CSP allows only self and approved script sources (no unsafe-eval)', () => {
     const code = indexCode();
-    expect(code).toContain("scriptSrc:");
+    expect(code).toContain('scriptSrc:');
     expect(code).toContain("'self'");
-    expect(code).toContain("https://challenges.cloudflare.com");
+    expect(code).toContain('https://challenges.cloudflare.com');
     expect(code).not.toContain('unsafe-eval');
   });
 
   it('CSP frame-src allows only approved iframe sources', () => {
     const code = indexCode();
-    expect(code).toContain("frameSrc:");
-    expect(code).toContain("https://challenges.cloudflare.com");
+    expect(code).toContain('frameSrc:');
+    expect(code).toContain('https://challenges.cloudflare.com');
   });
 
   it('CSP restricts img-src to self, data, and approved sources', () => {
     const code = indexCode();
-    expect(code).toContain("imgSrc:");
+    expect(code).toContain('imgSrc:');
     expect(code).toContain("'self'");
-    expect(code).toContain("data:");
+    expect(code).toContain('data:');
   });
 
   it('X-Frame-Options set to DENY', () => {
@@ -339,22 +325,22 @@ describe('Security Headers & CSP', () => {
 
   it('frame-ancestors set to none (clickjacking protection)', () => {
     const code = indexCode();
-    expect(code).toContain("frameAncestors: [\"'none'\"]");
+    expect(code).toContain('frameAncestors: ["\'none\'"]');
   });
 
   it('object-src set to none (plugin content blocked)', () => {
     const code = indexCode();
-    expect(code).toContain("objectSrc: [\"'none'\"]");
+    expect(code).toContain('objectSrc: ["\'none\'"]');
   });
 
   it('base-uri restricted to self (base tag hijacking prevention)', () => {
     const code = indexCode();
-    expect(code).toContain("baseUri: [\"'self'\"]");
+    expect(code).toContain('baseUri: ["\'self\'"]');
   });
 
   it('form-action restricted to self', () => {
     const code = indexCode();
-    expect(code).toContain("formAction: [\"'self'\"]");
+    expect(code).toContain('formAction: ["\'self\'"]');
   });
 
   it('Permissions-Policy restricts camera, mic, geolocation, payment', () => {
@@ -425,7 +411,8 @@ describe('Rate Limiting Coverage', () => {
 // ── Zod Schema Security ──
 
 describe('Zod Schema Validation Security', () => {
-  const schemasCode = () => fs.readFileSync(path.join(SHARED_SRC, 'validators/schemas.ts'), 'utf-8');
+  const schemasCode = () =>
+    fs.readFileSync(path.join(SHARED_SRC, 'validators/schemas.ts'), 'utf-8');
   const inputCode = () => fs.readFileSync(path.join(SHARED_SRC, 'validators/input.ts'), 'utf-8');
 
   it('email schema enforces max length (254 chars)', () => {
@@ -441,9 +428,9 @@ describe('Zod Schema Validation Security', () => {
 
   it('password schema enforces all 4 complexity rules', () => {
     const code = schemasCode();
-    expect(code).toContain('[A-Z]');  // uppercase
-    expect(code).toContain('[a-z]');  // lowercase
-    expect(code).toContain('[0-9]');  // digit
+    expect(code).toContain('[A-Z]'); // uppercase
+    expect(code).toContain('[a-z]'); // lowercase
+    expect(code).toContain('[0-9]'); // digit
     expect(code).toContain('length >= 8'); // min length
   });
 

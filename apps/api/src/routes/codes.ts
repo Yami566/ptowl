@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requireCSRF, requireClinic } from '../middleware/auth.js';
+import { requireAuth, requireClinic } from '../middleware/auth.js';
 import { sendPatientCode } from '../services/email.js';
 
 type Variables = {
@@ -10,7 +10,7 @@ type Variables = {
 export const codeRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // All code routes require auth + clinic user_type
-codeRoutes.use('*', requireAuth, requireCSRF, requireClinic);
+codeRoutes.use('*', requireAuth, requireClinic);
 
 /**
  * Generate a random 4-character alphanumeric code (uppercase).
@@ -33,9 +33,9 @@ codeRoutes.post('/:scheduleId', async (c) => {
   const scheduleId = c.req.param('scheduleId');
 
   // Verify the schedule belongs to this user
-  const schedule = await c.env.DB.prepare(
-    'SELECT id FROM schedules WHERE id = ? AND user_id = ?',
-  ).bind(scheduleId, user.id).first();
+  const schedule = await c.env.DB.prepare('SELECT id FROM schedules WHERE id = ? AND user_id = ?')
+    .bind(scheduleId, user.id)
+    .first();
 
   if (!schedule) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
@@ -44,7 +44,9 @@ codeRoutes.post('/:scheduleId', async (c) => {
   // Check if a code already exists for this schedule
   const existing = await c.env.DB.prepare(
     'SELECT id, code, created_at, expires_at FROM patient_codes WHERE schedule_id = ?',
-  ).bind(scheduleId).first<{ id: string; code: string; created_at: string; expires_at: string | null }>();
+  )
+    .bind(scheduleId)
+    .first<{ id: string; code: string; created_at: string; expires_at: string | null }>();
 
   if (existing) {
     return c.json({ ok: true, data: existing });
@@ -54,23 +56,30 @@ codeRoutes.post('/:scheduleId', async (c) => {
   let code = '';
   for (let attempt = 0; attempt < 5; attempt++) {
     code = generateCode();
-    const collision = await c.env.DB.prepare(
-      'SELECT id FROM patient_codes WHERE code = ?',
-    ).bind(code).first();
+    const collision = await c.env.DB.prepare('SELECT id FROM patient_codes WHERE code = ?')
+      .bind(code)
+      .first();
     if (!collision) break;
     if (attempt === 4) {
-      return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Could not generate unique code' } }, 500);
+      return c.json(
+        { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Could not generate unique code' } },
+        500,
+      );
     }
   }
 
   const id = crypto.randomUUID().replace(/-/g, '');
   await c.env.DB.prepare(
     "INSERT INTO patient_codes (id, schedule_id, code, created_by, created_at, expires_at) VALUES (?, ?, ?, ?, datetime('now'), datetime('now', '+7 days'))",
-  ).bind(id, scheduleId, code, user.id).run();
+  )
+    .bind(id, scheduleId, code, user.id)
+    .run();
 
   const created = await c.env.DB.prepare(
     'SELECT created_at, expires_at FROM patient_codes WHERE id = ?',
-  ).bind(id).first<{ created_at: string; expires_at: string }>();
+  )
+    .bind(id)
+    .first<{ created_at: string; expires_at: string }>();
 
   // If patient email provided, send the code via email
   let emailSent = false;
@@ -79,24 +88,23 @@ codeRoutes.post('/:scheduleId', async (c) => {
     const patientEmail = (body as { patientEmail?: string }).patientEmail;
     if (patientEmail && typeof patientEmail === 'string' && patientEmail.includes('@')) {
       // Get clinic name for the email
-      const profile = await c.env.DB.prepare(
-        'SELECT clinic_name FROM profiles WHERE user_id = ?',
-      ).bind(user.id).first<{ clinic_name: string }>();
+      const profile = await c.env.DB.prepare('SELECT clinic_name FROM profiles WHERE user_id = ?')
+        .bind(user.id)
+        .first<{ clinic_name: string }>();
       const clinicName = profile?.clinic_name || '';
 
-      emailSent = await sendPatientCode(
-        c.env.EMAIL_API_KEY,
-        patientEmail,
-        code,
-        clinicName,
-      );
+      emailSent = await sendPatientCode(c.env.EMAIL_API_KEY, patientEmail, code, clinicName);
     }
-  } catch { /* email is optional, never fail the code generation */ }
+  } catch {
+    /* email is optional, never fail the code generation */
+  }
 
   return c.json({
     ok: true,
     data: {
-      id, code, schedule_id: scheduleId,
+      id,
+      code,
+      schedule_id: scheduleId,
       created_at: created?.created_at ?? new Date().toISOString(),
       expires_at: created?.expires_at ?? null,
       email_sent: emailSent,
@@ -110,9 +118,9 @@ codeRoutes.get('/:scheduleId', async (c) => {
   const scheduleId = c.req.param('scheduleId');
 
   // Verify the schedule belongs to this user
-  const schedule = await c.env.DB.prepare(
-    'SELECT id FROM schedules WHERE id = ? AND user_id = ?',
-  ).bind(scheduleId, user.id).first();
+  const schedule = await c.env.DB.prepare('SELECT id FROM schedules WHERE id = ? AND user_id = ?')
+    .bind(scheduleId, user.id)
+    .first();
 
   if (!schedule) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
@@ -120,10 +128,15 @@ codeRoutes.get('/:scheduleId', async (c) => {
 
   const code = await c.env.DB.prepare(
     'SELECT id, code, created_at, expires_at FROM patient_codes WHERE schedule_id = ?',
-  ).bind(scheduleId).first();
+  )
+    .bind(scheduleId)
+    .first();
 
   if (!code) {
-    return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'No code exists for this schedule' } }, 404);
+    return c.json(
+      { ok: false, error: { code: 'NOT_FOUND', message: 'No code exists for this schedule' } },
+      404,
+    );
   }
 
   return c.json({ ok: true, data: code });

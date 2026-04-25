@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requirePatient, requireCSRF } from '../middleware/auth.js';
+import { requireAuth, requirePatient } from '../middleware/auth.js';
 import { zValidator } from '@hono/zod-validator';
 import { linkCodeSchema } from '@ptowl/shared';
 
@@ -17,7 +17,8 @@ patientRoutes.use('*', requireAuth, requirePatient);
 patientRoutes.get('/schedules', async (c) => {
   const user = c.get('user')!;
 
-  const rows = await c.env.DB.prepare(`
+  const rows = await c.env.DB.prepare(
+    `
     SELECT s.id, s.patient_initials, s.patient_alias, s.start_date, s.end_date,
            s.sessions_per_week, s.duration_weeks, s.notes, s.view_preference,
            ps.linked_at, p.clinic_name, p.clinic_phone
@@ -27,7 +28,10 @@ patientRoutes.get('/schedules', async (c) => {
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE ps.patient_id = ?
     ORDER BY s.start_date DESC
-  `).bind(user.id).all();
+  `,
+  )
+    .bind(user.id)
+    .all();
 
   return c.json({ ok: true, data: rows.results });
 });
@@ -38,29 +42,40 @@ patientRoutes.get('/schedules/:id', async (c) => {
   const scheduleId = c.req.param('id');
 
   if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
-    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+    return c.json(
+      { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+      400,
+    );
   }
 
   // Verify patient has access to this schedule
   const link = await c.env.DB.prepare(
     'SELECT id FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',
-  ).bind(user.id, scheduleId).first();
+  )
+    .bind(user.id, scheduleId)
+    .first();
 
   if (!link) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
   }
 
-  const schedule = await c.env.DB.prepare(`
+  const schedule = await c.env.DB.prepare(
+    `
     SELECT s.*, p.clinic_name, p.clinic_phone, p.clinic_email
     FROM schedules s
     JOIN users u ON u.id = s.user_id
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE s.id = ?
-  `).bind(scheduleId).first();
+  `,
+  )
+    .bind(scheduleId)
+    .first();
 
   const appointments = await c.env.DB.prepare(
     'SELECT * FROM appointments WHERE schedule_id = ? ORDER BY appointment_date, sort_order',
-  ).bind(scheduleId).all();
+  )
+    .bind(scheduleId)
+    .all();
 
   return c.json({
     ok: true,
@@ -72,62 +87,92 @@ patientRoutes.get('/schedules/:id', async (c) => {
 });
 
 // POST /link — Link a schedule to this patient via code
-patientRoutes.post('/link', requireCSRF, zValidator('json', linkCodeSchema, (result, c) => {
-  if (!result.success) {
-    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: result.error.issues[0]?.message || 'Code is required' } }, 400);
-  }
-}), async (c) => {
-  const user = c.get('user')!;
-  const { code } = c.req.valid('json');
+patientRoutes.post(
+  '/link',
+  zValidator('json', linkCodeSchema, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        {
+          ok: false,
+          error: {
+            code: 'INVALID_INPUT',
+            message: result.error.issues[0]?.message || 'Code is required',
+          },
+        },
+        400,
+      );
+    }
+  }),
+  async (c) => {
+    const user = c.get('user')!;
+    const { code } = c.req.valid('json');
 
-  // Normalize: strip prefix, uppercase
-  const rawCode = code.toUpperCase().replace(/^PTOWL-/, '');
-  const fullCode = `PTOWL-${rawCode}`;
+    // Normalize: strip prefix, uppercase
+    const rawCode = code.toUpperCase().replace(/^PTOWL-/, '');
+    const fullCode = `PTOWL-${rawCode}`;
 
-  // Look up the code
-  const patientCode = await c.env.DB.prepare(
-    'SELECT id, schedule_id, expires_at FROM patient_codes WHERE code = ?',
-  ).bind(fullCode).first<{ id: string; schedule_id: string; expires_at: string | null }>();
+    // Look up the code
+    const patientCode = await c.env.DB.prepare(
+      'SELECT id, schedule_id, expires_at FROM patient_codes WHERE code = ?',
+    )
+      .bind(fullCode)
+      .first<{ id: string; schedule_id: string; expires_at: string | null }>();
 
-  if (!patientCode) {
-    return c.json({ ok: false, error: { code: 'INVALID_CODE', message: 'Invalid code' } }, 404);
-  }
+    if (!patientCode) {
+      return c.json({ ok: false, error: { code: 'INVALID_CODE', message: 'Invalid code' } }, 404);
+    }
 
-  // Check expiry
-  if (patientCode.expires_at && new Date(patientCode.expires_at) < new Date()) {
-    return c.json({ ok: false, error: { code: 'CODE_EXPIRED', message: 'This code has expired' } }, 410);
-  }
+    // Check expiry
+    if (patientCode.expires_at && new Date(patientCode.expires_at) < new Date()) {
+      return c.json(
+        { ok: false, error: { code: 'CODE_EXPIRED', message: 'This code has expired' } },
+        410,
+      );
+    }
 
-  // Check if already linked
-  const existing = await c.env.DB.prepare(
-    'SELECT id FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',
-  ).bind(user.id, patientCode.schedule_id).first();
+    // Check if already linked
+    const existing = await c.env.DB.prepare(
+      'SELECT id FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',
+    )
+      .bind(user.id, patientCode.schedule_id)
+      .first();
 
-  if (existing) {
-    return c.json({ ok: false, error: { code: 'ALREADY_LINKED', message: 'Schedule already linked' } }, 409);
-  }
+    if (existing) {
+      return c.json(
+        { ok: false, error: { code: 'ALREADY_LINKED', message: 'Schedule already linked' } },
+        409,
+      );
+    }
 
-  // Create the link
-  const linkId = crypto.randomUUID().replace(/-/g, '');
-  await c.env.DB.prepare(
-    'INSERT INTO patient_schedules (id, patient_id, schedule_id) VALUES (?, ?, ?)',
-  ).bind(linkId, user.id, patientCode.schedule_id).run();
+    // Create the link
+    const linkId = crypto.randomUUID().replace(/-/g, '');
+    await c.env.DB.prepare(
+      'INSERT INTO patient_schedules (id, patient_id, schedule_id) VALUES (?, ?, ?)',
+    )
+      .bind(linkId, user.id, patientCode.schedule_id)
+      .run();
 
-  return c.json({ ok: true, data: { id: linkId, schedule_id: patientCode.schedule_id } });
-});
+    return c.json({ ok: true, data: { id: linkId, schedule_id: patientCode.schedule_id } });
+  },
+);
 
 // DELETE /unlink/:scheduleId — Remove a linked schedule
-patientRoutes.delete('/unlink/:scheduleId', requireCSRF, async (c) => {
+patientRoutes.delete('/unlink/:scheduleId', async (c) => {
   const user = c.get('user')!;
   const scheduleId = c.req.param('scheduleId');
 
   if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
-    return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+    return c.json(
+      { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+      400,
+    );
   }
 
   const result = await c.env.DB.prepare(
     'DELETE FROM patient_schedules WHERE patient_id = ? AND schedule_id = ?',
-  ).bind(user.id, scheduleId).run();
+  )
+    .bind(user.id, scheduleId)
+    .run();
 
   if (!result.meta.changes) {
     return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Link not found' } }, 404);

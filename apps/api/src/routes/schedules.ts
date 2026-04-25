@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from '../types/env.js';
-import { requireAuth, requireCSRF, requireClinic } from '../middleware/auth.js';
+import { requireAuth, requireClinic } from '../middleware/auth.js';
 import { validateInitials, validateScheduleParams, generateSchedule } from '@ptowl/shared';
 import { TIER_LIMITS } from '@ptowl/shared';
 
@@ -21,7 +21,9 @@ scheduleRoutes.get('/', async (c) => {
     const limit = Math.min(50, Math.max(1, parseInt(c.req.query('limit') || '20') || 20));
     const offset = (page - 1) * limit;
 
-    const countResult = await c.env.DB.prepare('SELECT COUNT(*) as total FROM schedules WHERE user_id = ?')
+    const countResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM schedules WHERE user_id = ?',
+    )
       .bind(user.id)
       .first<{ total: number }>();
 
@@ -38,12 +40,15 @@ scheduleRoutes.get('/', async (c) => {
     });
   } catch (err) {
     console.error('List schedules error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedules' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedules' } },
+      500,
+    );
   }
 });
 
 // POST / - Create new schedule
-scheduleRoutes.post('/', requireCSRF, async (c) => {
+scheduleRoutes.post('/', async (c) => {
   try {
     const user = c.get('user')!;
     const body = await c.req.json<{
@@ -58,41 +63,63 @@ scheduleRoutes.post('/', requireCSRF, async (c) => {
 
     // Validate initials
     const initialsErr = validateInitials(body.patient_initials);
-    if (initialsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: initialsErr } }, 400);
+    if (initialsErr)
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: initialsErr } }, 400);
 
     // Validate schedule params
     const paramsErr = validateScheduleParams({
       sessions_per_week: body.sessions_per_week,
       duration_weeks: body.duration_weeks,
     });
-    if (paramsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: paramsErr } }, 400);
+    if (paramsErr)
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: paramsErr } }, 400);
 
     // Validate start_date format (YYYY-MM-DD)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(body.start_date) || isNaN(Date.parse(body.start_date))) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid start date format' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid start date format' } },
+        400,
+      );
     }
 
     // M8 FIX: Validate template_id format if provided
     if (body.template_id) {
       if (!/^[0-9a-f]{32}$/i.test(body.template_id)) {
-        return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid template ID' } }, 400);
+        return c.json(
+          { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid template ID' } },
+          400,
+        );
       }
     }
 
     // Validate provider_name length
-    const providerName = (body.provider_name || '').replace(/<[^>]*>/g, '').trim().slice(0, 200);
-    const notes = (body.notes || '').replace(/<[^>]*>/g, '').trim().slice(0, 1000);
+    const providerName = (body.provider_name || '')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 200);
+    const notes = (body.notes || '')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 1000);
 
     // Tier limit check
     const tier = user.tier as 'free' | 'paid';
     const limits = TIER_LIMITS[tier];
-    const countResult = await c.env.DB.prepare('SELECT COUNT(*) as total FROM schedules WHERE user_id = ?')
+    const countResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM schedules WHERE user_id = ?',
+    )
       .bind(user.id)
       .first<{ total: number }>();
 
     if ((countResult?.total || 0) >= limits.maxSchedules) {
       return c.json(
-        { ok: false, error: { code: 'TIER_LIMIT', message: `Free tier limited to ${limits.maxSchedules} schedules. Upgrade to create more.` } },
+        {
+          ok: false,
+          error: {
+            code: 'TIER_LIMIT',
+            message: `Free tier limited to ${limits.maxSchedules} schedules. Upgrade to create more.`,
+          },
+        },
         403,
       );
     }
@@ -132,12 +159,21 @@ scheduleRoutes.post('/', requireCSRF, async (c) => {
       await c.env.DB.prepare(
         'INSERT INTO appointments (id, schedule_id, appointment_date, appointment_time, provider_name, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
       )
-        .bind(apptId, scheduleId, appt.appointment_date, appt.appointment_time, providerName, appt.sort_order)
+        .bind(
+          apptId,
+          scheduleId,
+          appt.appointment_date,
+          appt.appointment_time,
+          providerName,
+          appt.sort_order,
+        )
         .run();
     }
 
     // Fetch full schedule with appointments
-    const schedule = await c.env.DB.prepare('SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?')
+    const schedule = await c.env.DB.prepare(
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
+    )
       .bind(scheduleId, user.id)
       .first();
 
@@ -150,12 +186,15 @@ scheduleRoutes.post('/', requireCSRF, async (c) => {
     return c.json({ ok: true, data: { schedule, appointments: appts.results } }, 201);
   } catch (err) {
     console.error('Create schedule error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create schedule' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create schedule' } },
+      500,
+    );
   }
 });
 
 // POST /from-appointments - Create schedule from client-edited appointments
-scheduleRoutes.post('/from-appointments', requireCSRF, async (c) => {
+scheduleRoutes.post('/from-appointments', async (c) => {
   try {
     const user = c.get('user')!;
     const body = await c.req.json<{
@@ -177,57 +216,106 @@ scheduleRoutes.post('/from-appointments', requireCSRF, async (c) => {
 
     // Validate initials
     const initialsErr = validateInitials(body.patient_initials);
-    if (initialsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: initialsErr } }, 400);
+    if (initialsErr)
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: initialsErr } }, 400);
 
     // Validate schedule params
     const paramsErr = validateScheduleParams({
       sessions_per_week: body.sessions_per_week,
       duration_weeks: body.duration_weeks,
     });
-    if (paramsErr) return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: paramsErr } }, 400);
+    if (paramsErr)
+      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: paramsErr } }, 400);
 
     // Validate dates
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
     if (!datePattern.test(body.start_date) || isNaN(Date.parse(body.start_date))) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid start date format' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid start date format' } },
+        400,
+      );
     }
     if (!datePattern.test(body.end_date) || isNaN(Date.parse(body.end_date))) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid end date format' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid end date format' } },
+        400,
+      );
     }
 
     // Validate appointments array
     if (!Array.isArray(body.appointments) || body.appointments.length === 0) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Appointments array is required' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Appointments array is required' } },
+        400,
+      );
     }
     if (body.appointments.length > 365) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Too many appointments' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Too many appointments' } },
+        400,
+      );
     }
 
     const timePattern = /^\d{2}:\d{2}$/;
     for (const appt of body.appointments) {
       if (!datePattern.test(appt.appointment_date) || isNaN(Date.parse(appt.appointment_date))) {
-        return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: `Invalid appointment date: ${appt.appointment_date}` } }, 400);
+        return c.json(
+          {
+            ok: false,
+            error: {
+              code: 'INVALID_INPUT',
+              message: `Invalid appointment date: ${appt.appointment_date}`,
+            },
+          },
+          400,
+        );
       }
       if (!timePattern.test(appt.appointment_time)) {
-        return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: `Invalid appointment time: ${appt.appointment_time}` } }, 400);
+        return c.json(
+          {
+            ok: false,
+            error: {
+              code: 'INVALID_INPUT',
+              message: `Invalid appointment time: ${appt.appointment_time}`,
+            },
+          },
+          400,
+        );
       }
     }
 
     // Sanitize text fields
-    const providerName = (body.provider_name || '').replace(/<[^>]*>/g, '').trim().slice(0, 200);
-    const notes = (body.notes || '').replace(/<[^>]*>/g, '').trim().slice(0, 1000);
-    const patientAlias = (body.patient_alias || '').replace(/<[^>]*>/g, '').trim().slice(0, 100);
+    const providerName = (body.provider_name || '')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 200);
+    const notes = (body.notes || '')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 1000);
+    const patientAlias = (body.patient_alias || '')
+      .replace(/<[^>]*>/g, '')
+      .trim()
+      .slice(0, 100);
 
     // Tier limit check
     const tier = user.tier as 'free' | 'paid';
     const limits = TIER_LIMITS[tier];
-    const countResult = await c.env.DB.prepare('SELECT COUNT(*) as total FROM schedules WHERE user_id = ?')
+    const countResult = await c.env.DB.prepare(
+      'SELECT COUNT(*) as total FROM schedules WHERE user_id = ?',
+    )
       .bind(user.id)
       .first<{ total: number }>();
 
     if ((countResult?.total || 0) >= limits.maxSchedules) {
       return c.json(
-        { ok: false, error: { code: 'TIER_LIMIT', message: `Free tier limited to ${limits.maxSchedules} schedules. Upgrade to create more.` } },
+        {
+          ok: false,
+          error: {
+            code: 'TIER_LIMIT',
+            message: `Free tier limited to ${limits.maxSchedules} schedules. Upgrade to create more.`,
+          },
+        },
         403,
       );
     }
@@ -239,7 +327,18 @@ scheduleRoutes.post('/from-appointments', requireCSRF, async (c) => {
     await c.env.DB.prepare(
       'INSERT INTO schedules (id, user_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     )
-      .bind(scheduleId, user.id, initials, patientAlias, body.start_date, body.end_date, body.sessions_per_week, body.duration_weeks, providerName, notes)
+      .bind(
+        scheduleId,
+        user.id,
+        initials,
+        patientAlias,
+        body.start_date,
+        body.end_date,
+        body.sessions_per_week,
+        body.duration_weeks,
+        providerName,
+        notes,
+      )
       .run();
 
     // Insert client-edited appointments
@@ -248,12 +347,21 @@ scheduleRoutes.post('/from-appointments', requireCSRF, async (c) => {
       await c.env.DB.prepare(
         'INSERT INTO appointments (id, schedule_id, appointment_date, appointment_time, provider_name, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
       )
-        .bind(apptId, scheduleId, appt.appointment_date, appt.appointment_time, providerName, appt.sort_order)
+        .bind(
+          apptId,
+          scheduleId,
+          appt.appointment_date,
+          appt.appointment_time,
+          providerName,
+          appt.sort_order,
+        )
         .run();
     }
 
     // Fetch full result
-    const schedule = await c.env.DB.prepare('SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?')
+    const schedule = await c.env.DB.prepare(
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
+    )
       .bind(scheduleId, user.id)
       .first();
 
@@ -265,8 +373,14 @@ scheduleRoutes.post('/from-appointments', requireCSRF, async (c) => {
 
     return c.json({ ok: true, data: { schedule, appointments: appts.results } }, 201);
   } catch (err) {
-    console.error('Create from-appointments error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create schedule' } }, 500);
+    console.error(
+      'Create from-appointments error:',
+      err instanceof Error ? err.message : 'Unknown error',
+    );
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to create schedule' } },
+      500,
+    );
   }
 });
 
@@ -276,15 +390,23 @@ scheduleRoutes.get('/:id', async (c) => {
     const user = c.get('user')!;
     const scheduleId = c.req.param('id');
     if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+        400,
+      );
     }
 
-    const schedule = await c.env.DB.prepare('SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, share_token, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?')
+    const schedule = await c.env.DB.prepare(
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, share_token, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
+    )
       .bind(scheduleId, user.id)
       .first();
 
     if (!schedule) {
-      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } },
+        404,
+      );
     }
 
     const appointments = await c.env.DB.prepare(
@@ -296,26 +418,37 @@ scheduleRoutes.get('/:id', async (c) => {
     return c.json({ ok: true, data: { schedule, appointments: appointments.results } });
   } catch (err) {
     console.error('Get schedule error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedule' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedule' } },
+      500,
+    );
   }
 });
 
 // POST /:id/share - Generate a share token for public .ics link
-scheduleRoutes.post('/:id/share', requireCSRF, async (c) => {
+scheduleRoutes.post('/:id/share', async (c) => {
   try {
     const user = c.get('user')!;
     const scheduleId = c.req.param('id');
     if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+        400,
+      );
     }
 
     // Verify ownership
-    const schedule = await c.env.DB.prepare('SELECT id, share_token FROM schedules WHERE id = ? AND user_id = ?')
+    const schedule = await c.env.DB.prepare(
+      'SELECT id, share_token FROM schedules WHERE id = ? AND user_id = ?',
+    )
       .bind(scheduleId, user.id)
       .first<{ id: string; share_token: string | null }>();
 
     if (!schedule) {
-      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } },
+        404,
+      );
     }
 
     // Reuse existing token or generate new one
@@ -330,21 +463,29 @@ scheduleRoutes.post('/:id/share', requireCSRF, async (c) => {
     return c.json({ ok: true, data: { share_token: token } });
   } catch (err) {
     console.error('Share schedule error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to generate share link' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to generate share link' } },
+      500,
+    );
   }
 });
 
 // DELETE /:id - Delete schedule (cascade deletes appointments)
-scheduleRoutes.delete('/:id', requireCSRF, async (c) => {
+scheduleRoutes.delete('/:id', async (c) => {
   try {
     const user = c.get('user')!;
     const scheduleId = c.req.param('id');
     if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
-      return c.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } }, 400);
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+        400,
+      );
     }
 
     // Delete appointments first (in case no CASCADE)
-    await c.env.DB.prepare('DELETE FROM appointments WHERE schedule_id = ? AND schedule_id IN (SELECT id FROM schedules WHERE user_id = ?)')
+    await c.env.DB.prepare(
+      'DELETE FROM appointments WHERE schedule_id = ? AND schedule_id IN (SELECT id FROM schedules WHERE user_id = ?)',
+    )
       .bind(scheduleId, user.id)
       .run();
 
@@ -353,12 +494,18 @@ scheduleRoutes.delete('/:id', requireCSRF, async (c) => {
       .run();
 
     if (!result.meta.changes) {
-      return c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } }, 404);
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } },
+        404,
+      );
     }
 
     return c.json({ ok: true, data: { message: 'Schedule deleted' } });
   } catch (err) {
     console.error('Delete schedule error:', err instanceof Error ? err.message : 'Unknown error');
-    return c.json({ ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to delete schedule' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to delete schedule' } },
+      500,
+    );
   }
 });

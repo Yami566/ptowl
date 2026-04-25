@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { csrf } from 'hono/csrf';
 import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './types/env.js';
 import { authRoutes } from './routes/auth.js';
@@ -28,46 +29,71 @@ app.use('*', async (c, next) => {
   const frontendUrl = c.env.FRONTEND_URL;
   if (!frontendUrl) {
     console.error('FRONTEND_URL not configured — rejecting CORS');
-    return c.json({ ok: false, error: { code: 'CONFIG_ERROR', message: 'Server misconfigured' } }, 500);
+    return c.json(
+      { ok: false, error: { code: 'CONFIG_ERROR', message: 'Server misconfigured' } },
+      500,
+    );
   }
   const corsMiddleware = cors({
     origin: [frontendUrl],
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'X-CSRF-Token'],
+    allowHeaders: ['Content-Type'],
     credentials: true,
     maxAge: 86400,
   });
   return corsMiddleware(c, next);
 });
 
+// CSRF: hono/csrf rejects state-changing requests whose Origin doesn't match.
+// Replaces the custom signed-token middleware — modern browsers always send
+// Origin on POST/PUT/PATCH/DELETE, so this is the recommended approach.
+app.use('*', async (c, next) => {
+  const frontendUrl = c.env.FRONTEND_URL;
+  if (!frontendUrl) return next(); // CORS middleware above already handles missing config
+  const csrfMiddleware = csrf({ origin: frontendUrl });
+  return csrfMiddleware(c, next);
+});
+
 // H2 FIX: Block direct Worker URL access in production
 app.use('*', async (c, next) => {
   const host = c.req.header('host') || '';
   if (c.env.ENVIRONMENT === 'production' && host.endsWith('.workers.dev')) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Direct access not allowed' } }, 403);
+    return c.json(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Direct access not allowed' } },
+      403,
+    );
   }
   return next();
 });
 
-app.use('*', secureHeaders({
-  contentSecurityPolicy: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", 'https://challenges.cloudflare.com', 'https://apis.google.com', 'https://www.gstatic.com', 'https://www.google.com'],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
-    connectSrc: ["'self'"],
-    frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
-    frameAncestors: ["'none'"],
-    objectSrc: ["'none'"],       // Block Flash/Java plugin content
-    baseUri: ["'self'"],         // Prevent base tag hijacking
-    formAction: ["'self'"],      // Restrict form submissions to same origin
-  },
-  xFrameOptions: 'DENY',
-  xContentTypeOptions: 'nosniff',
-  referrerPolicy: 'strict-origin-when-cross-origin',
-  strictTransportSecurity: 'max-age=63072000; includeSubDomains; preload',
-}));
+app.use(
+  '*',
+  secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        'https://challenges.cloudflare.com',
+        'https://apis.google.com',
+        'https://www.gstatic.com',
+        'https://www.google.com',
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"], // Block Flash/Java plugin content
+      baseUri: ["'self'"], // Prevent base tag hijacking
+      formAction: ["'self'"], // Restrict form submissions to same origin
+    },
+    xFrameOptions: 'DENY',
+    xContentTypeOptions: 'nosniff',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    strictTransportSecurity: 'max-age=63072000; includeSubDomains; preload',
+  }),
+);
 
 // Permissions-Policy: restrict browser feature access (no built-in Hono support for this header)
 app.use('*', async (c, next) => {
@@ -79,7 +105,10 @@ app.use('*', async (c, next) => {
 app.use('*', async (c, next) => {
   const contentLength = parseInt(c.req.header('content-length') || '0');
   if (contentLength > 1_048_576) {
-    return c.json({ ok: false, error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' } }, 413);
+    return c.json(
+      { ok: false, error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' } },
+      413,
+    );
   }
   return next();
 });
@@ -99,14 +128,17 @@ app.get('/api/v1/health', async (c) => {
       },
     });
   } catch {
-    return c.json({
-      ok: false,
-      data: {
-        status: 'degraded',
-        db: { connected: false, latency_ms: -1 },
-        timestamp: new Date().toISOString(),
+    return c.json(
+      {
+        ok: false,
+        data: {
+          status: 'degraded',
+          db: { connected: false, latency_ms: -1 },
+          timestamp: new Date().toISOString(),
+        },
       },
-    }, 503);
+      503,
+    );
   }
 });
 
@@ -123,7 +155,9 @@ app.route('/api/v1/patient', patientRoutes);
 app.route('/api/v1/codes', codeRoutes);
 
 // 404 handler
-app.notFound((c) => c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404));
+app.notFound((c) =>
+  c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404),
+);
 
 // Structured error handler — logs JSON for Cloudflare Workers Observability
 app.onError((err, c) => {
@@ -147,22 +181,20 @@ app.onError((err, c) => {
 // ─── Scheduled cleanup (Cron Trigger) ────────────────────────
 // Runs daily at 3 AM UTC — deletes expired tokens and trims audit log
 async function cleanupExpiredData(db: D1Database): Promise<void> {
-  await db.prepare(
-    `DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM sessions WHERE expires_at < datetime('now')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`,
-  ).run();
+  await db
+    .prepare(`DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`)
+    .run();
+  await db
+    .prepare(`DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`)
+    .run();
+  await db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
+  await db.prepare(`DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`).run();
   // Clean up expired patient codes (7-day TTL)
-  await db.prepare(
-    `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
-  ).run();
+  await db
+    .prepare(
+      `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
+    )
+    .run();
 }
 
 export default {

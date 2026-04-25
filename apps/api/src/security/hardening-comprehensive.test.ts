@@ -21,12 +21,18 @@ function readAllFiles(dir: string, ext: string[]): Array<{ path: string; content
   try {
     const entries = fs.readdirSync(dir, { withFileTypes: true, recursive: true });
     for (const entry of entries) {
-      if (entry.isFile() && ext.some((e) => entry.name.endsWith(e)) && !entry.name.includes('.test.')) {
+      if (
+        entry.isFile() &&
+        ext.some((e) => entry.name.endsWith(e)) &&
+        !entry.name.includes('.test.')
+      ) {
         const fullPath = path.join(entry.parentPath || dir, entry.name);
         files.push({ path: fullPath, content: fs.readFileSync(fullPath, 'utf-8') });
       }
     }
-  } catch { /* dir doesn't exist */ }
+  } catch {
+    /* dir doesn't exist */
+  }
   return files;
 }
 
@@ -74,24 +80,10 @@ describe('Auth Middleware Security', () => {
     expect(code).toContain('401');
   });
 
-  it('requireCSRF skips verification for GET/HEAD/OPTIONS methods', () => {
-    const code = authMiddleware();
-    expect(code).toContain("['GET', 'HEAD', 'OPTIONS'].includes(method)");
-    // Should call next() without checking token for safe methods
-    expect(code).toContain('return next()');
-  });
-
-  it('requireCSRF requires X-CSRF-Token header for state-mutating requests', () => {
-    const code = authMiddleware();
-    expect(code).toContain("c.req.header('X-CSRF-Token')");
-    expect(code).toContain('CSRF_MISSING');
-    expect(code).toContain('403');
-  });
-
-  it('requireCSRF verifies CSRF token against user ID and server secret', () => {
-    const code = authMiddleware();
-    expect(code).toContain('verifyCSRFToken(csrfToken, c.env.JWT_SECRET, user.id)');
-    expect(code).toContain('CSRF_INVALID');
+  it('CSRF protection is registered globally (hono/csrf, origin-based)', () => {
+    const indexCode = readFile('index.ts');
+    expect(indexCode).toContain("from 'hono/csrf'");
+    expect(indexCode).toContain('csrf({ origin:');
   });
 
   it('requireAdmin checks role === admin and admin_verified === true', () => {
@@ -141,7 +133,10 @@ describe('Admin Route Security', () => {
 
   it('admin approve route validates user ID before DB query', () => {
     const code = adminCode();
-    const approveSection = code.slice(code.indexOf("'/users/:id/approve'"), code.indexOf("'/users/:id/deny'"));
+    const approveSection = code.slice(
+      code.indexOf("'/users/:id/approve'"),
+      code.indexOf("'/users/:id/deny'"),
+    );
     // ID validation must appear before the UPDATE query
     const validationPos = approveSection.indexOf('[0-9a-f]{32}');
     const updatePos = approveSection.indexOf('UPDATE users SET');
@@ -521,12 +516,15 @@ describe('Admin Route Authorization Chain', () => {
     const usersSection = code.match(/adminRoutes\.get\(\s*['"]\/users['"]/);
     expect(usersSection).not.toBeNull();
     // The route registration must include both requireAuth and requireAdmin
-    const routeLine = code.slice(code.indexOf("adminRoutes.get('/users'"), code.indexOf("adminRoutes.get('/users'") + 200);
+    const routeLine = code.slice(
+      code.indexOf("adminRoutes.get('/users'"),
+      code.indexOf("adminRoutes.get('/users'") + 200,
+    );
     expect(routeLine).toContain('requireAuth');
     expect(routeLine).toContain('requireAdmin');
   });
 
-  it('admin /users/:id/approve requires requireAuth, requireAdmin, and requireCSRF', () => {
+  it('admin /users/:id/approve requires requireAuth and requireAdmin', () => {
     const code = readFile('routes/admin.ts');
     const routeLine = code.slice(
       code.indexOf("'/users/:id/approve'"),
@@ -534,10 +532,9 @@ describe('Admin Route Authorization Chain', () => {
     );
     expect(routeLine).toContain('requireAuth');
     expect(routeLine).toContain('requireAdmin');
-    expect(routeLine).toContain('requireCSRF');
   });
 
-  it('admin /users/:id/deny requires requireAuth, requireAdmin, and requireCSRF', () => {
+  it('admin /users/:id/deny requires requireAuth and requireAdmin', () => {
     const code = readFile('routes/admin.ts');
     const routeLine = code.slice(
       code.indexOf("'/users/:id/deny'"),
@@ -545,7 +542,6 @@ describe('Admin Route Authorization Chain', () => {
     );
     expect(routeLine).toContain('requireAuth');
     expect(routeLine).toContain('requireAdmin');
-    expect(routeLine).toContain('requireCSRF');
   });
 });
 
@@ -583,7 +579,10 @@ describe('Account Lockout Protection', () => {
   // Admin 2FA has custom rate limiting (max 3 codes per 5 min).
   it('admin send-code has rate limiting for verification codes', () => {
     const code = readFile('routes/admin.ts');
-    const sendCodeSection = code.slice(code.indexOf("'/send-code'"), code.indexOf("'/verify-code'"));
+    const sendCodeSection = code.slice(
+      code.indexOf("'/send-code'"),
+      code.indexOf("'/verify-code'"),
+    );
     expect(sendCodeSection).toContain('RATE_LIMITED');
     expect(sendCodeSection).toContain('Too many codes requested');
   });
@@ -634,7 +633,10 @@ describe('Verification Code Security', () => {
 
   it('admin send-code checks role is admin before generating code', () => {
     const code = readFile('routes/admin.ts');
-    const sendCodeSection = code.slice(code.indexOf("'/send-code'"), code.indexOf("'/verify-code'"));
+    const sendCodeSection = code.slice(
+      code.indexOf("'/send-code'"),
+      code.indexOf("'/verify-code'"),
+    );
     expect(sendCodeSection).toContain("user.role !== 'admin'");
     expect(sendCodeSection).toContain('FORBIDDEN');
   });
