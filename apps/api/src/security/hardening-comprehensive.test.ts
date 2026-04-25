@@ -242,28 +242,27 @@ describe('HSTS and Security Headers', () => {
 describe('Input Sanitization', () => {
   it('HTML tags stripped from provider_name in appointments', () => {
     const code = readFile('routes/appointments.ts');
-    // provider_name must have HTML tags stripped
-    expect(code).toContain("provider_name.replace(/<[^>]*>/g, '')");
+    expect(code).toMatch(/provider_name[\s\S]*?\.replace\(\/<\[\^>\]\*>\/g, ''\)/);
   });
 
   it('HTML tags stripped from provider_name in schedules', () => {
     const code = readFile('routes/schedules.ts');
-    expect(code).toContain("provider_name || '').replace(/<[^>]*>/g, '')");
+    expect(code).toMatch(/provider_name[\s\S]*?\.replace\(\/<\[\^>\]\*>\/g, ''\)/);
   });
 
   it('HTML tags stripped from clinic_name in profile', () => {
     const code = readFile('routes/profile.ts');
-    expect(code).toContain("clinic_name.replace(/<[^>]*>/g, '')");
+    expect(code).toMatch(/clinic_name[\s\S]*?\.replace\(\/<\[\^>\]\*>\/g, ''\)/);
   });
 
   it('HTML tags stripped from clinic_address in profile', () => {
     const code = readFile('routes/profile.ts');
-    expect(code).toContain("clinic_address.replace(/<[^>]*>/g, '')");
+    expect(code).toMatch(/clinic_address[\s\S]*?\.replace\(\/<\[\^>\]\*>\/g, ''\)/);
   });
 
   it('HTML tags stripped from notes in schedules', () => {
     const code = readFile('routes/schedules.ts');
-    expect(code).toContain("notes || '').replace(/<[^>]*>/g, '')");
+    expect(code).toMatch(/notes[\s\S]*?\.replace\(\/<\[\^>\]\*>\/g, ''\)/);
   });
 
   it('template name has HTML sanitization', () => {
@@ -286,19 +285,19 @@ describe('Input Sanitization', () => {
 
   it('logo upload validates PNG magic bytes (0x89504E47)', () => {
     const code = readFile('routes/profile.ts');
-    // Must check the first 4 bytes match PNG signature
-    expect(code).toContain('bytes[0] === 0x89');
-    expect(code).toContain('bytes[1] === 0x50');
-    expect(code).toContain('bytes[2] === 0x4E');
-    expect(code).toContain('bytes[3] === 0x47');
+    // Must check the first 4 bytes match PNG signature (case-insensitive hex)
+    expect(code).toMatch(/bytes\[0\] === 0x89/i);
+    expect(code).toMatch(/bytes\[1\] === 0x50/i);
+    expect(code).toMatch(/bytes\[2\] === 0x4e/i);
+    expect(code).toMatch(/bytes\[3\] === 0x47/i);
   });
 
   it('logo upload validates JPEG magic bytes (0xFFD8FF)', () => {
     const code = readFile('routes/profile.ts');
-    // Must check the first 3 bytes match JPEG signature
-    expect(code).toContain('bytes[0] === 0xFF');
-    expect(code).toContain('bytes[1] === 0xD8');
-    expect(code).toContain('bytes[2] === 0xFF');
+    // Must check the first 3 bytes match JPEG signature (case-insensitive hex)
+    expect(code).toMatch(/bytes\[0\] === 0xff/i);
+    expect(code).toMatch(/bytes\[1\] === 0xd8/i);
+    expect(code).toMatch(/bytes\[2\] === 0xff/i);
   });
 
   it('body size limit of 1MB present to prevent DoS via large payloads', () => {
