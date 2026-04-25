@@ -29,7 +29,7 @@ scheduleRoutes.get('/', async (c) => {
       .first<{ total: number }>();
 
     const schedules = await c.env.DB.prepare(
-      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, reminders_enabled, (patient_email_encrypted IS NOT NULL) AS has_patient_email, created_at, updated_at FROM schedules WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
     )
       .bind(user.id, limit, offset)
       .all();
@@ -173,7 +173,7 @@ scheduleRoutes.post('/', async (c) => {
 
     // Fetch full schedule with appointments
     const schedule = await c.env.DB.prepare(
-      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, reminders_enabled, (patient_email_encrypted IS NOT NULL) AS has_patient_email, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
     )
       .bind(scheduleId, user.id)
       .first();
@@ -361,7 +361,7 @@ scheduleRoutes.post('/from-appointments', async (c) => {
 
     // Fetch full result
     const schedule = await c.env.DB.prepare(
-      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
+      'SELECT id, user_id, template_id, patient_initials, patient_alias, start_date, end_date, sessions_per_week, duration_weeks, provider_name, notes, reminders_enabled, (patient_email_encrypted IS NOT NULL) AS has_patient_email, created_at, updated_at FROM schedules WHERE id = ? AND user_id = ?',
     )
       .bind(scheduleId, user.id)
       .first();

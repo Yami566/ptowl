@@ -9,6 +9,7 @@ export interface WizardResult {
   patientInitials: string;
   patientAlias: string;
   appointmentTime: string; // HH:MM
+  patientEmail?: string; // optional — enables 24h + 1h reminder emails
 }
 
 export interface StepOption {
@@ -90,7 +91,11 @@ export const TIME_SLOTS: TimeOption[] = [
 
 // ── Helpers ──
 
-const shortDateFmt = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const shortDateFmt = new Intl.DateTimeFormat('en-US', {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
 export function formatShortDate(date: Date): string {
   return shortDateFmt.format(date);
 }
@@ -105,7 +110,7 @@ export function toISODate(date: Date): string {
 export function getNextMonday(): Date {
   const now = new Date();
   const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
-  const daysUntilMon = dayOfWeek === 0 ? 1 : (8 - dayOfWeek);
+  const daysUntilMon = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
   const next = new Date(now);
   next.setDate(now.getDate() + daysUntilMon);
   return next;

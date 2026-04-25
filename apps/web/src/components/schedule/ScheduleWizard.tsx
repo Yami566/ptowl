@@ -22,13 +22,7 @@ interface ScheduleWizardProps {
   onCancel: () => void;
 }
 
-const STEP_TITLES = [
-  'Patient Initials',
-  'Days per Week',
-  'Duration',
-  'Time',
-  'Confirm',
-];
+const STEP_TITLES = ['Patient Initials', 'Days per Week', 'Duration', 'Time', 'Confirm'];
 
 // ── Component ──
 
@@ -40,6 +34,8 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
   // Selections
   const [patientInitials, setPatientInitials] = useState('');
   const [patientAlias, setPatientAlias] = useState('');
+  const [patientEmail, setPatientEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [frequencyKey, setFrequencyKey] = useState('');
   const [durationKey, setDurationKey] = useState('');
   const [durationMode, setDurationMode] = useState<'weeks' | 'months'>('weeks');
@@ -86,7 +82,10 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
   // ── Action handlers ──
 
   const handleInitialsChange = useCallback((value: string) => {
-    const cleaned = value.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase();
+    const cleaned = value
+      .replace(/[^a-zA-Z]/g, '')
+      .slice(0, 2)
+      .toUpperCase();
     setPatientInitials(cleaned);
     if (cleaned.length === 2) {
       setPatientAlias(lookupAlias(cleaned));
@@ -96,6 +95,12 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
   }, []);
 
   const handleConfirm = useCallback(() => {
+    const trimmedEmail = patientEmail.trim();
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEmailError('Please enter a valid email or leave blank');
+      return;
+    }
+    setEmailError('');
     onComplete({
       sessionsPerWeek,
       durationWeeks,
@@ -103,8 +108,18 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
       patientInitials,
       patientAlias,
       appointmentTime: selectedTime?.time ?? '09:00',
+      patientEmail: trimmedEmail || undefined,
     });
-  }, [onComplete, sessionsPerWeek, durationWeeks, startDate, patientInitials, patientAlias, selectedTime]);
+  }, [
+    onComplete,
+    sessionsPerWeek,
+    durationWeeks,
+    startDate,
+    patientInitials,
+    patientAlias,
+    selectedTime,
+    patientEmail,
+  ]);
 
   const handleRestart = useCallback(() => {
     setStep(1);
@@ -196,7 +211,16 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [step, patientInitials, durationMode, goBack, goForward, onCancel, handleConfirm, handleRestart]);
+  }, [
+    step,
+    patientInitials,
+    durationMode,
+    goBack,
+    goForward,
+    onCancel,
+    handleConfirm,
+    handleRestart,
+  ]);
 
   // ── Duration options with session count ──
 
@@ -272,7 +296,11 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
                 </div>
               )}
               {patientInitials.length === 2 && (
-                <button style={styles.continueBtn} onClick={() => goForward(2)} aria-label="Continue">
+                <button
+                  style={styles.continueBtn}
+                  onClick={() => goForward(2)}
+                  aria-label="Continue"
+                >
                   Continue <span style={styles.navKey}>Enter</span>
                 </button>
               )}
@@ -287,7 +315,10 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
             <h3 style={styles.stepTitle}>How many days per week?</h3>
             <div style={styles.optionList}>
               {FREQUENCIES.map((opt) =>
-                renderOptionButton(opt, () => { setFrequencyKey(opt.key); goForward(3); })
+                renderOptionButton(opt, () => {
+                  setFrequencyKey(opt.key);
+                  goForward(3);
+                }),
               )}
             </div>
           </div>
@@ -300,21 +331,36 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
             <h3 style={styles.stepTitle}>How long?</h3>
             <div style={styles.toggleRow}>
               <button
-                style={{ ...styles.toggleBtn, ...(durationMode === 'months' ? styles.toggleActive : {}) }}
-                onClick={() => { setDurationMode('months'); setDurationKey(''); }}
+                style={{
+                  ...styles.toggleBtn,
+                  ...(durationMode === 'months' ? styles.toggleActive : {}),
+                }}
+                onClick={() => {
+                  setDurationMode('months');
+                  setDurationKey('');
+                }}
               >
                 <span style={styles.toggleKey}>Q</span> Months
               </button>
               <button
-                style={{ ...styles.toggleBtn, ...(durationMode === 'weeks' ? styles.toggleActive : {}) }}
-                onClick={() => { setDurationMode('weeks'); setDurationKey(''); }}
+                style={{
+                  ...styles.toggleBtn,
+                  ...(durationMode === 'weeks' ? styles.toggleActive : {}),
+                }}
+                onClick={() => {
+                  setDurationMode('weeks');
+                  setDurationKey('');
+                }}
               >
                 <span style={styles.toggleKey}>W</span> Weeks
               </button>
             </div>
             <div style={styles.optionList}>
               {durationOptions.map((opt, idx) =>
-                renderOptionButton(opt, () => { setDurationKey(durationList[idx]!.key); goForward(4); })
+                renderOptionButton(opt, () => {
+                  setDurationKey(durationList[idx]!.key);
+                  goForward(4);
+                }),
               )}
             </div>
           </div>
@@ -325,13 +371,15 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
         return (
           <div>
             <h3 style={styles.stepTitle}>What time?</h3>
-            <p style={styles.stepSubtitle}>Applies to all appointments. You can adjust individual times after.</p>
+            <p style={styles.stepSubtitle}>
+              Applies to all appointments. You can adjust individual times after.
+            </p>
             <div style={styles.optionList}>
               {TIME_SLOTS.map((opt) =>
-                renderOptionButton(
-                  { key: opt.key, label: opt.label, description: '' },
-                  () => { setTimeKey(opt.key); goForward(5); },
-                )
+                renderOptionButton({ key: opt.key, label: opt.label, description: '' }, () => {
+                  setTimeKey(opt.key);
+                  goForward(5);
+                }),
               )}
             </div>
           </div>
@@ -345,7 +393,9 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
             <div style={styles.summaryCard}>
               <div style={styles.summaryRow}>
                 <span style={styles.summaryLabel}>Patient</span>
-                <span style={styles.summaryValue}>{patientInitials} &mdash; {patientAlias}</span>
+                <span style={styles.summaryValue}>
+                  {patientInitials} &mdash; {patientAlias}
+                </span>
               </div>
               <div style={styles.summaryDivider} />
               <div style={styles.summaryRow}>
@@ -354,16 +404,47 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
               </div>
               <div style={styles.summaryRow}>
                 <span style={styles.summaryLabel}>Duration</span>
-                <span style={styles.summaryValue}>{durationWeeks} weeks ({totalSessions} sessions)</span>
+                <span style={styles.summaryValue}>
+                  {durationWeeks} weeks ({totalSessions} sessions)
+                </span>
               </div>
               <div style={styles.summaryRow}>
                 <span style={styles.summaryLabel}>Time</span>
-                <span style={styles.summaryValue}>{selectedTime ? formatTime(selectedTime.time) : '9:00 AM'}</span>
+                <span style={styles.summaryValue}>
+                  {selectedTime ? formatTime(selectedTime.time) : '9:00 AM'}
+                </span>
               </div>
               <div style={styles.summaryRow}>
                 <span style={styles.summaryLabel}>Start Date</span>
                 <span style={styles.summaryValue}>{startDateLabel}</span>
               </div>
+            </div>
+            <div style={styles.emailBlock}>
+              <label htmlFor="wizard-patient-email" style={styles.emailLabel}>
+                Patient email <span style={styles.emailOptional}>(optional)</span>
+              </label>
+              <input
+                id="wizard-patient-email"
+                type="email"
+                value={patientEmail}
+                onChange={(e) => {
+                  setPatientEmail(e.target.value);
+                  setEmailError('');
+                }}
+                placeholder="patient@example.com"
+                autoComplete="off"
+                style={styles.emailInput}
+                aria-describedby="wizard-patient-email-help"
+              />
+              <p id="wizard-patient-email-help" style={styles.emailHelp}>
+                Add to send 24h + 1h appointment reminders. Leave blank to skip. Stored encrypted;
+                patient can unsubscribe with one click.
+              </p>
+              {emailError && (
+                <p style={styles.emailErr} role="alert">
+                  {emailError}
+                </p>
+              )}
             </div>
             <div style={styles.confirmButtons}>
               <button style={styles.confirmYes} onClick={handleConfirm} aria-label="Yes, generate">
@@ -384,7 +465,9 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
   return (
     <div
       style={styles.overlay}
-      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
       role="dialog"
       aria-modal="true"
       aria-label={`Schedule Wizard — Step ${step}: ${STEP_TITLES[step - 1]}`}
@@ -392,7 +475,9 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
       <div ref={containerRef} style={styles.wizard} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
           <span style={styles.headerTitle}>Schedule Wizard</span>
-          <button style={styles.closeBtn} onClick={onCancel} aria-label="Close wizard">&#x2715;</button>
+          <button style={styles.closeBtn} onClick={onCancel} aria-label="Close wizard">
+            &#x2715;
+          </button>
         </div>
         {renderProgressBar()}
         <div style={styles.stepLabel}>
@@ -425,47 +510,359 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
 // ── Styles ──
 
 const styles: Record<string, React.CSSProperties> = {
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' },
-  wizard: { background: 'var(--white)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' as const, display: 'flex', flexDirection: 'column' as const, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem 0.75rem' },
-  headerTitle: { fontSize: '1.1rem', fontWeight: 700, color: 'var(--dark)', letterSpacing: '-0.01em' },
-  closeBtn: { background: 'none', fontSize: '1.1rem', color: 'var(--gray-text)', padding: '0.25rem', lineHeight: 1, borderRadius: '4px' },
-  progressContainer: { padding: '0 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' },
-  progressTrack: { flex: 1, height: '4px', background: 'var(--gray-light)', borderRadius: '2px', overflow: 'hidden' },
-  progressFill: { height: '100%', background: 'var(--green-mid)', borderRadius: '2px', transition: 'width 0.3s ease' },
-  progressLabel: { fontSize: '0.75rem', color: 'var(--gray-text)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' as const },
-  stepLabel: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem 0.25rem' },
-  stepNumber: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', background: 'var(--green-dark)', color: 'white', borderRadius: '50%', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem' },
-  stepName: { fontSize: '0.85rem', fontWeight: 600, color: 'var(--dark)', textTransform: 'uppercase' as const, letterSpacing: '0.04em' },
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200,
+    padding: '1rem',
+  },
+  wizard: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    width: '100%',
+    maxWidth: '520px',
+    maxHeight: '90vh',
+    overflowY: 'auto' as const,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1.25rem 1.5rem 0.75rem',
+  },
+  headerTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 700,
+    color: 'var(--dark)',
+    letterSpacing: '-0.01em',
+  },
+  closeBtn: {
+    background: 'none',
+    fontSize: '1.1rem',
+    color: 'var(--gray-text)',
+    padding: '0.25rem',
+    lineHeight: 1,
+    borderRadius: '4px',
+  },
+  progressContainer: {
+    padding: '0 1.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '0.25rem',
+  },
+  progressTrack: {
+    flex: 1,
+    height: '4px',
+    background: 'var(--gray-light)',
+    borderRadius: '2px',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    background: 'var(--green-mid)',
+    borderRadius: '2px',
+    transition: 'width 0.3s ease',
+  },
+  progressLabel: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    fontFamily: 'var(--font-mono)',
+    whiteSpace: 'nowrap' as const,
+  },
+  stepLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.5rem 0.25rem',
+  },
+  stepNumber: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '24px',
+    height: '24px',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: '50%',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+  },
+  stepName: {
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
+  },
   stepContent: { padding: '0.5rem 1.5rem 1rem', minHeight: '200px' },
   stepTitle: { fontSize: '1.25rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '1rem' },
-  stepSubtitle: { fontSize: '0.875rem', color: 'var(--gray-text)', marginBottom: '1rem', marginTop: '-0.5rem' },
+  stepSubtitle: {
+    fontSize: '0.875rem',
+    color: 'var(--gray-text)',
+    marginBottom: '1rem',
+    marginTop: '-0.5rem',
+  },
   optionList: { display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' },
-  optionButton: { display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1rem', background: 'var(--off-white)', border: '2px solid var(--gray-mid)', borderRadius: 'var(--radius)', textAlign: 'left' as const, transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s', cursor: 'pointer', width: '100%' },
-  optionKey: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', minWidth: '32px', background: 'var(--green-dark)', color: 'white', borderRadius: '6px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.875rem' },
+  optionButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.875rem',
+    padding: '0.875rem 1rem',
+    background: 'var(--off-white)',
+    border: '2px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    textAlign: 'left' as const,
+    transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  optionKey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px',
+    minWidth: '32px',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: '6px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.875rem',
+  },
   optionText: { display: 'flex', flexDirection: 'column' as const, gap: '0.125rem' },
   optionLabel: { fontWeight: 600, fontSize: '0.95rem', color: 'var(--dark)' },
   optionDesc: { fontSize: '0.8rem', color: 'var(--gray-text)' },
   toggleRow: { display: 'flex', gap: '0.5rem', marginBottom: '1rem' },
-  toggleBtn: { display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 1rem', background: 'var(--gray-light)', border: '2px solid var(--gray-mid)', borderRadius: 'var(--radius)', fontWeight: 600, fontSize: '0.875rem', color: 'var(--gray-text)', cursor: 'pointer', transition: 'all 0.15s', flex: 1, justifyContent: 'center' },
-  toggleActive: { background: 'var(--green-light)', borderColor: 'var(--green-mid)', color: 'var(--green-dark)' },
-  toggleKey: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', background: 'rgba(0,0,0,0.08)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.75rem' },
-  initialsWrap: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '1rem' },
-  initialsInput: { padding: '1rem', fontSize: '2.5rem', textAlign: 'center' as const, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.5rem', border: '2px solid var(--green-mid)', borderRadius: 'var(--radius)', textTransform: 'uppercase' as const, width: '160px', color: 'var(--dark)', background: 'var(--off-white)' },
-  aliasReveal: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem', background: 'var(--green-light)', borderRadius: 'var(--radius)', animation: 'wizardSlideIn 0.2s ease-out' },
+  toggleBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+    padding: '0.5rem 1rem',
+    background: 'var(--gray-light)',
+    border: '2px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    fontWeight: 600,
+    fontSize: '0.875rem',
+    color: 'var(--gray-text)',
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  toggleActive: {
+    background: 'var(--green-light)',
+    borderColor: 'var(--green-mid)',
+    color: 'var(--green-dark)',
+  },
+  toggleKey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '22px',
+    height: '22px',
+    background: 'rgba(0,0,0,0.08)',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+  },
+  initialsWrap: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  initialsInput: {
+    padding: '1rem',
+    fontSize: '2.5rem',
+    textAlign: 'center' as const,
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    letterSpacing: '0.5rem',
+    border: '2px solid var(--green-mid)',
+    borderRadius: 'var(--radius)',
+    textTransform: 'uppercase' as const,
+    width: '160px',
+    color: 'var(--dark)',
+    background: 'var(--off-white)',
+  },
+  aliasReveal: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.25rem',
+    background: 'var(--green-light)',
+    borderRadius: 'var(--radius)',
+    animation: 'wizardSlideIn 0.2s ease-out',
+  },
   aliasIcon: { fontSize: '1.25rem' },
-  aliasName: { fontWeight: 700, fontSize: '1.1rem', color: 'var(--green-dark)', fontFamily: 'var(--font-body)' },
-  continueBtn: { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem', background: 'var(--green-dark)', color: 'white', borderRadius: 'var(--radius)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.15s', cursor: 'pointer', marginTop: '0.25rem' },
-  summaryCard: { background: 'var(--off-white)', border: '2px solid var(--green-light)', borderRadius: 'var(--radius-lg)', padding: '1.25rem', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column' as const, gap: '0.625rem' },
-  summaryRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' },
-  summaryLabel: { fontSize: '0.8rem', color: 'var(--gray-text)', fontWeight: 500, textTransform: 'uppercase' as const, letterSpacing: '0.03em' },
-  summaryValue: { fontSize: '0.95rem', fontWeight: 600, color: 'var(--dark)', textAlign: 'right' as const },
+  aliasName: {
+    fontWeight: 700,
+    fontSize: '1.1rem',
+    color: 'var(--green-dark)',
+    fontFamily: 'var(--font-body)',
+  },
+  continueBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.625rem 1.25rem',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: 'var(--radius)',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    transition: 'background 0.15s',
+    cursor: 'pointer',
+    marginTop: '0.25rem',
+  },
+  summaryCard: {
+    background: 'var(--off-white)',
+    border: '2px solid var(--green-light)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '1.25rem',
+    marginBottom: '1.25rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.625rem',
+  },
+  summaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  summaryLabel: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    fontWeight: 500,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.03em',
+  },
+  summaryValue: {
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    textAlign: 'right' as const,
+  },
   summaryDivider: { height: '1px', background: 'var(--gray-mid)', margin: '0.125rem 0' },
+  emailBlock: { marginBottom: '1rem', paddingTop: '0.5rem' },
+  emailLabel: {
+    display: 'block',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    marginBottom: '0.375rem',
+  },
+  emailOptional: { fontSize: '0.75rem', color: 'var(--gray-text)', fontWeight: 400 },
+  emailInput: {
+    width: '100%',
+    padding: '0.625rem 0.75rem',
+    fontSize: '0.95rem',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    background: 'var(--white)',
+    boxSizing: 'border-box' as const,
+  },
+  emailHelp: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.45,
+    marginTop: '0.375rem',
+    marginBottom: 0,
+  },
+  emailErr: {
+    fontSize: '0.8rem',
+    color: 'var(--red-mid)',
+    fontWeight: 500,
+    marginTop: '0.375rem',
+    marginBottom: 0,
+  },
   confirmButtons: { display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' },
-  confirmYes: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem', padding: '0.875rem 1rem', background: 'var(--green-dark)', color: 'white', borderRadius: 'var(--radius)', fontWeight: 700, fontSize: '1rem', transition: 'background 0.15s', cursor: 'pointer', width: '100%' },
-  confirmNo: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.625rem', padding: '0.75rem 1rem', background: 'var(--gray-light)', color: 'var(--dark)', borderRadius: 'var(--radius)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.15s', cursor: 'pointer', width: '100%' },
-  confirmKey: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '0.8rem' },
-  navHints: { display: 'flex', justifyContent: 'center', gap: '1rem', padding: '0.75rem 1.5rem 1.25rem', borderTop: '1px solid var(--gray-light)' },
-  navButton: { display: 'flex', alignItems: 'center', gap: '0.375rem', background: 'none', color: 'var(--gray-text)', fontSize: '0.8rem', fontWeight: 500, padding: '0.25rem 0.5rem', borderRadius: '4px', transition: 'color 0.15s', cursor: 'pointer' },
-  navKey: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '20px', padding: '0 4px', background: 'var(--gray-light)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 600, color: 'var(--gray-text)' },
+  confirmYes: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.625rem',
+    padding: '0.875rem 1rem',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: 'var(--radius)',
+    fontWeight: 700,
+    fontSize: '1rem',
+    transition: 'background 0.15s',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  confirmNo: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.625rem',
+    padding: '0.75rem 1rem',
+    background: 'var(--gray-light)',
+    color: 'var(--dark)',
+    borderRadius: 'var(--radius)',
+    fontWeight: 600,
+    fontSize: '0.9rem',
+    transition: 'background 0.15s',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  confirmKey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '26px',
+    height: '26px',
+    background: 'rgba(255,255,255,0.2)',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.8rem',
+  },
+  navHints: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    padding: '0.75rem 1.5rem 1.25rem',
+    borderTop: '1px solid var(--gray-light)',
+  },
+  navButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+    background: 'none',
+    color: 'var(--gray-text)',
+    fontSize: '0.8rem',
+    fontWeight: 500,
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+    transition: 'color 0.15s',
+    cursor: 'pointer',
+  },
+  navKey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '22px',
+    height: '20px',
+    padding: '0 4px',
+    background: 'var(--gray-light)',
+    borderRadius: '3px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.7rem',
+    fontWeight: 600,
+    color: 'var(--gray-text)',
+  },
 };
