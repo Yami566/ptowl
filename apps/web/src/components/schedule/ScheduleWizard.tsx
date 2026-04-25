@@ -434,14 +434,17 @@ export function ScheduleWizard({ onComplete, onCancel }: ScheduleWizardProps) {
                 placeholder="patient@example.com"
                 autoComplete="off"
                 style={styles.emailInput}
-                aria-describedby="wizard-patient-email-help"
+                aria-describedby={
+                  emailError ? 'wizard-patient-email-err' : 'wizard-patient-email-help'
+                }
+                aria-invalid={emailError ? true : undefined}
               />
               <p id="wizard-patient-email-help" style={styles.emailHelp}>
                 Add to send 24h + 1h appointment reminders. Leave blank to skip. Stored encrypted;
                 patient can unsubscribe with one click.
               </p>
               {emailError && (
-                <p style={styles.emailErr} role="alert">
+                <p id="wizard-patient-email-err" style={styles.emailErr} role="alert">
                   {emailError}
                 </p>
               )}

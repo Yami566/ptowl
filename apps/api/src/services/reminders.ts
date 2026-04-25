@@ -71,7 +71,11 @@ export async function findAndEnqueueDueReminders(env: Env): Promise<{ enqueued: 
 
 async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> {
   const offsetMs = (type === '24h' ? 24 : 1) * 60 * 60 * 1000;
-  const halfWindowMs = 7.5 * 60 * 1000;
+  // 15-min half-window = 30-min full window. Cron runs every 15 min, so a
+  // 30-min tolerance guarantees every appointment falls in at least one
+  // tick's window even if the scheduler runs up to ~7 min late. Idempotency
+  // markers + WHERE-clause guards prevent double-send.
+  const halfWindowMs = 15 * 60 * 1000;
   const center = Date.now() + offsetMs;
 
   // Widen the SQL window by ±14h to cover the worst-case clinic UTC
@@ -147,12 +151,19 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
 
     const emailHash = await hashEmail(email);
 
-    // Mark FIRST so a flapping cron doesn't double-enqueue.
-    await env.DB.prepare(
+    // Atomic claim: UPDATE ... WHERE column IS NULL returns rowcount 0
+    // if a concurrent cron tick already claimed this appointment.
+    // We check meta.changes before enqueueing so we never double-send.
+    const claim = await env.DB.prepare(
       `UPDATE appointments SET ${sentColumn} = datetime('now') WHERE id = ? AND ${sentColumn} IS NULL`,
     )
       .bind(row.appointment_id)
       .run();
+
+    if (!claim.meta.changes) {
+      // Another cron tick won the claim; skip.
+      continue;
+    }
 
     const message: ReminderMessage = {
       appointmentId: row.appointment_id,

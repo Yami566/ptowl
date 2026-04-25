@@ -5,12 +5,16 @@ import { verifyUnsubscribeToken } from '../crypto/unsubscribe-token.js';
 /**
  * Public unsubscribe endpoints. No auth — token is the bearer.
  *
- * GET /:token        — render an HTML page showing current preferences
- *                       and the "unsubscribe" + "switch to daily digest"
- *                       buttons.
- * POST /:token       — apply the chosen preference: { action: "unsubscribe"
- *                       | "digest" | "resume" }. Updates email_subscriptions
- *                       keyed by the email hash inside the token.
+ * GET /:token       Render an HTML preferences page. Three buttons,
+ *                   each is its own form-encoded POST submission. No
+ *                   inline JS, so the strict CSP (no 'unsafe-inline'
+ *                   in scriptSrc) doesn't block anything.
+ * POST /:token      Apply the chosen preference. Accepts both
+ *                   application/x-www-form-urlencoded (from the buttons
+ *                   below) and application/json (for programmatic
+ *                   callers). On success, redirect back to GET with
+ *                   ?saved=<action> so the rendered page reflects new
+ *                   state.
  *
  * The token (HMAC-signed, 90-day expiry) embeds only the email hash
  * — never the plaintext email. So even if someone forwards the link,
@@ -18,6 +22,7 @@ import { verifyUnsubscribeToken } from '../crypto/unsubscribe-token.js';
  */
 
 type Variables = { user: null };
+type Action = 'unsubscribe' | 'digest' | 'resume';
 
 export const remindersRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -42,7 +47,10 @@ remindersRoutes.get('/unsubscribe/:token', async (c) => {
       digest: row?.digest_mode === 1,
     };
 
-    return c.html(renderPage('Reminder preferences', '', { token, state }));
+    const savedAction = c.req.query('saved');
+    const flashMessage = savedAction ? 'Preferences saved. You can close this tab.' : '';
+
+    return c.html(renderPage('Reminder preferences', '', { token, state, flashMessage }));
   } catch (err) {
     console.error('Unsubscribe page error:', err instanceof Error ? err.message : 'Unknown error');
     return c.json(
@@ -63,9 +71,18 @@ remindersRoutes.post('/unsubscribe/:token', async (c) => {
       );
     }
 
-    const body = await c.req.json<{ action?: 'unsubscribe' | 'digest' | 'resume' }>();
-    const action = body.action;
-    if (!action || !['unsubscribe', 'digest', 'resume'].includes(action)) {
+    // Accept both form-encoded (button submission) and JSON (API callers).
+    const contentType = c.req.header('content-type') || '';
+    let action: string | undefined;
+    if (contentType.includes('application/json')) {
+      const body = await c.req.json<{ action?: string }>();
+      action = body.action;
+    } else {
+      const form = await c.req.parseBody();
+      action = typeof form.action === 'string' ? form.action : undefined;
+    }
+
+    if (!action || !isValidAction(action)) {
       return c.json(
         { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid action' } },
         400,
@@ -86,7 +103,12 @@ remindersRoutes.post('/unsubscribe/:token', async (c) => {
       .bind(emailHash, unsubscribed, digestMode)
       .run();
 
-    return c.json({ ok: true, data: { action } });
+    // For form submissions: 303 See Other → GET with ?saved=action.
+    // For JSON callers: return JSON.
+    if (contentType.includes('application/json')) {
+      return c.json({ ok: true, data: { action } });
+    }
+    return c.redirect(`./${token}?saved=${encodeURIComponent(action)}`, 303);
   } catch (err) {
     console.error('Unsubscribe POST error:', err instanceof Error ? err.message : 'Unknown error');
     return c.json(
@@ -96,34 +118,46 @@ remindersRoutes.post('/unsubscribe/:token', async (c) => {
   }
 });
 
+function isValidAction(s: string): s is Action {
+  return s === 'unsubscribe' || s === 'digest' || s === 'resume';
+}
+
 function renderPage(
   title: string,
   message: string,
-  ctx: { token: string; state: { unsubscribed: boolean; digest: boolean } } | null,
+  ctx: {
+    token: string;
+    state: { unsubscribed: boolean; digest: boolean };
+    flashMessage: string;
+  } | null,
 ): string {
   const css = `
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
            background: #F5F5F5; margin: 0; min-height: 100vh; display: flex;
-           align-items: center; justify-content: center; }
+           align-items: center; justify-content: center; padding: 1rem; }
     .card { background: white; border-radius: 16px; padding: 2.5rem;
             max-width: 460px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             box-sizing: border-box; }
     h1 { color: #1B5E20; font-size: 1.5rem; margin: 0 0 0.5rem; }
     p { color: #444; line-height: 1.55; }
+    form { margin: 0; }
     button { display: block; width: 100%; padding: 0.875rem 1rem;
              font-size: 1rem; font-weight: 600; border: none;
              border-radius: 8px; cursor: pointer; margin-top: 0.75rem; }
+    button:focus { outline: 2px solid #1B5E20; outline-offset: 2px; }
     .primary { background: #4CAF50; color: white; }
     .secondary { background: #E8F5E9; color: #1B5E20; }
     .danger { background: #FFEBEE; color: #C62828; }
     .muted { color: #888; font-size: 0.85rem; margin-top: 1.5rem; }
+    .flash { background: #E8F5E9; color: #1B5E20; padding: 0.75rem 1rem;
+             border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
     .state { background: #F5F5F5; padding: 0.875rem; border-radius: 8px;
              margin: 1rem 0; font-size: 0.9rem; color: #555; }
     .ok { color: #1B5E20; font-weight: 600; }
   `;
 
   if (!ctx) {
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head><body><div class="card"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a href="https://ptowl.com" class="muted">ptowl.com</a></div></body></html>`;
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>${css}</style></head><body><div class="card"><h1>${escapeHtml(title)}</h1><p>${escapeHtml(message)}</p><a href="https://ptowl.com" class="muted">ptowl.com</a></div></body></html>`;
   }
 
   const stateLabel = ctx.state.unsubscribed
@@ -132,43 +166,36 @@ function renderPage(
       ? 'You currently receive a <span class="ok">daily digest</span> instead of individual reminders.'
       : 'You currently receive <span class="ok">individual reminders</span> 24h and 1h before each appointment.';
 
+  const flashHtml = ctx.flashMessage
+    ? `<div class="flash" role="status">${escapeHtml(ctx.flashMessage)}</div>`
+    : '';
+
+  // No inline JS — three forms, three submit buttons. CSP-safe.
+  // Each form posts back to the same URL; the POST handler upserts
+  // email_subscriptions and 303-redirects to GET with ?saved=action.
   return `<!DOCTYPE html>
-<html><head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <style>${css}</style>
 </head><body>
-<div class="card">
+<main class="card">
   <h1>${escapeHtml(title)}</h1>
-  <div class="state">${stateLabel}</div>
+  ${flashHtml}
+  <div class="state" role="status" aria-live="polite">${stateLabel}</div>
   <p>What would you like to do?</p>
-  <button class="primary" data-action="resume">Get individual reminders (default)</button>
-  <button class="secondary" data-action="digest">Switch to daily digest (one email/day)</button>
-  <button class="danger" data-action="unsubscribe">Unsubscribe from all PTOWL reminders</button>
-  <p id="result" class="muted"></p>
+  <form method="post" action="">
+    <button class="primary" type="submit" name="action" value="resume" aria-label="Get individual reminders 24 hours and 1 hour before each appointment">Get individual reminders (default)</button>
+  </form>
+  <form method="post" action="">
+    <button class="secondary" type="submit" name="action" value="digest" aria-label="Switch to one daily digest email per day">Switch to daily digest (one email/day)</button>
+  </form>
+  <form method="post" action="">
+    <button class="danger" type="submit" name="action" value="unsubscribe" aria-label="Unsubscribe from all PTOWL reminders">Unsubscribe from all PTOWL reminders</button>
+  </form>
   <p class="muted">PTOWL · <a href="https://ptowl.com" style="color:#888">ptowl.com</a></p>
-</div>
-<script>
-  const buttons = document.querySelectorAll('button[data-action]');
-  const result = document.getElementById('result');
-  buttons.forEach(b => b.addEventListener('click', async () => {
-    buttons.forEach(x => x.disabled = true);
-    result.textContent = 'Saving…';
-    try {
-      const res = await fetch(window.location.pathname, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: b.dataset.action })
-      });
-      const json = await res.json();
-      result.textContent = json.ok ? 'Preferences saved. You can close this tab.' : 'Something went wrong. Try again.';
-    } catch (e) {
-      result.textContent = 'Network error. Try again.';
-    }
-    buttons.forEach(x => x.disabled = false);
-  }));
-</script>
+</main>
 </body></html>`;
 }
 
