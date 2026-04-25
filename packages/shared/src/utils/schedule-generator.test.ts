@@ -1,23 +1,31 @@
 import { describe, it, expect } from 'vitest';
 import {
-  generateSchedule,
   formatDate,
   formatTime,
   getMonthsInRange,
   getDaysInMonth,
   getFirstDayOfMonth,
 } from './schedule-generator.js';
+import { generateSchedule } from './rrule-generator.js';
 
 // ── generateSchedule ──
 
 describe('generateSchedule', () => {
   it('returns correct count for 3x/wk over 4 weeks (12 appointments)', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 3, duration_weeks: 4 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 3,
+      duration_weeks: 4,
+    });
     expect(result.appointments).toHaveLength(12);
   });
 
   it('returns only Mon/Wed/Fri for 3x/wk', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 3, duration_weeks: 2 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 3,
+      duration_weeks: 2,
+    });
     const days = result.appointments.map((a) => a.day_of_week);
     for (const day of days) {
       expect(['Monday', 'Wednesday', 'Friday']).toContain(day);
@@ -25,7 +33,11 @@ describe('generateSchedule', () => {
   });
 
   it('returns only Mondays for 1x/wk', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 1, duration_weeks: 4 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 1,
+      duration_weeks: 4,
+    });
     expect(result.appointments).toHaveLength(4);
     for (const appt of result.appointments) {
       expect(appt.day_of_week).toBe('Monday');
@@ -33,21 +45,33 @@ describe('generateSchedule', () => {
   });
 
   it('returns Mon-Fri for 5x/wk', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 5, duration_weeks: 1 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 5,
+      duration_weeks: 1,
+    });
     expect(result.appointments).toHaveLength(5);
     const days = result.appointments.map((a) => a.day_of_week);
     expect(days).toEqual(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
   });
 
   it('returns all 7 days for 7x/wk', () => {
-    const result = generateSchedule({ start_date: '2025-01-05', sessions_per_week: 7, duration_weeks: 1 });
+    const result = generateSchedule({
+      start_date: '2025-01-05',
+      sessions_per_week: 7,
+      duration_weeks: 1,
+    });
     expect(result.appointments).toHaveLength(7);
     const days = new Set(result.appointments.map((a) => a.day_of_week));
     expect(days.size).toBe(7);
   });
 
   it('returns Mon+Thu for 2x/wk', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 2, duration_weeks: 2 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 2,
+      duration_weeks: 2,
+    });
     const days = result.appointments.map((a) => a.day_of_week);
     for (const day of days) {
       expect(['Monday', 'Thursday']).toContain(day);
@@ -55,43 +79,74 @@ describe('generateSchedule', () => {
   });
 
   it('uses default time of 09:00 when not specified', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 1, duration_weeks: 1 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 1,
+      duration_weeks: 1,
+    });
     expect(result.appointments[0]?.appointment_time).toBe('09:00');
   });
 
   it('uses custom default_time when provided', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 1, duration_weeks: 1, default_time: '14:30' });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 1,
+      duration_weeks: 1,
+      default_time: '14:30',
+    });
     expect(result.appointments[0]?.appointment_time).toBe('14:30');
   });
 
   it('returns sorted appointments by date', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 3, duration_weeks: 4 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 3,
+      duration_weeks: 4,
+    });
     for (let i = 1; i < result.appointments.length; i++) {
-      expect(result.appointments[i]!.appointment_date >= result.appointments[i - 1]!.appointment_date).toBe(true);
+      expect(
+        result.appointments[i]!.appointment_date >= result.appointments[i - 1]!.appointment_date,
+      ).toBe(true);
     }
   });
 
   it('has sequential sort_order starting at 0', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 3, duration_weeks: 2 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 3,
+      duration_weeks: 2,
+    });
     result.appointments.forEach((appt, i) => {
       expect(appt.sort_order).toBe(i);
     });
   });
 
   it('calculates correct end_date as last appointment date', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 3, duration_weeks: 1 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 3,
+      duration_weeks: 1,
+    });
     const lastAppt = result.appointments[result.appointments.length - 1];
     expect(result.end_date).toBe(lastAppt?.appointment_date);
   });
 
   it('handles single week with single session', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 1, duration_weeks: 1 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 1,
+      duration_weeks: 1,
+    });
     expect(result.appointments).toHaveLength(1);
     expect(result.appointments[0]?.appointment_date).toBe('2025-01-06');
   });
 
   it('handles maximum duration (52 weeks)', () => {
-    const result = generateSchedule({ start_date: '2025-01-06', sessions_per_week: 1, duration_weeks: 52 });
+    const result = generateSchedule({
+      start_date: '2025-01-06',
+      sessions_per_week: 1,
+      duration_weeks: 52,
+    });
     expect(result.appointments).toHaveLength(52);
   });
 });
