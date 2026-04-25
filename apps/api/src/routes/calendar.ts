@@ -15,7 +15,7 @@ calendarRoutes.get('/:token.ics', async (c) => {
     const token = c.req.param('token');
 
     // Validate token format (32-char hex)
-    if (!/^[0-9a-f]{32}$/i.test(token)) {
+    if (!token || !/^[0-9a-f]{32}$/i.test(token)) {
       return c.text('Not found', 404);
     }
 
