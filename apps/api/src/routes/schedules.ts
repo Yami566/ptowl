@@ -3,6 +3,7 @@ import type { Env } from '../types/env.js';
 import { requireAuth, requireClinic } from '../middleware/auth.js';
 import { validateInitials, validateScheduleParams, generateSchedule } from '@ptowl/shared';
 import { TIER_LIMITS } from '@ptowl/shared';
+import { encryptEmail } from '../crypto/email-cipher.js';
 
 type Variables = {
   user: { id: string; email: string; role: string; tier: string } | null;
@@ -420,6 +421,109 @@ scheduleRoutes.get('/:id', async (c) => {
     console.error('Get schedule error:', err instanceof Error ? err.message : 'Unknown error');
     return c.json(
       { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch schedule' } },
+      500,
+    );
+  }
+});
+
+// PUT /:id/reminders - Set patient email + reminder enable for a schedule.
+// Email is AES-GCM encrypted at rest with EMAIL_ENCRYPTION_KEY. Reminders
+// fire 24h + 1h before each appointment via the cron+queue+MailChannels
+// path; clinics can toggle reminders_enabled to mute without losing email.
+scheduleRoutes.put('/:id/reminders', async (c) => {
+  try {
+    const user = c.get('user')!;
+    const scheduleId = c.req.param('id');
+    if (!/^[0-9a-f]{32}$/i.test(scheduleId)) {
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid schedule ID' } },
+        400,
+      );
+    }
+
+    const body = await c.req.json<{
+      patient_email?: string | null;
+      reminders_enabled?: boolean;
+    }>();
+
+    // Verify ownership.
+    const existing = await c.env.DB.prepare('SELECT id FROM schedules WHERE id = ? AND user_id = ?')
+      .bind(scheduleId, user.id)
+      .first();
+    if (!existing) {
+      return c.json(
+        { ok: false, error: { code: 'NOT_FOUND', message: 'Schedule not found' } },
+        404,
+      );
+    }
+
+    const updates: string[] = [];
+    const values: (string | number | null)[] = [];
+
+    if (body.patient_email !== undefined) {
+      if (body.patient_email && body.patient_email.trim().length > 0) {
+        if (!c.env.EMAIL_ENCRYPTION_KEY) {
+          return c.json(
+            {
+              ok: false,
+              error: {
+                code: 'CONFIG_ERROR',
+                message: 'Email reminders are not configured on this server',
+              },
+            },
+            503,
+          );
+        }
+        const email = body.patient_email.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+          return c.json(
+            { ok: false, error: { code: 'INVALID_INPUT', message: 'Invalid email' } },
+            400,
+          );
+        }
+        const encrypted = await encryptEmail(email, c.env.EMAIL_ENCRYPTION_KEY);
+        updates.push('patient_email_encrypted = ?');
+        values.push(encrypted);
+      } else {
+        // Explicitly clearing the email.
+        updates.push('patient_email_encrypted = NULL');
+      }
+    }
+
+    if (body.reminders_enabled !== undefined) {
+      updates.push('reminders_enabled = ?');
+      values.push(body.reminders_enabled ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      return c.json(
+        { ok: false, error: { code: 'INVALID_INPUT', message: 'No fields to update' } },
+        400,
+      );
+    }
+
+    updates.push("updated_at = datetime('now')");
+    values.push(scheduleId);
+
+    await c.env.DB.prepare(`UPDATE schedules SET ${updates.join(', ')} WHERE id = ?`)
+      .bind(...values)
+      .run();
+
+    return c.json({
+      ok: true,
+      data: {
+        message: 'Reminder preferences updated',
+        has_email: body.patient_email ? true : body.patient_email === null ? false : undefined,
+        reminders_enabled: body.reminders_enabled,
+      },
+    });
+  } catch (err) {
+    console.error('Update reminders error:', err instanceof Error ? err.message : 'Unknown error');
+    return c.json(
+      {
+        ok: false,
+        error: { code: 'INTERNAL_ERROR', message: 'Failed to update reminder preferences' },
+      },
       500,
     );
   }
