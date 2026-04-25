@@ -95,8 +95,8 @@ ptowl/
 ├── docs/                      # Project documentation
 ├── pnpm-workspace.yaml        # Workspace definition
 ├── tsconfig.base.json         # Shared TypeScript config
-├── cloudbuild.yaml            # Production CI/CD pipeline
-├── cloudbuild-pr.yaml         # PR validation pipeline
+├── .github/workflows/         # GitHub Actions: ci.yml, deploy.yml,
+│                              # codeql.yml, release-please.yml
 ├── brainstorm.md              # Product strategy document
 └── ADMIN-GUIDE.md             # Operations guide
 ```
@@ -422,45 +422,46 @@ Layer 7: Input Validation (Zod schemas on all API inputs, parameterized SQL)
 
 ## 6. CI/CD Pipeline
 
-### Production Pipeline (cloudbuild.yaml)
+### Production Pipeline (.github/workflows/deploy.yml)
 
 ```
 Trigger: Push to main branch
-Timeout: 600 seconds
+Concurrency group: deploy-production (cancel-in-progress: false)
 
-Step 1: Install Dependencies
-  → pnpm install --frozen-lockfile
-
-Step 2: Run Tests
-  → pnpm test (692 tests across 3 packages)
-
-Step 3: Build All Packages
-  → pnpm build (shared → api → web)
-
-Step 4: Deploy API Worker
-  → wrangler deploy (Cloudflare Workers)
-
-Step 5: Deploy Frontend
-  → wrangler pages deploy (Cloudflare Pages)
+Step 1: Checkout + setup pnpm 9 / Node 20 (with pnpm cache)
+Step 2: pnpm install --frozen-lockfile
+Step 3: pnpm build (shared → api → web)
+Step 4: cloudflare/wrangler-action@v3 — deploy API Worker
+Step 5: cloudflare/wrangler-action@v3 — deploy Frontend to Pages
 ```
 
-### PR Validation Pipeline (cloudbuild-pr.yaml)
+### CI Pipeline (.github/workflows/ci.yml)
 
 ```
-Trigger: Pull request to main
-Timeout: 300 seconds
+Trigger: PR to main + pushes to main
+Concurrency group: ci-${{ github.ref }} (cancel-in-progress: true)
 
-Step 1: Install Dependencies
-Step 2: Run Tests
-Step 3: TypeCheck
-(No deployment)
+Parallel jobs (each on a fresh runner):
+- lint        → pnpm lint
+- typecheck   → pnpm typecheck
+- test        → pnpm test:unit
+- build       → pnpm build
+- commitlint  → validates Conventional Commits on PR commits
 ```
+
+### Other workflows
+
+- .github/workflows/codeql.yml — CodeQL security scan on PR + weekly cron.
+- .github/workflows/release-please.yml — automated semver release PRs
+  driven by Conventional Commit messages.
 
 ### Secrets Management
 
-- Cloudflare secrets: `wrangler secret put <NAME>` (encrypted at rest)
-- Google Cloud Build secrets: Secret Manager (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID)
-- Local development: .dev.vars file (gitignored)
+- Cloudflare API token: GitHub Actions secret `CLOUDFLARE_API_TOKEN`
+- Cloudflare account ID: GitHub Actions secret `CLOUDFLARE_ACCOUNT_ID`
+- Worker runtime secrets (JWT_SECRET, EMAIL_API_KEY, etc.):
+  `wrangler secret put <NAME>` (encrypted at rest by Cloudflare)
+- Local development: apps/api/.dev.vars file (gitignored)
 
 ---
 
