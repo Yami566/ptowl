@@ -2,6 +2,10 @@ export interface Env {
   // D1 Database binding
   DB: D1Database;
 
+  // R2 binding for clinic logos (optional — falls back to base64-in-D1
+  // if the bucket isn't configured yet). Bucket: ptowl-logos.
+  LOGOS?: R2Bucket;
+
   // Secrets (set via `wrangler secret put`)
   JWT_SECRET: string;
   ADMIN_EMAIL: string;

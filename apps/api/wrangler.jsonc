@@ -20,8 +20,18 @@
   // Secrets (set via `wrangler secret put`):
   // JWT_SECRET         - 64-char random hex for JWT signing
   // ADMIN_EMAIL        - admin notification email address
-  // EMAIL_API_KEY      - transactional email service key (Resend)
+  // EMAIL_API_KEY      - MailChannels API key (X-API-Key header)
   // TURNSTILE_SECRET_KEY - Cloudflare Turnstile secret key
+  // R2 bucket for clinic logos. Create once with:
+  //   wrangler r2 bucket create ptowl-logos
+  //   wrangler r2 bucket create ptowl-logos-staging
+  // Falls back to base64-in-D1 if the binding isn't present.
+  "r2_buckets": [
+    {
+      "binding": "LOGOS",
+      "bucket_name": "ptowl-logos"
+    }
+  ],
   "vars": {
     "ENVIRONMENT": "production",
     "FRONTEND_URL": "https://ptowl.com",
@@ -44,6 +54,12 @@
           "database_name": "ptowl-db-staging",
           "database_id": "30b11ee4-19a5-4627-8540-c11fee9b484f",
           "migrations_dir": "src/migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "LOGOS",
+          "bucket_name": "ptowl-logos-staging"
         }
       ],
       "vars": {

@@ -282,8 +282,8 @@ describe('Route Protection & Auth Security', () => {
 
   it('TemplateEditorPage and PrintSettingsPage are lazy-loaded', () => {
     const code = appCode();
-    expect(code).toContain("lazy(() => import('./pages/TemplateEditorPage.js')");
-    expect(code).toContain("lazy(() => import('./pages/PrintSettingsPage.js')");
+    expect(code).toMatch(/lazy\([\s\S]*?import\(['"]\.\/pages\/TemplateEditorPage\.js['"]\)/);
+    expect(code).toMatch(/lazy\([\s\S]*?import\(['"]\.\/pages\/PrintSettingsPage\.js['"]\)/);
   });
 
   it('auth state is stored in React state (Firebase localStorage is session recovery only)', () => {

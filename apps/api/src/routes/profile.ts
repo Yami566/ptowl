@@ -164,13 +164,38 @@ profileRoutes.post('/logo', async (c) => {
       }
     }
 
+    // Decode the base64 payload once — used for R2 + magic-byte check.
+    const base64Payload = body.logo.split(',')[1] || '';
+    const isPng = pngPattern.test(body.logo);
+    const contentType = isPng ? 'image/png' : 'image/jpeg';
+
+    let logoR2Key: string | null = null;
+
+    if (c.env.LOGOS) {
+      try {
+        const binary = atob(base64Payload);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const ext = isPng ? 'png' : 'jpg';
+        // Per-user object key; overwrites on re-upload (idempotent).
+        logoR2Key = `logos/${user.id}/clinic.${ext}`;
+        await c.env.LOGOS.put(logoR2Key, bytes, {
+          httpMetadata: { contentType, cacheControl: 'public, max-age=86400' },
+        });
+      } catch (err) {
+        // R2 failure should not block the upload — fall back to base64 only.
+        console.error('R2 put failed:', err instanceof Error ? err.message : 'Unknown error');
+        logoR2Key = null;
+      }
+    }
+
     await c.env.DB.prepare(
-      "UPDATE profiles SET logo_url = ?, updated_at = datetime('now') WHERE user_id = ?",
+      "UPDATE profiles SET logo_url = ?, logo_r2_key = ?, updated_at = datetime('now') WHERE user_id = ?",
     )
-      .bind(body.logo, user.id)
+      .bind(body.logo, logoR2Key, user.id)
       .run();
 
-    return c.json({ ok: true, data: { message: 'Logo uploaded' } });
+    return c.json({ ok: true, data: { message: 'Logo uploaded', r2: !!logoR2Key } });
   } catch (err) {
     console.error('Upload logo error:', err instanceof Error ? err.message : 'Unknown error');
     return c.json(
