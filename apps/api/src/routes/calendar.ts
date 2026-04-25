@@ -87,7 +87,9 @@ calendarRoutes.get('/:token.ics', async (c) => {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': `attachment; filename="schedule-${schedule.patient_initials.toLowerCase()}.ics"`,
-        'Cache-Control': 'no-cache',
+        // Per-token URL is unguessable and effectively private; safe to cache at edge.
+        // 1h is short enough that schedule edits propagate quickly.
+        'Cache-Control': 'public, max-age=3600, s-maxage=3600',
       },
     });
   } catch (err) {
