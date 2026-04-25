@@ -10,18 +10,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "echo 'lint ok'",
     "test": "vitest run",
-    "test:unit": "vitest run",
-    "cap:sync": "cap sync",
-    "cap:open:ios": "cap open ios",
-    "cap:open:android": "cap open android",
-    "cap:build": "pnpm build && cap sync"
+    "test:unit": "vitest run"
   },
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
-    "@capacitor/cli": "^8.2.0",
-    "@capacitor/core": "^8.2.0",
-    "@capacitor/ios": "^8.2.0",
-    "@capacitor/status-bar": "^8.0.1",
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
@@ -31,7 +22,6 @@
     "canvas-confetti": "^1.9.4",
     "cmdk": "^1.1.1",
     "firebase": "^12.10.0",
-    "onesignal-cordova-plugin": "^5.3.5",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
