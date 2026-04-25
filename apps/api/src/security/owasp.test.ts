@@ -49,6 +49,7 @@ describe('OWASP A03: Injection Prevention', () => {
           /updates\.join/, // Dynamic SET from validated columns
           /lockoutWindow/, // Rate limit window constant
           /Expiry|expiry|Window|window/i, // Any expiry/window constant
+          /sentColumn/, // Reminder cron picks one of two hardcoded column names
         ];
         const isSafe = safePatterns.some((p) => p.test(interpolation));
         expect(isSafe, `Unsafe SQL interpolation \${${interpolation}} in ${file.path}`).toBe(true);

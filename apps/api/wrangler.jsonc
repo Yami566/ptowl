@@ -7,7 +7,32 @@
     "enabled": true
   },
   "triggers": {
-    "crons": ["0 3 * * *"]
+    // 15-minute granularity to drive 24h + 1h reminder windows.
+    // The cron handler also runs the daily cleanup tasks once per day
+    // (see scheduled() in src/index.ts).
+    "crons": ["*/15 * * * *"]
+  },
+  // Cloudflare Queue for outbound reminder emails. Create once with:
+  //   wrangler queues create ptowl-reminders
+  //   wrangler queues create ptowl-reminders-staging
+  // Producer: this Worker enqueues from cron. Consumer: same Worker via
+  // its `queue` export.
+  "queues": {
+    "producers": [
+      {
+        "binding": "EMAIL_QUEUE",
+        "queue": "ptowl-reminders"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "ptowl-reminders",
+        "max_batch_size": 25,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "ptowl-reminders-dlq"
+      }
+    ]
   },
   "d1_databases": [
     {
@@ -62,6 +87,22 @@
           "bucket_name": "ptowl-logos-staging"
         }
       ],
+      "queues": {
+        "producers": [
+          {
+            "binding": "EMAIL_QUEUE",
+            "queue": "ptowl-reminders-staging"
+          }
+        ],
+        "consumers": [
+          {
+            "queue": "ptowl-reminders-staging",
+            "max_batch_size": 25,
+            "max_batch_timeout": 5,
+            "max_retries": 3
+          }
+        ]
+      },
       "vars": {
         "ENVIRONMENT": "staging",
         "FRONTEND_URL": "https://staging.ptowl.pages.dev",

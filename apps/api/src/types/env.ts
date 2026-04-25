@@ -6,6 +6,11 @@ export interface Env {
   // if the bucket isn't configured yet). Bucket: ptowl-logos.
   LOGOS?: R2Bucket;
 
+  // Cloudflare Queue for outbound reminder emails (optional — cron
+  // skips enqueue if the binding isn't configured). Queue: ptowl-reminders.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  EMAIL_QUEUE?: Queue<any>;
+
   // Secrets (set via `wrangler secret put`)
   JWT_SECRET: string;
   ADMIN_EMAIL: string;

@@ -13,6 +13,11 @@ import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
 import { patientRoutes } from './routes/patient.js';
 import { codeRoutes } from './routes/codes.js';
+import {
+  findAndEnqueueDueReminders,
+  processReminderMessage,
+  type ReminderMessage,
+} from './services/reminders.js';
 // Rate limiting moved to Cloudflare WAF Rules (dashboard config, edge-level).
 // Custom per-isolate rate limiting was unreliable on distributed Workers.
 
@@ -179,7 +184,7 @@ app.onError((err, c) => {
 });
 
 // ─── Scheduled cleanup (Cron Trigger) ────────────────────────
-// Runs daily at 3 AM UTC — deletes expired tokens and trims audit log
+// Runs every 15 minutes — daily-cleanup branch only fires once per day.
 async function cleanupExpiredData(db: D1Database): Promise<void> {
   await db
     .prepare(`DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`)
@@ -189,7 +194,6 @@ async function cleanupExpiredData(db: D1Database): Promise<void> {
     .run();
   await db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
   await db.prepare(`DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`).run();
-  // Clean up expired patient codes (7-day TTL)
   await db
     .prepare(
       `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
@@ -199,7 +203,32 @@ async function cleanupExpiredData(db: D1Database): Promise<void> {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(cleanupExpiredData(env.DB));
+
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    // Reminder scan runs every cron tick (15 min).
+    ctx.waitUntil(
+      findAndEnqueueDueReminders(env).catch((err) =>
+        console.error('Reminder scan failed:', err instanceof Error ? err.message : err),
+      ),
+    );
+
+    // Daily cleanup — only fire once per day at the 03:00 UTC tick.
+    const d = new Date(event.scheduledTime);
+    if (d.getUTCHours() === 3 && d.getUTCMinutes() < 15) {
+      ctx.waitUntil(cleanupExpiredData(env.DB));
+    }
+  },
+
+  async queue(batch: MessageBatch<ReminderMessage>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      try {
+        const ok = await processReminderMessage(env, message.body);
+        if (ok) message.ack();
+        else message.retry();
+      } catch (err) {
+        console.error('Queue handler error:', err instanceof Error ? err.message : 'Unknown');
+        message.retry();
+      }
+    }
   },
 };
