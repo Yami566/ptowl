@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.wrangler
+.next
+coverage
+pnpm-lock.yaml
+**/*.min.js
+**/*.min.css
+apps/web/android
+apps/web/ios

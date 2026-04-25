@@ -1,0 +1,20 @@
+# Default reviewer for everything in the repo.
+# Update with team handles once teams are configured in the org.
+*                       @yami566
+
+# Infra & deploy config
+/.github/               @yami566
+/apps/api/wrangler.jsonc @yami566
+/apps/api/migrations/   @yami566
+
+# Frontend
+/apps/web/              @yami566
+
+# API
+/apps/api/              @yami566
+
+# Shared library
+/packages/shared/       @yami566
+
+# Docs
+/docs/                  @yami566
