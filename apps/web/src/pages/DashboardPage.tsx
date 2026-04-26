@@ -544,22 +544,23 @@ export function DashboardPage() {
             {showShortcuts && (
               <div style={styles.shortcutsGrid}>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>1</kbd> Open wizard
+                  <kbd style={styles.emptyKbd}>1</kbd> Open wizard
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>2</kbd>-<kbd style={styles.kbd}>6</kbd> Quick preset
+                  <kbd style={styles.emptyKbd}>2</kbd>-<kbd style={styles.emptyKbd}>6</kbd> Quick
+                  preset
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>Cmd+K</kbd> Command palette
+                  <kbd style={styles.emptyKbd}>Cmd+K</kbd> Command palette
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>Enter</kbd> Confirm / Generate
+                  <kbd style={styles.emptyKbd}>Enter</kbd> Confirm / Generate
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>Esc</kbd> Close modal
+                  <kbd style={styles.emptyKbd}>Esc</kbd> Close modal
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.kbd}>P</kbd> Print (on schedule page)
+                  <kbd style={styles.emptyKbd}>P</kbd> Print (on schedule page)
                 </div>
               </div>
             )}
@@ -663,8 +664,23 @@ export function DashboardPage() {
               </div>
             </div>
           ) : (
-            <div style={styles.emptyState}>
-              <p style={styles.emptyText}>No schedules yet. Create your first one above!</p>
+            <div style={styles.emptyState} role="status" aria-live="polite">
+              <div style={styles.emptyIcon} aria-hidden="true">
+                🦉
+              </div>
+              <h3 style={styles.emptyTitle}>You haven't created a schedule yet</h3>
+              <p style={styles.emptyText}>
+                Press <kbd style={styles.emptyKbd}>1</kbd> to launch the wizard, or one of{' '}
+                <kbd style={styles.emptyKbd}>2</kbd>–<kbd style={styles.emptyKbd}>6</kbd> for a
+                preset template. From phone in to printed schedule in three keypresses.
+              </p>
+              <p style={styles.emptyHint}>
+                New here? The{' '}
+                <a href="/about" style={styles.emptyLink}>
+                  about page
+                </a>{' '}
+                walks through the workflow in 90 seconds.
+              </p>
             </div>
           )}
         </main>
@@ -943,13 +959,48 @@ const styles: Record<string, React.CSSProperties> = {
   savedInfo: { fontSize: '0.8rem', color: 'var(--gray-text)' },
   emptyState: {
     textAlign: 'center' as const,
-    padding: '2rem',
+    padding: '2.5rem 2rem',
     background: 'var(--white)',
     borderRadius: 'var(--radius-lg)',
     border: '1px dashed var(--gray-mid)',
     marginTop: '1rem',
   },
-  emptyText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
+  emptyIcon: { fontSize: '2.5rem', marginBottom: '0.75rem' },
+  emptyTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    margin: '0 0 0.75rem',
+  },
+  emptyText: {
+    color: 'var(--dark-alt)',
+    fontSize: '0.95rem',
+    lineHeight: 1.6,
+    maxWidth: '480px',
+    margin: '0 auto 1rem',
+  },
+  emptyHint: {
+    color: 'var(--gray-text)',
+    fontSize: '0.85rem',
+    margin: 0,
+  },
+  emptyLink: {
+    color: 'var(--green-mid)',
+    fontWeight: 500,
+    textDecoration: 'underline',
+  },
+  emptyKbd: {
+    display: 'inline-block',
+    padding: '0.125rem 0.4rem',
+    background: 'var(--gray-light)',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.85em',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    margin: '0 0.125rem',
+  },
 
   // #9 Smart Greeting + #5 Patient Count + #2 Streak
   patientBadge: {
