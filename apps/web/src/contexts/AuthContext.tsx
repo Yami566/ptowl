@@ -119,10 +119,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate('/', { replace: true });
   }, [navigate]);
 
-  // SECURITY: Block ALL route rendering until auth check completes.
-  // This prevents unauthenticated users from seeing protected components
-  // even momentarily during the async auth verification.
-  if (loading) {
+  // Public paths render immediately — they don't depend on the user. The
+  // per-route guards (ProtectedRoute, ClinicRoute, PatientRoute, AdminRoute)
+  // still gate protected components on `loading`, so there's no flash of
+  // protected content. Blocking globally caused white-screen-on-link-tap in
+  // sandboxed in-app browsers (iMessage / SFSafariViewController) where
+  // Firebase's localStorage persistence can hang for seconds.
+  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
+  if (loading && !isPublicPath) {
     return (
       <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
         <LoadingOverlay message="Verifying session..." />

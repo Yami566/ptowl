@@ -29,17 +29,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Persist Firebase auth across browser restarts (uses localStorage)
-setPersistence(auth, browserLocalPersistence);
+// Persist Firebase auth across browser restarts (uses localStorage). The
+// .catch is required: in iOS Safari View Controller (the iMessage in-app
+// browser) localStorage access can throw, and an unhandled rejection here
+// breaks Firebase init silently. Falling back to the default in-memory
+// persistence is fine — the user will just have to re-auth next session.
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 
 /**
  * Resolves with the current Firebase user (or null) once auth state is ready.
- * Bails after 5s if Firebase can't reach Google's auth servers (DNS / network
- * outage). Without this timeout, AuthProvider blocks rendering on the loading
- * overlay indefinitely when Firebase is unreachable — which freezes every
- * page including the public marketing pages.
+ * Bails after 2s if Firebase can't reach Google's auth servers or its
+ * persistence layer is broken. Short timeout because the user is staring at
+ * a loading state — if there's no Firebase session to recover, we want to
+ * paint the public landing page fast.
  */
-const FIREBASE_AUTH_TIMEOUT_MS = 5_000;
+const FIREBASE_AUTH_TIMEOUT_MS = 2_000;
 export function waitForFirebaseUser(): Promise<User | null> {
   return new Promise((resolve) => {
     let resolved = false;

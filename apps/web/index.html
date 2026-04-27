@@ -43,21 +43,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <noscript>
+      <div style="padding: 24px; font-family: system-ui, sans-serif; color: #1B5E20; text-align: center;">
+        Patient Owl needs JavaScript. If you're viewing this from inside an in-app browser
+        (Messages, Mail, etc.), tap the Share icon and choose "Open in Safari".
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/69c2330f46a6c41c341aa7c6/1jkf9et9r';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
 
     <!--
       Cloudflare Web Analytics
@@ -69,6 +62,15 @@
 
       If you prefer a manual <script> tag instead of dashboard auto-insert,
       paste the snippet from the Web Analytics dashboard here.
+    -->
+
+    <!--
+      Tawk.to chat removed: the inline loader was blocked by the strict
+      production CSP (`script-src 'self' …` with no `'unsafe-inline'`),
+      so the widget was silently non-functional. Re-add via Cloudflare
+      Zaraz custom HTML (docs/THIRD-PARTY.md) if/when chat is needed —
+      Zaraz proxies the script through the same origin so no CSP
+      allow-list change is required.
     -->
   </body>
 </html>
