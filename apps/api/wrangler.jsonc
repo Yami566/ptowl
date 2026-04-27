@@ -65,19 +65,14 @@
   },
   "vars": {
     "ENVIRONMENT": "production",
-    // Canonical origin (legacy single-domain consumers).
+    // Canonical origin. Add more here if we ever own a second branded
+    // domain (FRONTEND_URLS comma-separated overrides this single value).
     "FRONTEND_URL": "https://ptowl.com",
-    // Multi-domain mirror — accept ptowl.com AND patientowl.com on both apex
-    // and www. Per-domain certs auto-issued by Cloudflare when each zone is
-    // added in the dashboard (see docs/DOMAIN-ALIAS.md).
-    "FRONTEND_URLS": "https://ptowl.com,https://www.ptowl.com,https://patientowl.com,https://www.patientowl.com",
     "FIREBASE_PROJECT_ID": "ptowl-bdfbe"
   },
   "routes": [
     { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
-    { "pattern": "www.ptowl.com/api/*", "zone_name": "ptowl.com" },
-    { "pattern": "patientowl.com/api/*", "zone_name": "patientowl.com" },
-    { "pattern": "www.patientowl.com/api/*", "zone_name": "patientowl.com" }
+    { "pattern": "www.ptowl.com/api/*", "zone_name": "ptowl.com" }
   ],
   // ─── Staging environment ────────────────────────────────────
   // Deploy: wrangler deploy --env staging

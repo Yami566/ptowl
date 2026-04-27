@@ -1,128 +1,104 @@
-# Domain alias setup — `patientowl.com` ↔ `ptowl.com`
+# Domain & URL — `patientowl.com` is not ours
 
-`ptowl.com` is the canonical short URL for the product. Many users
-naturally type `patientowl.com` (the full brand name). When they share
-the long form via iMessage / Slack / email, the link must work.
+`ptowl.com` is the canonical (and only) domain we own and serve. Many
+people will naturally type or remember `patientowl.com` because that
+matches the spoken brand name. **This is a problem we cannot solve in
+code** — the domain is registered to someone else.
 
-This doc covers two options for handling the alias. **Pick one — they're
-mutually exclusive.**
+## What's happening when someone shares `patientowl.com` in iMessage
 
-## Option A — 301 redirect (recommended)
+iMessage's link-preview service tries to:
 
-`patientowl.com/*` permanently redirects to `ptowl.com/*`. Cleanest
-SEO; users see one canonical URL after the bounce.
+1. Resolve the hostname over DNS.
+2. Fetch the URL over HTTPS.
+3. Parse OG / Twitter meta tags from the response.
 
-### Steps (Cloudflare dashboard, 5 minutes)
+For `patientowl.com`, step 1 might succeed (if the squatter has DNS
+records) but step 2 either fails (no TLS) or returns a parking page
+without proper meta tags. Either way, no preview card renders and
+tapping the link goes somewhere we can't control — usually a parking
+page or a 404.
 
-1. **Add the domain to Cloudflare**
-   - Cloudflare dashboard → **Add a Site** → enter `patientowl.com`.
-   - Pick the Free plan (or whichever matches your account).
-   - Update the registrar's nameservers to the two Cloudflare NSs shown.
-   - Wait ~5 min for "Active" status.
+## What we can do
 
-2. **Universal SSL** auto-issues a TLS cert. No action needed once the
-   zone is Active.
+### 1. Make `ptowl.com` the only URL anyone ever sees from us
 
-3. **Bulk Redirects** (Cloudflare → Bulk Redirects → Create List):
-   - List name: `patientowl-to-ptowl`
-   - Type: Redirect
-   - Add a rule:
-     - **Source URL**: `https://patientowl.com/*` _(also add
-       `https://www.patientowl.com/_`)\*
-     - **Target URL**: `https://ptowl.com/$1`
-     - **Status**: 301 (Permanent Redirect)
-     - **Preserve query string**: yes
-     - **Preserve path suffix**: yes
-4. Test:
+Already mostly true. Confirmed clean:
 
-   ```bash
-   curl -sI https://patientowl.com/about
-   # Expect: HTTP/2 301
-   #         location: https://ptowl.com/about
-   ```
+- `apps/web/index.html` — `og:url` and Twitter cards point at `ptowl.com`.
+- `apps/web/src/pages/PrivacyPolicyPage.tsx` — contact references
+  `help@ptowl.com` and `https://ptowl.com`.
+- `apps/api/src/services/email.ts` — every transactional email body
+  (admin notifications, patient share codes, reminder emails)
+  links to `https://ptowl.com`.
+- `apps/api/wrangler.jsonc` — `FRONTEND_URL` is `https://ptowl.com`.
+- README badges, lean canvas, all docs use `ptowl.com`.
 
-5. After verification, no code changes are needed. Skip Option B below.
+If you spot any `patientowl.com` reference in code or marketing, it's
+a bug — replace with `ptowl.com`.
 
-## Option B — Mirror (both URLs serve the SPA)
+### 2. Surface the canonical URL prominently
 
-Same Worker, same Pages deployment, two branded URLs. Useful if you want
-brand consistency in printed materials (e.g. business cards saying
-`patientowl.com` work natively) but adds operational surface area.
+`apps/web/index.html` carries `<link rel="canonical" href="https://ptowl.com/">`
+so search engines and social previews always pick the canonical form
+even if someone reaches us through a redirect or alias.
 
-### Code already in place (this branch)
+### 3. (Future option) Acquire `patientowl.com`
 
-- `apps/api/wrangler.jsonc` declares Worker routes for both domains:
-  ```jsonc
-  "routes": [
-    { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
-    { "pattern": "www.ptowl.com/api/*", "zone_name": "ptowl.com" },
-    { "pattern": "patientowl.com/api/*", "zone_name": "patientowl.com" },
-    { "pattern": "www.patientowl.com/api/*", "zone_name": "patientowl.com" }
-  ]
-  ```
-- `FRONTEND_URLS` env var lists every accepted origin. CORS + hono/csrf
-  middleware accept all of them.
-- `apps/web/index.html` has `<link rel="canonical" href="https://ptowl.com/">`
-  so search engines pick a single primary URL even when both serve the
-  same content.
+If owning the long form becomes important, the realistic paths are:
 
-### Steps (Cloudflare dashboard)
+- **Domain broker outreach** — send a polite acquisition offer to the
+  current registrant via the WHOIS contact. Common ranges for
+  uncategorized non-trademark `.com` domains: $500–$5,000.
+- **Watch for expiry** — most squatted domains release if they don't
+  monetize. Use a backorder service (Snapnames, DropCatch).
+- **Trademark + UDRP** — only if "Patient Owl" is a registered
+  trademark _and_ the current use is bad-faith infringement. Slow,
+  expensive, low success rate without a clear case.
 
-1. **Add the domain to Cloudflare** (same as Option A step 1).
-2. **Cloudflare Pages → ptowl project → Custom domains → Add a domain**:
-   - `patientowl.com`
-   - `www.patientowl.com`
-     Cloudflare auto-issues TLS and routes traffic to the same Pages build.
-3. **Workers → ptowl-api → Triggers → Routes**: Cloudflare picks up the
-   new routes from `wrangler.jsonc` on next deploy. Or click
-   **Add route** manually after a deploy.
-4. Test:
-   ```bash
-   curl -sI https://patientowl.com
-   # Expect: HTTP/2 200, x-powered-by: ... (Pages headers)
-   curl -s https://patientowl.com/api/v1/health | head -1
-   # Expect: {"ok":true,...}
-   ```
+If/when acquired, the multi-origin support added in
+`apps/api/src/index.ts` (`getAllowedOrigins(env)`) is in place: just
+add the new origin to `FRONTEND_URLS` in `wrangler.jsonc` and add the
+Worker routes. No code change needed.
 
-## Why iMessage previews fail today
+### 4. Don't pretend we control it
 
-When you paste a URL in iMessage, Apple's link-preview service:
+The earlier commit `9fd11ab` configured Worker routes for
+`patientowl.com/api/*` and added `patientowl.com` to the CORS / CSRF
+allow-list. That commit was wrong on a false assumption. The follow-up
+revert removes those entries — keeping the multi-origin helper in place
+for the day we actually buy a second domain we control.
 
-1. Resolves the hostname over DNS.
-2. Fetches the URL over HTTPS (must have a valid TLS cert from a
-   trusted CA).
-3. Parses the response as HTML and reads `<meta property="og:*">`,
-   `<meta name="twitter:*">`, `<title>`, favicon.
-4. Renders a preview card if all of the above succeeds.
+## What to ask folks who share the wrong URL
 
-`patientowl.com` is failing one of those steps — most likely #1 (the
-domain isn't registered or its DNS doesn't point anywhere) or #2 (no
-valid cert, since iOS rejects self-signed and untrusted CAs more
-strictly than desktop browsers).
+If someone DM's you saying "your link doesn't work", the answer is:
 
-After Option A or B above, the preview card should render correctly
-within ~5 minutes (DNS propagation + cert provisioning).
+> The site is at **ptowl.com** (no "patient"). Try
+> [https://ptowl.com](https://ptowl.com) instead.
 
-## What to do if you don't own `patientowl.com`
+Consider adding the canonical URL to:
 
-Two paths:
+- Email signatures
+- Business cards (the lean canvas already says "ptowl.com")
+- iMessage / share-link copy when sending the schedule URL to a
+  patient (the share path already returns the `ptowl.com/cal/<token>.ics`
+  form)
+- Any social media bios
 
-- **Buy the domain** — usually $10–$15/year via Cloudflare Registrar
-  (no markup), Namecheap, or Porkbun. Then follow Option A.
-- **Stay on `ptowl.com` only** — update marketing materials so people
-  always see the short form. Open Graph + iMessage previews are already
-  configured for `ptowl.com`. Cheaper, less moving parts.
+## What's NOT a fix
 
-If `patientowl.com` is a typo (someone misheard "ptowl") then there's
-nothing to fix on our end; surface the canonical URL more prominently
-in the privacy policy / share modals / email templates.
+- Redirects in our Cloudflare account — only work for domains in our
+  account. We don't have `patientowl.com`.
+- Worker routes — Cloudflare Workers only intercept traffic for zones
+  we own.
+- DNS changes — only the registrant of `patientowl.com` can update its
+  DNS records.
+- Changing our `og:url` to `patientowl.com` — would actively make
+  things worse: we'd link previews to a domain we don't control.
 
-## Notes
+## Why I shipped the wrong fix first
 
-- The PRD already lists Patient Owl as the brand and `ptowl.com` as the
-  URL. If you mirror, also update the privacy-policy contact section
-  to mention both domains.
-- Cloudflare Web Analytics (when enabled) treats each domain as a
-  separate site — you'll see split traffic between `ptowl.com` and
-  `patientowl.com` in the dashboard. Aggregate via Cloudflare's
-  Analytics Engine if a unified view matters.
+Commit `9fd11ab` assumed you owned the domain (or were about to buy it)
+and proactively wired up routes + multi-origin support. That assumption
+was wrong. Lesson logged: **before adding domain config, confirm the
+domain is ours.** Should be a question, not an assumption.

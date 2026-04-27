@@ -35,7 +35,8 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
  *   - Single canonical: FRONTEND_URL only (legacy behaviour)
  *   - Multi-domain mirror: FRONTEND_URLS = "https://a,https://b,..." overrides
  *     FRONTEND_URL when set. Used to mirror the Worker behind branded
- *     aliases (ptowl.com + patientowl.com) without redirecting.
+ *     aliases that we own (e.g. future ptowl.app, staging.ptowl.com).
+ *     Only useful when the alias domain is in our Cloudflare account.
  * Returns null when no origin is configured (callers respond with CONFIG_ERROR).
  */
 function getAllowedOrigins(env: Env): string[] | null {

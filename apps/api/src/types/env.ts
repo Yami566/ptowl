@@ -30,8 +30,9 @@ export interface Env {
   FRONTEND_URL: string;
   // Optional comma-separated list of additional accepted origins.
   // Used to mirror the same Worker behind multiple branded domains
-  // (e.g. ptowl.com + patientowl.com). Each entry is an absolute origin:
-  //   https://ptowl.com,https://www.ptowl.com,https://patientowl.com,https://www.patientowl.com
-  // Validated against `URL` parsing at request time.
+  // when we own them (e.g. a future ptowl.app or staging.ptowl.com).
+  // Each entry is an absolute origin like https://example.com.
+  // Validated against the request's Origin header at runtime.
+  // Leave unset to use FRONTEND_URL alone.
   FRONTEND_URLS?: string;
 }
