@@ -547,7 +547,9 @@ describe('Admin Route Authorization Chain', () => {
 describe('CORS Configuration Security', () => {
   it('CORS uses strict origin from FRONTEND_URL (no wildcard)', () => {
     const code = readFile('index.ts');
-    expect(code).toContain('origin: [frontendUrl]');
+    // Multi-origin allow-list (FRONTEND_URLS) sourced via getAllowedOrigins;
+    // no '*' wildcard, no `origin: true`, no fall-through.
+    expect(code).toContain('origin: origins');
     expect(code).not.toContain("origin: '*'");
     expect(code).not.toContain('origin: true');
   });
@@ -559,7 +561,7 @@ describe('CORS Configuration Security', () => {
 
   it('CORS rejects requests when FRONTEND_URL is not configured', () => {
     const code = readFile('index.ts');
-    expect(code).toContain('!frontendUrl');
+    expect(code).toMatch(/!origins|!frontendUrl/);
     expect(code).toContain('CONFIG_ERROR');
   });
 });

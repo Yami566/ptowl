@@ -354,7 +354,7 @@ describe('Security Headers & CSP', () => {
 
   it('CORS rejects requests when FRONTEND_URL is not configured', () => {
     const code = indexCode();
-    expect(code).toContain('!frontendUrl');
+    expect(code).toMatch(/!origins|!frontendUrl/);
     expect(code).toContain('CONFIG_ERROR');
   });
 

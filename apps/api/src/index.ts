@@ -30,18 +30,35 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // ─── Global middleware ───────────────────────────────────────
 
+/**
+ * Compute the set of accepted origins for this request. Supports two modes:
+ *   - Single canonical: FRONTEND_URL only (legacy behaviour)
+ *   - Multi-domain mirror: FRONTEND_URLS = "https://a,https://b,..." overrides
+ *     FRONTEND_URL when set. Used to mirror the Worker behind branded
+ *     aliases (ptowl.com + patientowl.com) without redirecting.
+ * Returns null when no origin is configured (callers respond with CONFIG_ERROR).
+ */
+function getAllowedOrigins(env: Env): string[] | null {
+  const list = (env.FRONTEND_URLS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (list.length > 0) return list;
+  return env.FRONTEND_URL ? [env.FRONTEND_URL] : null;
+}
+
 // H1 FIX: Strict CORS — no fallback to localhost in production
 app.use('*', async (c, next) => {
-  const frontendUrl = c.env.FRONTEND_URL;
-  if (!frontendUrl) {
-    console.error('FRONTEND_URL not configured — rejecting CORS');
+  const origins = getAllowedOrigins(c.env);
+  if (!origins) {
+    console.error('FRONTEND_URL(S) not configured — rejecting CORS');
     return c.json(
       { ok: false, error: { code: 'CONFIG_ERROR', message: 'Server misconfigured' } },
       500,
     );
   }
   const corsMiddleware = cors({
-    origin: [frontendUrl],
+    origin: origins,
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type'],
     credentials: true,
@@ -54,9 +71,9 @@ app.use('*', async (c, next) => {
 // Replaces the custom signed-token middleware — modern browsers always send
 // Origin on POST/PUT/PATCH/DELETE, so this is the recommended approach.
 app.use('*', async (c, next) => {
-  const frontendUrl = c.env.FRONTEND_URL;
-  if (!frontendUrl) return next(); // CORS middleware above already handles missing config
-  const csrfMiddleware = csrf({ origin: frontendUrl });
+  const origins = getAllowedOrigins(c.env);
+  if (!origins) return next(); // CORS middleware above already handles missing config
+  const csrfMiddleware = csrf({ origin: origins });
   return csrfMiddleware(c, next);
 });
 

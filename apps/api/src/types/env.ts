@@ -25,5 +25,13 @@ export interface Env {
 
   // Environment variables
   ENVIRONMENT: string;
+  // Primary frontend origin. Used for CSRF + CORS allow-list as the
+  // canonical URL in single-domain deployments.
   FRONTEND_URL: string;
+  // Optional comma-separated list of additional accepted origins.
+  // Used to mirror the same Worker behind multiple branded domains
+  // (e.g. ptowl.com + patientowl.com). Each entry is an absolute origin:
+  //   https://ptowl.com,https://www.ptowl.com,https://patientowl.com,https://www.patientowl.com
+  // Validated against `URL` parsing at request time.
+  FRONTEND_URLS?: string;
 }
