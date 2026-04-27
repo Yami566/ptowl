@@ -149,8 +149,20 @@ export function LandingPage() {
   if (user) return null;
 
   // Format phone for display: (XXX) XXX-XXXX
+  // Tolerates pasted/autofilled values:
+  //   "+15551234567" → 5551234567 → (555) 123-4567   (E.164 with country code)
+  //   "1 (555) 123-4567" → same
+  //   "5551234567" → same
+  //   "(555) 123-4567" → same
   const formatPhone = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 10);
+    let digits = val.replace(/\D/g, '');
+    // Drop a leading "1" country code when the user/autofill supplied an
+    // 11-digit US/Canada number. Without this, autofilling +15551234567
+    // would slice to 1555123456, which is wrong.
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.slice(1);
+    }
+    digits = digits.slice(0, 10);
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -413,63 +425,82 @@ export function LandingPage() {
               <label htmlFor="phone-input" className="sr-only">
                 Phone number
               </label>
-              <div style={styles.phoneRow}>
-                <span style={styles.countryCode}>+1</span>
-                <input
-                  id="phone-input"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, handleSendCode)}
-                  placeholder="(555) 123-4567"
-                  style={styles.phoneInput}
-                  autoFocus
-                  autoComplete="tel-national"
-                  inputMode="numeric"
-                  aria-label="Phone number, 10 digits"
-                />
-              </div>
-              {hadSavedPhone && phone && (
-                <button
-                  type="button"
-                  style={styles.useDifferent}
-                  onClick={() => {
-                    setPhone('');
-                    try {
-                      localStorage.removeItem('ptowl-last-phone');
-                    } catch {
-                      /* non-fatal */
-                    }
-                  }}
-                >
-                  Use a different number
-                </button>
-              )}
-              <label style={styles.termsRow}>
-                <input
-                  type="checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  style={styles.rememberCheck}
-                />
-                <span style={styles.termsText}>
-                  I agree to the{' '}
-                  <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>
-                    Terms of Service
-                  </a>{' '}
-                  and{' '}
-                  <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>
-                    Privacy Policy
-                  </a>
-                </span>
-              </label>
-              <button
-                style={{ ...styles.authBtn, opacity: sending || !agreedToTerms ? 0.6 : 1 }}
-                onClick={handleSendCode}
-                disabled={sending || !agreedToTerms}
+              {/*
+                Wrap phone entry in a real <form> with proper name + autoComplete.
+                Without this, iOS Safari + Android Chrome don't surface the
+                contact-card autofill chip. autoComplete="tel" matches the
+                broadest set of saved-number sources (E.164, formatted national,
+                or raw digits); "tel-national" is more specific but less
+                commonly populated.
+              */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!sending && agreedToTerms) handleSendCode();
+                }}
+                noValidate
               >
-                {sending ? 'Sending code...' : 'Continue'}
-              </button>
+                <div style={styles.phoneRow}>
+                  <span style={styles.countryCode} aria-hidden="true">
+                    +1
+                  </span>
+                  <input
+                    id="phone-input"
+                    name="tel"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="(555) 123-4567"
+                    style={styles.phoneInput}
+                    autoFocus
+                    autoComplete="tel"
+                    inputMode="tel"
+                    enterKeyHint="next"
+                    aria-label="Phone number"
+                  />
+                </div>
+                {hadSavedPhone && phone && (
+                  <button
+                    type="button"
+                    style={styles.useDifferent}
+                    onClick={() => {
+                      setPhone('');
+                      try {
+                        localStorage.removeItem('ptowl-last-phone');
+                      } catch {
+                        /* non-fatal */
+                      }
+                    }}
+                  >
+                    Use a different number
+                  </button>
+                )}
+                <label style={styles.termsRow}>
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    style={styles.rememberCheck}
+                  />
+                  <span style={styles.termsText}>
+                    I agree to the{' '}
+                    <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                      Terms of Service
+                    </a>{' '}
+                    and{' '}
+                    <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
+                <button
+                  type="submit"
+                  style={{ ...styles.authBtn, opacity: sending || !agreedToTerms ? 0.6 : 1 }}
+                  disabled={sending || !agreedToTerms}
+                >
+                  {sending ? 'Sending code...' : 'Continue'}
+                </button>
+              </form>
               <label style={styles.rememberRow}>
                 <input
                   type="checkbox"
