@@ -8,17 +8,18 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Phone Auth UI', () => {
   test('shows phone input on landing page', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // Should show a phone input field
     const phoneInput = page.locator('input[type="tel"]');
-    await expect(phoneInput).toBeVisible();
+    await expect(phoneInput).toBeVisible({ timeout: 20_000 });
   });
 
   test('validates phone number format', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const phoneInput = page.locator('input[type="tel"]');
+    await expect(phoneInput).toBeVisible({ timeout: 20_000 });
     await phoneInput.fill('123'); // Too short
 
     // Try to submit — look for the send code button
@@ -31,9 +32,10 @@ test.describe('Phone Auth UI', () => {
   });
 
   test('phone input accepts only digits', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const phoneInput = page.locator('input[type="tel"]');
+    await expect(phoneInput).toBeVisible({ timeout: 20_000 });
     await phoneInput.fill('abcdefghij');
 
     // The input should strip non-digits (handled by onChange)

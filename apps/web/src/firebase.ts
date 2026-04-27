@@ -32,13 +32,33 @@ export const auth = getAuth(app);
 // Persist Firebase auth across browser restarts (uses localStorage)
 setPersistence(auth, browserLocalPersistence);
 
-/** Returns a promise that resolves with the current Firebase user (or null) once auth state is ready */
+/**
+ * Resolves with the current Firebase user (or null) once auth state is ready.
+ * Bails after 5s if Firebase can't reach Google's auth servers (DNS / network
+ * outage). Without this timeout, AuthProvider blocks rendering on the loading
+ * overlay indefinitely when Firebase is unreachable — which freezes every
+ * page including the public marketing pages.
+ */
+const FIREBASE_AUTH_TIMEOUT_MS = 5_000;
 export function waitForFirebaseUser(): Promise<User | null> {
   return new Promise((resolve) => {
+    let resolved = false;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (resolved) return;
+      resolved = true;
       unsubscribe();
       resolve(user);
     });
+    setTimeout(() => {
+      if (resolved) return;
+      resolved = true;
+      try {
+        unsubscribe();
+      } catch {
+        /* unsubscribe may already be invalid */
+      }
+      resolve(null);
+    }, FIREBASE_AUTH_TIMEOUT_MS);
   });
 }
 
@@ -48,7 +68,11 @@ let recaptchaVerifier: RecaptchaVerifier | null = null;
 
 export function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
   if (recaptchaVerifier) {
-    try { recaptchaVerifier.clear(); } catch { /* already cleared */ }
+    try {
+      recaptchaVerifier.clear();
+    } catch {
+      /* already cleared */
+    }
   }
   recaptchaVerifier = new RecaptchaVerifier(auth, containerId, { size: 'invisible' });
   return recaptchaVerifier;
@@ -56,7 +80,10 @@ export function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
 
 // ── Primary Phone Auth ─────────────────────────────────────────
 
-export async function sendPhoneCode(phone: string, containerId: string): Promise<ConfirmationResult> {
+export async function sendPhoneCode(
+  phone: string,
+  containerId: string,
+): Promise<ConfirmationResult> {
   const verifier = getRecaptchaVerifier(containerId);
   return signInWithPhoneNumber(auth, phone, verifier);
 }
@@ -82,9 +109,7 @@ export async function startMFASignIn(
   const resolver = getMultiFactorResolver(auth, error);
 
   // Find the phone factor hint
-  const phoneHint = resolver.hints.find(
-    (h) => h.factorId === PhoneMultiFactorGenerator.FACTOR_ID,
-  );
+  const phoneHint = resolver.hints.find((h) => h.factorId === PhoneMultiFactorGenerator.FACTOR_ID);
   if (!phoneHint) throw new Error('No phone factor enrolled');
 
   const phoneAuthProvider = new PhoneAuthProvider(auth);
@@ -131,10 +156,7 @@ export async function startMFAEnrollment(
 }
 
 /** Step 2: Finalize MFA enrollment with the verification code */
-export async function finalizeMFAEnrollment(
-  verificationId: string,
-  code: string,
-): Promise<void> {
+export async function finalizeMFAEnrollment(verificationId: string, code: string): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error('Not signed in');
 
