@@ -84,76 +84,7 @@ describe('Auth Middleware Security', () => {
     expect(indexCode).toContain('csrf({ origin:');
   });
 
-  it('requireAdmin checks role === admin (CF Access provides 2FA at the edge)', () => {
-    const code = authMiddleware();
-    expect(code).toContain("dbUser.role !== 'admin'");
-    // The legacy email-OTP admin_verified bit is gone — Stage B routes
-    // /admin through Cloudflare Access where the OTP happens at the edge
-    // before requests reach the Worker.
-    expect(code).not.toContain('admin_verified');
-  });
-
-  it('requireAdmin revalidates role against database (stale-token protection)', () => {
-    const code = authMiddleware();
-    expect(code).toContain('SELECT role, status FROM users WHERE id = ?');
-    expect(code).toContain("dbUser.role !== 'admin'");
-    expect(code).toContain("dbUser.status !== 'approved'");
-  });
-});
-
-// ══════════════════════════════════════════════════════════════════
-// 2. Admin Route Security (8 tests)
-// ══════════════════════════════════════════════════════════════════
-
-describe('Admin Route Security', () => {
-  const adminCode = () => readFile('routes/admin.ts');
-
-  it('admin auth uses phone login + email 2FA (no Auth0)', () => {
-    const code = adminCode();
-    // Admin login is handled by normal phone auth; admin panel uses email 2FA
-    expect(code).toContain("'/send-code'");
-    expect(code).toContain("'/verify-code'");
-    expect(code).toContain("user.role !== 'admin'");
-  });
-
-  it('admin cookies use secure flag based on environment (H2 FIX)', () => {
-    const code = adminCode();
-    // Must check ENVIRONMENT to set secure flag
-    expect(code).toContain("c.env.ENVIRONMENT === 'production'");
-    expect(code).toContain('secure: isProduction');
-  });
-
-  it('admin user ID validation uses 32-char hex regex (H3 FIX)', () => {
-    const code = adminCode();
-    // Both approve and deny routes must validate user ID with strict hex pattern
-    expect(code).toContain('/^[0-9a-f]{32}$/i.test(userId)');
-  });
-
-  it('admin approve route validates user ID before DB query', () => {
-    const code = adminCode();
-    const approveSection = code.slice(
-      code.indexOf("'/users/:id/approve'"),
-      code.indexOf("'/users/:id/deny'"),
-    );
-    // ID validation must appear before the UPDATE query
-    const validationPos = approveSection.indexOf('[0-9a-f]{32}');
-    const updatePos = approveSection.indexOf('UPDATE users SET');
-    expect(validationPos).toBeGreaterThan(-1);
-    expect(updatePos).toBeGreaterThan(-1);
-    expect(validationPos).toBeLessThan(updatePos);
-  });
-
-  it('admin deny route validates user ID before DB query', () => {
-    const code = adminCode();
-    const denySection = code.slice(code.indexOf("'/users/:id/deny'"));
-    // ID validation must appear before the UPDATE query
-    const validationPos = denySection.indexOf('[0-9a-f]{32}');
-    const updatePos = denySection.indexOf('UPDATE users SET');
-    expect(validationPos).toBeGreaterThan(-1);
-    expect(updatePos).toBeGreaterThan(-1);
-    expect(validationPos).toBeLessThan(updatePos);
-  });
-
+  // Admin console was removed in HOTFIX 3 — no admin role checks remain.
   it('rate limiting is handled by Cloudflare WAF (edge-level)', () => {
     const indexCode = readFile('index.ts');
     expect(indexCode).toContain('Cloudflare WAF');
@@ -351,19 +282,6 @@ describe('Error Handling Security', () => {
     expect(healthStr).not.toContain('node');
   });
 
-  it('admin verification code value is NOT included in email subject line', () => {
-    const emailCode = readFile('services/email.ts');
-    // Find the sendAdminVerificationCode function's subject line
-    const funcSection = emailCode.slice(emailCode.indexOf('sendAdminVerificationCode'));
-    const subjectMatch = funcSection.match(/subject\s*=\s*['"`][^'"`]*['"`]/);
-    expect(subjectMatch).not.toBeNull();
-    // The subject should NOT interpolate the actual code value — it belongs only in the HTML body
-    // A descriptive word like "verification code" in the subject is fine,
-    // but ${code} (the 6-digit value) must never appear in the subject
-    expect(subjectMatch![0]).not.toContain('${code}');
-    expect(subjectMatch![0]).not.toContain('${escapeHtml(code)}');
-  });
-
   it('error responses use INTERNAL_ERROR code in all route catch blocks', () => {
     const routeFiles = readAllFiles(path.join(API_SRC, 'routes'), ['.ts']);
     for (const file of routeFiles) {
@@ -456,7 +374,6 @@ describe('No SELECT * in Queries', () => {
     'routes/appointments.ts',
     'routes/schedules.ts',
     'routes/profile.ts',
-    'routes/admin.ts',
     'routes/auth.ts',
     'routes/alias.ts',
   ];
@@ -495,40 +412,7 @@ describe('Schedule ID Validation', () => {
   });
 });
 
-describe('Admin Route Authorization Chain', () => {
-  it('admin /users GET requires both requireAuth and requireAdmin middleware', () => {
-    const code = readFile('routes/admin.ts');
-    const usersSection = code.match(/adminRoutes\.get\(\s*['"]\/users['"]/);
-    expect(usersSection).not.toBeNull();
-    // The route registration must include both requireAuth and requireAdmin
-    const routeLine = code.slice(
-      code.indexOf("adminRoutes.get('/users'"),
-      code.indexOf("adminRoutes.get('/users'") + 200,
-    );
-    expect(routeLine).toContain('requireAuth');
-    expect(routeLine).toContain('requireAdmin');
-  });
-
-  it('admin /users/:id/approve requires requireAuth and requireAdmin', () => {
-    const code = readFile('routes/admin.ts');
-    const routeLine = code.slice(
-      code.indexOf("'/users/:id/approve'"),
-      code.indexOf("'/users/:id/approve'") + 200,
-    );
-    expect(routeLine).toContain('requireAuth');
-    expect(routeLine).toContain('requireAdmin');
-  });
-
-  it('admin /users/:id/deny requires requireAuth and requireAdmin', () => {
-    const code = readFile('routes/admin.ts');
-    const routeLine = code.slice(
-      code.indexOf("'/users/:id/deny'"),
-      code.indexOf("'/users/:id/deny'") + 200,
-    );
-    expect(routeLine).toContain('requireAuth');
-    expect(routeLine).toContain('requireAdmin');
-  });
-});
+// Admin Route Authorization Chain — removed in HOTFIX 3 (admin console deleted).
 
 describe('CORS Configuration Security', () => {
   it('CORS uses strict origin from FRONTEND_URL (no wildcard)', () => {
@@ -561,19 +445,9 @@ describe('Workers.dev Access Blocking', () => {
   });
 });
 
-describe('Account Lockout Protection', () => {
-  // User login uses Firebase Phone Auth which handles rate limiting internally.
-  // Admin 2FA has custom rate limiting (max 3 codes per 5 min).
-  it('admin send-code has rate limiting for verification codes', () => {
-    const code = readFile('routes/admin.ts');
-    const sendCodeSection = code.slice(
-      code.indexOf("'/send-code'"),
-      code.indexOf("'/verify-code'"),
-    );
-    expect(sendCodeSection).toContain('RATE_LIMITED');
-    expect(sendCodeSection).toContain('Too many codes requested');
-  });
-});
+// Account Lockout Protection — removed in HOTFIX 3 (admin console deleted).
+// User login uses Firebase Phone/Google/email auth, which handles rate
+// limiting at Google's identity layer.
 
 describe('Anti-Enumeration Protection', () => {
   // Phone auth uses Firebase, which does not reveal whether a phone
@@ -587,52 +461,13 @@ describe('Anti-Enumeration Protection', () => {
   });
 });
 
-describe('Email Template Security', () => {
-  it('email service uses escapeHtml for all user-provided content', () => {
-    const code = readFile('services/email.ts');
+describe('Reminder Email Template Security', () => {
+  it('reminder service escapes user-provided content in HTML', () => {
+    const code = readFile('services/reminders.ts');
+    // reminders.ts has its own local escapeHtml (no shared email.ts anymore)
     expect(code).toContain('escapeHtml');
-    // escapeHtml should escape &, <, >, and "
     expect(code).toContain('&amp;');
     expect(code).toContain('&lt;');
     expect(code).toContain('&gt;');
-    expect(code).toContain('&quot;');
-  });
-
-  // No passwords in phone auth system — only SMS OTP.
-  it('admin verification code is hashed before storage (SHA-256)', () => {
-    const code = readFile('routes/admin.ts');
-    expect(code).toContain("crypto.subtle.digest('SHA-256'");
-    expect(code).toContain('code_hash');
-  });
-});
-
-describe('Verification Code Security', () => {
-  it('admin verification code is hashed with SHA-256 before storage', () => {
-    const code = readFile('routes/admin.ts');
-    expect(code).toContain("crypto.subtle.digest('SHA-256'");
-    expect(code).toContain('code_hash');
-  });
-
-  it('admin verification code validates exactly 6 digits', () => {
-    const code = readFile('routes/admin.ts');
-    expect(code).toContain('body.code.length !== 6');
-    expect(code).toContain('/^\\d{6}$/.test(body.code)');
-  });
-
-  it('admin send-code checks role is admin before generating code', () => {
-    const code = readFile('routes/admin.ts');
-    const sendCodeSection = code.slice(
-      code.indexOf("'/send-code'"),
-      code.indexOf("'/verify-code'"),
-    );
-    expect(sendCodeSection).toContain("user.role !== 'admin'");
-    expect(sendCodeSection).toContain('FORBIDDEN');
-  });
-
-  it('admin verify-code checks role is admin before validating code', () => {
-    const code = readFile('routes/admin.ts');
-    const verifySection = code.slice(code.indexOf("'/verify-code'"), code.indexOf("'/users'"));
-    expect(verifySection).toContain("user.role !== 'admin'");
-    expect(verifySection).toContain('FORBIDDEN');
   });
 });

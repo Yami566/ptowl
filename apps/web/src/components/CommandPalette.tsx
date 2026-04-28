@@ -66,11 +66,6 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
               <Command.Item onSelect={() => go('/customize/print')} style={s.item}>
                 <span style={s.icon}>&#128424;</span> Print Settings
               </Command.Item>
-              {user?.role === 'admin' && (
-                <Command.Item onSelect={() => go('/admin')} style={s.item}>
-                  <span style={s.icon}>&#128737;&#65039;</span> Admin Panel
-                </Command.Item>
-              )}
             </Command.Group>
 
             <Command.Group heading="Quick Actions" style={s.group}>
@@ -81,7 +76,13 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
                 <span style={s.icon}>{theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}</span>
                 {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               </Command.Item>
-              <Command.Item onSelect={() => { navigator.clipboard.writeText(window.location.href); onOpenChange(false); }} style={s.item}>
+              <Command.Item
+                onSelect={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  onOpenChange(false);
+                }}
+                style={s.item}
+              >
                 <span style={s.icon}>&#128279;</span> Copy Current URL
               </Command.Item>
               <Command.Item onSelect={() => action(logout)} style={s.item}>
@@ -100,7 +101,9 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
                   >
                     <span style={s.icon}>&#128197;</span>
                     {sched.patient_alias}
-                    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--gray-text)' }}>
+                    <span
+                      style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--gray-text)' }}
+                    >
                       {sched.patient_initials}
                     </span>
                   </Command.Item>

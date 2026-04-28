@@ -8,7 +8,6 @@ import { scheduleRoutes } from './routes/schedules.js';
 import { appointmentRoutes } from './routes/appointments.js';
 import { templateRoutes } from './routes/templates.js';
 import { profileRoutes } from './routes/profile.js';
-import { adminRoutes } from './routes/admin.js';
 import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
 import { remindersRoutes } from './routes/reminders.js';
@@ -170,7 +169,6 @@ app.route('/api/v1/schedules', scheduleRoutes);
 app.route('/api/v1/appointments', appointmentRoutes);
 app.route('/api/v1/templates', templateRoutes);
 app.route('/api/v1/profile', profileRoutes);
-app.route('/api/v1/admin', adminRoutes);
 app.route('/api/v1/alias', aliasRoutes);
 app.route('/api/v1/cal', calendarRoutes);
 app.route('/api/v1/reminders', remindersRoutes);
@@ -202,13 +200,6 @@ app.onError((err, c) => {
 // ─── Scheduled cleanup (Cron Trigger) ────────────────────────
 // Runs every 15 minutes — daily-cleanup branch only fires once per day.
 async function cleanupExpiredData(db: D1Database): Promise<void> {
-  await db
-    .prepare(`DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`)
-    .run();
-  await db
-    .prepare(`DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`)
-    .run();
-  await db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
   await db.prepare(`DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`).run();
 }
 

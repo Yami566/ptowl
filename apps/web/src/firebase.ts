@@ -1,21 +1,22 @@
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  browserLocalPersistence,
+  indexedDBLocalPersistence,
   setPersistence,
-  onAuthStateChanged,
   RecaptchaVerifier,
-  signInWithPhoneNumber,
   PhoneAuthProvider,
   PhoneMultiFactorGenerator,
   multiFactor,
-  getMultiFactorResolver,
-  type ConfirmationResult,
-  type MultiFactorResolver,
-  type MultiFactorError,
-  type User,
 } from 'firebase/auth';
-export type { ConfirmationResult, MultiFactorResolver, MultiFactorError } from 'firebase/auth';
+
+// FirebaseUI Web ships against the v8-style compat surface even though
+// we use the modular v9+ API everywhere else. Importing `firebase/compat/*`
+// alongside the modular initializeApp registers the same project under
+// the compat singleton, which firebaseui consumes via firebase.auth().
+// This pattern is documented in the firebaseui-web README under
+// "Using FirebaseUI with Firebase 9+ modular SDK".
+import firebaseCompat from 'firebase/compat/app';
+import 'firebase/compat/auth';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyDrV20McvFOj14RwdXR533IS2XHkpwyxfw',
@@ -27,50 +28,27 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+firebaseCompat.initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Persist Firebase auth across browser restarts (uses localStorage). The
-// .catch is required: in iOS Safari View Controller (the iMessage in-app
-// browser) localStorage access can throw, and an unhandled rejection here
-// breaks Firebase init silently. Falling back to the default in-memory
-// persistence is fine — the user will just have to re-auth next session.
-setPersistence(auth, browserLocalPersistence).catch(() => {});
+// IndexedDB persistence is more durable than localStorage in sandboxed
+// browser contexts (Safari ITP, iMessage SVC, private mode in some
+// browsers). The .catch is required because some contexts throw
+// synchronously on storage probe; in that case Firebase falls back to
+// in-memory persistence and the user re-auths on next visit.
+setPersistence(auth, indexedDBLocalPersistence).catch(() => {});
 
-/**
- * Resolves with the current Firebase user (or null) once auth state is ready.
- * Bails after 2s if Firebase can't reach Google's auth servers or its
- * persistence layer is broken. Short timeout because the user is staring at
- * a loading state — if there's no Firebase session to recover, we want to
- * paint the public landing page fast.
- */
-const FIREBASE_AUTH_TIMEOUT_MS = 2_000;
-export function waitForFirebaseUser(): Promise<User | null> {
-  return new Promise((resolve) => {
-    let resolved = false;
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (resolved) return;
-      resolved = true;
-      unsubscribe();
-      resolve(user);
-    });
-    setTimeout(() => {
-      if (resolved) return;
-      resolved = true;
-      try {
-        unsubscribe();
-      } catch {
-        /* unsubscribe may already be invalid */
-      }
-      resolve(null);
-    }, FIREBASE_AUTH_TIMEOUT_MS);
-  });
+export async function getFirebaseIdToken(): Promise<string | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  return user.getIdToken();
 }
 
-// ── reCAPTCHA ──────────────────────────────────────────────────
+// ── reCAPTCHA (used by MFA enrollment in ProfilePage) ──────────
 
 let recaptchaVerifier: RecaptchaVerifier | null = null;
 
-export function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
+function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
   if (recaptchaVerifier) {
     try {
       recaptchaVerifier.clear();
@@ -82,64 +60,8 @@ export function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
   return recaptchaVerifier;
 }
 
-// ── Primary Phone Auth ─────────────────────────────────────────
+// ── MFA Enrollment (sign-in MFA challenge is handled by FirebaseUI) ──
 
-export async function sendPhoneCode(
-  phone: string,
-  containerId: string,
-): Promise<ConfirmationResult> {
-  const verifier = getRecaptchaVerifier(containerId);
-  return signInWithPhoneNumber(auth, phone, verifier);
-}
-
-export async function getFirebaseIdToken(): Promise<string | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
-  return user.getIdToken();
-}
-
-// ── MFA: Sign-in with second factor ────────────────────────────
-
-/** Check if a caught error is an MFA challenge */
-export function isMFAError(err: unknown): err is MultiFactorError {
-  return (err as { code?: string })?.code === 'auth/multi-factor-auth-required';
-}
-
-/** Step 1: Send SMS to the enrolled MFA phone during sign-in */
-export async function startMFASignIn(
-  error: MultiFactorError,
-  containerId: string,
-): Promise<{ resolver: MultiFactorResolver; verificationId: string }> {
-  const resolver = getMultiFactorResolver(auth, error);
-
-  // Find the phone factor hint
-  const phoneHint = resolver.hints.find((h) => h.factorId === PhoneMultiFactorGenerator.FACTOR_ID);
-  if (!phoneHint) throw new Error('No phone factor enrolled');
-
-  const phoneAuthProvider = new PhoneAuthProvider(auth);
-  const verifier = getRecaptchaVerifier(containerId);
-  const verificationId = await phoneAuthProvider.verifyPhoneNumber(
-    { multiFactorHint: phoneHint, session: resolver.session },
-    verifier,
-  );
-
-  return { resolver, verificationId };
-}
-
-/** Step 2: Complete MFA sign-in with the verification code */
-export async function completeMFASignIn(
-  resolver: MultiFactorResolver,
-  verificationId: string,
-  code: string,
-) {
-  const cred = PhoneAuthProvider.credential(verificationId, code);
-  const assertion = PhoneMultiFactorGenerator.assertion(cred);
-  return resolver.resolveSignIn(assertion);
-}
-
-// ── MFA: Enrollment ────────────────────────────────────────────
-
-/** Step 1: Start enrolling a second phone number for MFA */
 export async function startMFAEnrollment(
   phoneNumber: string,
   containerId: string,
@@ -155,11 +77,9 @@ export async function startMFAEnrollment(
     { phoneNumber, session },
     verifier,
   );
-
   return verificationId;
 }
 
-/** Step 2: Finalize MFA enrollment with the verification code */
 export async function finalizeMFAEnrollment(verificationId: string, code: string): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error('Not signed in');
@@ -169,7 +89,6 @@ export async function finalizeMFAEnrollment(verificationId: string, code: string
   await multiFactor(user).enroll(assertion, 'SMS');
 }
 
-/** Check if the current user has MFA enrolled */
 export function getMFAStatus(): { enrolled: boolean; phoneHint?: string } {
   const user = auth.currentUser;
   if (!user) return { enrolled: false };
@@ -177,7 +96,6 @@ export function getMFAStatus(): { enrolled: boolean; phoneHint?: string } {
   const factors = multiFactor(user).enrolledFactors;
   if (factors.length === 0) return { enrolled: false };
 
-  // Get the masked phone number from the first factor
   const phoneFactor = factors[0];
   return {
     enrolled: true,
@@ -185,7 +103,6 @@ export function getMFAStatus(): { enrolled: boolean; phoneHint?: string } {
   };
 }
 
-/** Unenroll MFA (remove the first enrolled factor) */
 export async function unenrollMFA(): Promise<void> {
   const user = auth.currentUser;
   if (!user) throw new Error('Not signed in');

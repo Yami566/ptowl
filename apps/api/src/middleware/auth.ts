@@ -60,40 +60,9 @@ export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variable
 );
 
 /**
- * requireAdmin — gated behind requireAuth. Re-checks the role against
- * the current D1 row so a downgrade takes effect immediately, rather
- * than waiting for a token to expire (Firebase ID tokens last 1h).
- *
- * The previous email-OTP verification bit was removed — Stage B
- * (HOTFIX 2) puts /admin behind Cloudflare Access, where the OTP step
- * happens at the edge before the request ever reaches the Worker.
- */
-export const requireAdmin = createMiddleware<{ Bindings: Env; Variables: Variables }>(
-  async (c, next) => {
-    const user = c.get('user');
-    if (!user) {
-      return c.json(
-        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
-        401,
-      );
-    }
-    const dbUser = await c.env.DB.prepare('SELECT role, status FROM users WHERE id = ?')
-      .bind(user.id)
-      .first<{ role: string; status: string }>();
-    if (!dbUser || dbUser.role !== 'admin' || dbUser.status !== 'approved') {
-      return c.json(
-        { ok: false, error: { code: 'FORBIDDEN', message: 'Admin access required' } },
-        403,
-      );
-    }
-    await next();
-  },
-);
-
-/**
- * requireClinic — kept as a separate middleware for symmetry with the
- * routes that mount it; identical to requireAuth now that the patient
- * portal is gone (every authenticated user is a clinic).
+ * requireClinic — identical to requireAuth now that the patient portal
+ * and admin console are gone (every authenticated user is a clinic).
+ * Kept as a separate name for symmetry with the routes that mount it.
  */
 export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {

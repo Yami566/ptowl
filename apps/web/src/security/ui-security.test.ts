@@ -143,14 +143,14 @@ describe('Authentication Security', () => {
     expect(authFile).toContain("navigate('/'");
   });
 
-  it('phone auth uses Firebase (no local password form)', () => {
+  it('login uses FirebaseUI drop-in widget (multi-provider; no bespoke form)', () => {
     const landingFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LandingPage.tsx'), 'utf-8');
-    // Firebase phone auth — SMS + verification handled by Firebase. The
-    // /auth/firebase token-exchange endpoint was retired in Stage A;
-    // the frontend now calls login() directly after Firebase verification
-    // and the AuthContext fetches /auth/me with the Bearer token.
-    expect(landingFile).toContain('sendPhoneCode');
-    expect(landingFile).toContain('inputMode="numeric"');
+    // Stage G of HOTFIX 3 replaced the hand-rolled phone form with
+    // Google's FirebaseUI Web component, which drives Phone, Google,
+    // Email-link, and (optionally) Apple sign-in from a single
+    // declarative config. None of the legacy auth surfaces remain.
+    expect(landingFile).toContain('FirebaseAuthUI');
+    expect(landingFile).not.toContain('sendPhoneCode');
     expect(landingFile).not.toContain('/auth/firebase');
   });
 
@@ -189,10 +189,8 @@ describe('Secure Routing', () => {
     expect(authFile).toContain("'/terms'");
   });
 
-  it('admin route exists and is protected', () => {
-    const appFile = fs.readFileSync(path.join(WEB_SRC, 'App.tsx'), 'utf-8');
-    expect(appFile).toContain('/admin');
-  });
+  // Admin route was removed in HOTFIX 3 — user management now happens via
+  // the Cloudflare D1 dashboard (off-the-shelf), not a custom admin page.
 });
 
 // ── No Secrets in Source Code ──
