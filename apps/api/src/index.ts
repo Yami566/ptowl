@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { csrf } from 'hono/csrf';
 import { secureHeaders } from 'hono/secure-headers';
 import type { Env } from './types/env.js';
 import { authRoutes } from './routes/auth.js';
@@ -10,8 +11,12 @@ import { profileRoutes } from './routes/profile.js';
 import { adminRoutes } from './routes/admin.js';
 import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
-import { patientRoutes } from './routes/patient.js';
-import { codeRoutes } from './routes/codes.js';
+import { remindersRoutes } from './routes/reminders.js';
+import {
+  findAndEnqueueDueReminders,
+  processReminderMessage,
+  type ReminderMessage,
+} from './services/reminders.js';
 // Rate limiting moved to Cloudflare WAF Rules (dashboard config, edge-level).
 // Custom per-isolate rate limiting was unreliable on distributed Workers.
 
@@ -23,51 +28,94 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // ─── Global middleware ───────────────────────────────────────
 
+/**
+ * Compute the set of accepted origins for this request. Supports two modes:
+ *   - Single canonical: FRONTEND_URL only (legacy behaviour)
+ *   - Multi-domain mirror: FRONTEND_URLS = "https://a,https://b,..." overrides
+ *     FRONTEND_URL when set. Used to mirror the Worker behind branded
+ *     aliases that we own (e.g. future ptowl.app, staging.ptowl.com).
+ *     Only useful when the alias domain is in our Cloudflare account.
+ * Returns null when no origin is configured (callers respond with CONFIG_ERROR).
+ */
+function getAllowedOrigins(env: Env): string[] | null {
+  const list = (env.FRONTEND_URLS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (list.length > 0) return list;
+  return env.FRONTEND_URL ? [env.FRONTEND_URL] : null;
+}
+
 // H1 FIX: Strict CORS — no fallback to localhost in production
 app.use('*', async (c, next) => {
-  const frontendUrl = c.env.FRONTEND_URL;
-  if (!frontendUrl) {
-    console.error('FRONTEND_URL not configured — rejecting CORS');
-    return c.json({ ok: false, error: { code: 'CONFIG_ERROR', message: 'Server misconfigured' } }, 500);
+  const origins = getAllowedOrigins(c.env);
+  if (!origins) {
+    console.error('FRONTEND_URL(S) not configured — rejecting CORS');
+    return c.json(
+      { ok: false, error: { code: 'CONFIG_ERROR', message: 'Server misconfigured' } },
+      500,
+    );
   }
   const corsMiddleware = cors({
-    origin: [frontendUrl],
+    origin: origins,
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'X-CSRF-Token'],
+    allowHeaders: ['Content-Type'],
     credentials: true,
     maxAge: 86400,
   });
   return corsMiddleware(c, next);
 });
 
+// CSRF: hono/csrf rejects state-changing requests whose Origin doesn't match.
+// Replaces the custom signed-token middleware — modern browsers always send
+// Origin on POST/PUT/PATCH/DELETE, so this is the recommended approach.
+app.use('*', async (c, next) => {
+  const origins = getAllowedOrigins(c.env);
+  if (!origins) return next(); // CORS middleware above already handles missing config
+  const csrfMiddleware = csrf({ origin: origins });
+  return csrfMiddleware(c, next);
+});
+
 // H2 FIX: Block direct Worker URL access in production
 app.use('*', async (c, next) => {
   const host = c.req.header('host') || '';
   if (c.env.ENVIRONMENT === 'production' && host.endsWith('.workers.dev')) {
-    return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Direct access not allowed' } }, 403);
+    return c.json(
+      { ok: false, error: { code: 'FORBIDDEN', message: 'Direct access not allowed' } },
+      403,
+    );
   }
   return next();
 });
 
-app.use('*', secureHeaders({
-  contentSecurityPolicy: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", 'https://challenges.cloudflare.com', 'https://apis.google.com', 'https://www.gstatic.com', 'https://www.google.com'],
-    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-    imgSrc: ["'self'", 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
-    connectSrc: ["'self'"],
-    frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
-    frameAncestors: ["'none'"],
-    objectSrc: ["'none'"],       // Block Flash/Java plugin content
-    baseUri: ["'self'"],         // Prevent base tag hijacking
-    formAction: ["'self'"],      // Restrict form submissions to same origin
-  },
-  xFrameOptions: 'DENY',
-  xContentTypeOptions: 'nosniff',
-  referrerPolicy: 'strict-origin-when-cross-origin',
-  strictTransportSecurity: 'max-age=63072000; includeSubDomains; preload',
-}));
+app.use(
+  '*',
+  secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        'https://challenges.cloudflare.com',
+        'https://apis.google.com',
+        'https://www.gstatic.com',
+        'https://www.google.com',
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:', 'blob:', 'https://lh3.googleusercontent.com'],
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"], // Block Flash/Java plugin content
+      baseUri: ["'self'"], // Prevent base tag hijacking
+      formAction: ["'self'"], // Restrict form submissions to same origin
+    },
+    xFrameOptions: 'DENY',
+    xContentTypeOptions: 'nosniff',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    strictTransportSecurity: 'max-age=63072000; includeSubDomains; preload',
+  }),
+);
 
 // Permissions-Policy: restrict browser feature access (no built-in Hono support for this header)
 app.use('*', async (c, next) => {
@@ -79,7 +127,10 @@ app.use('*', async (c, next) => {
 app.use('*', async (c, next) => {
   const contentLength = parseInt(c.req.header('content-length') || '0');
   if (contentLength > 1_048_576) {
-    return c.json({ ok: false, error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' } }, 413);
+    return c.json(
+      { ok: false, error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body too large' } },
+      413,
+    );
   }
   return next();
 });
@@ -99,14 +150,17 @@ app.get('/api/v1/health', async (c) => {
       },
     });
   } catch {
-    return c.json({
-      ok: false,
-      data: {
-        status: 'degraded',
-        db: { connected: false, latency_ms: -1 },
-        timestamp: new Date().toISOString(),
+    return c.json(
+      {
+        ok: false,
+        data: {
+          status: 'degraded',
+          db: { connected: false, latency_ms: -1 },
+          timestamp: new Date().toISOString(),
+        },
       },
-    }, 503);
+      503,
+    );
   }
 });
 
@@ -119,11 +173,12 @@ app.route('/api/v1/profile', profileRoutes);
 app.route('/api/v1/admin', adminRoutes);
 app.route('/api/v1/alias', aliasRoutes);
 app.route('/api/v1/cal', calendarRoutes);
-app.route('/api/v1/patient', patientRoutes);
-app.route('/api/v1/codes', codeRoutes);
+app.route('/api/v1/reminders', remindersRoutes);
 
 // 404 handler
-app.notFound((c) => c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404));
+app.notFound((c) =>
+  c.json({ ok: false, error: { code: 'NOT_FOUND', message: 'Route not found' } }, 404),
+);
 
 // Structured error handler — logs JSON for Cloudflare Workers Observability
 app.onError((err, c) => {
@@ -145,29 +200,46 @@ app.onError((err, c) => {
 });
 
 // ─── Scheduled cleanup (Cron Trigger) ────────────────────────
-// Runs daily at 3 AM UTC — deletes expired tokens and trims audit log
+// Runs every 15 minutes — daily-cleanup branch only fires once per day.
 async function cleanupExpiredData(db: D1Database): Promise<void> {
-  await db.prepare(
-    `DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM sessions WHERE expires_at < datetime('now')`,
-  ).run();
-  await db.prepare(
-    `DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`,
-  ).run();
-  // Clean up expired patient codes (7-day TTL)
-  await db.prepare(
-    `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
-  ).run();
+  await db
+    .prepare(`DELETE FROM admin_verification_codes WHERE expires_at < datetime('now', '-1 hour')`)
+    .run();
+  await db
+    .prepare(`DELETE FROM password_reset_tokens WHERE expires_at < datetime('now', '-1 hour')`)
+    .run();
+  await db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
+  await db.prepare(`DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`).run();
 }
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(cleanupExpiredData(env.DB));
+
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    // Reminder scan runs every cron tick (15 min).
+    ctx.waitUntil(
+      findAndEnqueueDueReminders(env).catch((err) =>
+        console.error('Reminder scan failed:', err instanceof Error ? err.message : err),
+      ),
+    );
+
+    // Daily cleanup — only fire once per day at the 03:00 UTC tick.
+    const d = new Date(event.scheduledTime);
+    if (d.getUTCHours() === 3 && d.getUTCMinutes() < 15) {
+      ctx.waitUntil(cleanupExpiredData(env.DB));
+    }
+  },
+
+  async queue(batch: MessageBatch<ReminderMessage>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      try {
+        const ok = await processReminderMessage(env, message.body);
+        if (ok) message.ack();
+        else message.retry();
+      } catch (err) {
+        console.error('Queue handler error:', err instanceof Error ? err.message : 'Unknown');
+        message.retry();
+      }
+    }
   },
 };

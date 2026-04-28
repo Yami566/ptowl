@@ -25,19 +25,19 @@ function InlineHourglass() {
         <span
           key={i}
           className="ptowl-sand"
-          style={{
-            '--sand-delay': `${p.delay}s`,
-            '--sand-x-start': `${p.xStart}px`,
-            '--sand-x-end': `${p.xEnd}px`,
-            '--sand-size': `${p.size}px`,
-          } as React.CSSProperties}
+          style={
+            {
+              '--sand-delay': `${p.delay}s`,
+              '--sand-x-start': `${p.xStart}px`,
+              '--sand-x-end': `${p.xEnd}px`,
+              '--sand-size': `${p.size}px`,
+            } as React.CSSProperties
+          }
         />
       ))}
-      <span
-        className="ptowl-hourglass-o"
-        style={{ fontSize: '3rem' }}
-        aria-hidden="true"
-      >O</span>
+      <span className="ptowl-hourglass-o" style={{ fontSize: '3rem' }} aria-hidden="true">
+        O
+      </span>
       <div className="ptowl-sand-pile" />
     </div>
   );
@@ -70,12 +70,11 @@ export function PendingPage() {
           <InlineHourglass />
           <h1 style={styles.title}>Account Pending</h1>
           <p style={styles.text}>
-            Your registration was successful! An admin has been notified and will approve your account shortly.
+            Your registration was successful! An admin has been notified and will approve your
+            account shortly.
           </p>
           <p style={styles.textSmall}>
-            {user?.user_type === 'patient'
-              ? "Once approved, you'll be able to view your schedules."
-              : "Once approved, you'll have full access to create and print patient schedules."}
+            Once approved, you'll have full access to create and print patient schedules.
           </p>
 
           <button
@@ -98,14 +97,59 @@ export function PendingPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--off-white)', padding: '1rem' },
-  center: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', width: '100%', maxWidth: '420px' },
+  page: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'var(--off-white)',
+    padding: '1rem',
+  },
+  center: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: '420px',
+  },
   brand: { marginBottom: '2rem' },
-  card: { background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '3rem', width: '100%', textAlign: 'center' as const, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
+  card: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '3rem',
+    width: '100%',
+    textAlign: 'center' as const,
+    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+  },
   title: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.75rem' },
   text: { color: 'var(--gray-text)', lineHeight: 1.6, marginBottom: '0.5rem' },
-  textSmall: { color: 'var(--gray-text)', lineHeight: 1.6, marginBottom: '1.5rem', fontSize: '0.85rem', opacity: 0.8 },
-  checkBtn: { width: '100%', padding: '0.875rem', background: 'var(--green-mid)', color: 'white', border: 'none', borderRadius: 'var(--radius)', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' },
+  textSmall: {
+    color: 'var(--gray-text)',
+    lineHeight: 1.6,
+    marginBottom: '1.5rem',
+    fontSize: '0.85rem',
+    opacity: 0.8,
+  },
+  checkBtn: {
+    width: '100%',
+    padding: '0.875rem',
+    background: 'var(--green-mid)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
   message: { color: 'var(--gray-text)', fontSize: '0.85rem', marginTop: '0.75rem' },
-  logoutBtn: { width: '100%', padding: '0.5rem', background: 'transparent', border: 'none', color: 'var(--gray-text)', fontSize: '0.85rem', cursor: 'pointer', marginTop: '1rem' },
+  logoutBtn: {
+    width: '100%',
+    padding: '0.5rem',
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--gray-text)',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    marginTop: '1rem',
+  },
 };

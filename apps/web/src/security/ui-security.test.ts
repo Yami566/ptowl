@@ -24,7 +24,9 @@ function readAllFiles(dir: string, ext: string[]): Array<{ path: string; content
         files.push({ path: fullPath, content: fs.readFileSync(fullPath, 'utf-8') });
       }
     }
-  } catch { /* dir doesn't exist */ }
+  } catch {
+    /* dir doesn't exist */
+  }
   return files;
 }
 
@@ -34,7 +36,9 @@ describe('XSS Prevention', () => {
   it('no dangerouslySetInnerHTML usage in any component', () => {
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
-      expect(file.content, `Found dangerouslySetInnerHTML in ${file.path}`).not.toContain('dangerouslySetInnerHTML');
+      expect(file.content, `Found dangerouslySetInnerHTML in ${file.path}`).not.toContain(
+        'dangerouslySetInnerHTML',
+      );
     }
   });
 
@@ -69,11 +73,15 @@ describe('Data Leakage Prevention', () => {
   it('no localStorage.setItem with sensitive data', () => {
     // Allow known safe localStorage usage (device-local, non-sensitive preferences)
     const SAFE_LOCALSTORAGE_FILES = [
-      'usePrintSettings.ts',   // print layout preferences
-      'firebase.ts',           // Firebase auth persistence (browserLocalPersistence)
-      'useTheme.ts',           // dark/light mode toggle
-      'DashboardPage.tsx',     // streak counter + schedule order (localStorage-based)
+      'usePrintSettings.ts', // print layout preferences
+      'firebase.ts', // Firebase auth persistence (browserLocalPersistence)
+      'useTheme.ts', // dark/light mode toggle
+      'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
       'OnboardingChecklist.tsx', // onboarding step progress
+      // Phone number is the address (login identifier), not the credential.
+      // Firebase OTP is the actual auth — knowing the number alone gains no access.
+      // Persisting it is a one-tap-return UX win, not a sensitive-data leak.
+      'LandingPage.tsx', // last-used phone number for one-tap return
     ];
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
@@ -103,14 +111,19 @@ describe('Data Leakage Prevention', () => {
 // ── API Security ──
 
 describe('API Communication Security', () => {
-  it('API client uses credentials: include', () => {
+  it('API client attaches Firebase ID token as Authorization: Bearer', () => {
     const clientFile = fs.readFileSync(path.join(WEB_SRC, 'api/client.ts'), 'utf-8');
-    expect(clientFile).toContain("credentials: 'include'");
+    expect(clientFile).toContain('getFirebaseIdToken');
+    expect(clientFile).toContain('Bearer ${idToken}');
+    // No more httpOnly cookies or credentials: 'include' — Stage A
+    // moved off server-side session state.
+    expect(clientFile).not.toContain("credentials: 'include'");
   });
 
-  it('CSRF token is attached to mutating requests', () => {
+  it('client relies on browser-sent Origin for CSRF (no token in headers)', () => {
     const clientFile = fs.readFileSync(path.join(WEB_SRC, 'api/client.ts'), 'utf-8');
-    expect(clientFile).toContain('X-CSRF-Token');
+    expect(clientFile).not.toContain('X-CSRF-Token');
+    expect(clientFile).not.toContain('csrfToken');
   });
 
   it('API base URL uses relative path (no hardcoded domain)', () => {
@@ -132,10 +145,13 @@ describe('Authentication Security', () => {
 
   it('phone auth uses Firebase (no local password form)', () => {
     const landingFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LandingPage.tsx'), 'utf-8');
-    // Firebase phone auth — SMS handled by Firebase, token exchanged with backend
+    // Firebase phone auth — SMS + verification handled by Firebase. The
+    // /auth/firebase token-exchange endpoint was retired in Stage A;
+    // the frontend now calls login() directly after Firebase verification
+    // and the AuthContext fetches /auth/me with the Bearer token.
     expect(landingFile).toContain('sendPhoneCode');
-    expect(landingFile).toContain('/auth/firebase');
-    expect(landingFile).toContain("inputMode=\"numeric\"");
+    expect(landingFile).toContain('inputMode="numeric"');
+    expect(landingFile).not.toContain('/auth/firebase');
   });
 
   it('login page redirects to landing (phone auth is inline)', () => {
@@ -149,7 +165,10 @@ describe('Authentication Security', () => {
 
 describe('PII Protection', () => {
   it('PII detection module exists and is functional', () => {
-    const piiFile = fs.readFileSync(path.join(MONOREPO_ROOT, 'packages', 'shared', 'src', 'validators', 'pii.ts'), 'utf-8');
+    const piiFile = fs.readFileSync(
+      path.join(MONOREPO_ROOT, 'packages', 'shared', 'src', 'validators', 'pii.ts'),
+      'utf-8',
+    );
     expect(piiFile).toContain('detectPII');
     expect(piiFile).toContain('hasPII');
     expect(piiFile).toContain('ssn');
@@ -200,7 +219,12 @@ describe('No Secrets in Source Code', () => {
       // Filter out legitimate password field references
       if (matches) {
         const realMatches = matches.filter(
-          (m) => !m.includes("password'") && !m.includes('password"') && !m.includes('password:') && !m.includes("type=") && !m.includes("name=")
+          (m) =>
+            !m.includes("password'") &&
+            !m.includes('password"') &&
+            !m.includes('password:') &&
+            !m.includes('type=') &&
+            !m.includes('name='),
         );
         expect(realMatches.length, `Found hardcoded password in ${file.path}`).toBe(0);
       }

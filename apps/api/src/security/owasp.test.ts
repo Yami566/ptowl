@@ -16,12 +16,18 @@ function readAllFiles(dir: string, ext: string[]): Array<{ path: string; content
   try {
     const entries = fs.readdirSync(dir, { withFileTypes: true, recursive: true });
     for (const entry of entries) {
-      if (entry.isFile() && ext.some((e) => entry.name.endsWith(e)) && !entry.name.includes('.test.')) {
+      if (
+        entry.isFile() &&
+        ext.some((e) => entry.name.endsWith(e)) &&
+        !entry.name.includes('.test.')
+      ) {
         const fullPath = path.join(entry.parentPath || dir, entry.name);
         files.push({ path: fullPath, content: fs.readFileSync(fullPath, 'utf-8') });
       }
     }
-  } catch { /* dir doesn't exist */ }
+  } catch {
+    /* dir doesn't exist */
+  }
   return files;
 }
 
@@ -40,9 +46,10 @@ describe('OWASP A03: Injection Prevention', () => {
         // - SQLite datetime offsets: ${minutesVariable} minutes
         // Allowed: dynamic SET from hardcoded columns, or constants for datetime()
         const safePatterns = [
-          /updates\.join/,         // Dynamic SET from validated columns
-          /lockoutWindow/,         // Rate limit window constant
+          /updates\.join/, // Dynamic SET from validated columns
+          /lockoutWindow/, // Rate limit window constant
           /Expiry|expiry|Window|window/i, // Any expiry/window constant
+          /sentColumn/, // Reminder cron picks one of two hardcoded column names
         ];
         const isSafe = safePatterns.some((p) => p.test(interpolation));
         expect(isSafe, `Unsafe SQL interpolation \${${interpolation}} in ${file.path}`).toBe(true);
@@ -82,12 +89,6 @@ describe('OWASP A02: Cryptographic Strength', () => {
     expect(content).toContain('HS256');
   });
 
-  it('CSRF token uses HMAC binding', () => {
-    const content = fs.readFileSync(path.join(API_SRC, 'crypto/csrf.ts'), 'utf-8');
-    expect(content).toContain('HMAC');
-    expect(content).toContain('userId');
-  });
-
   it('password verification uses constant-time comparison', () => {
     const content = fs.readFileSync(path.join(API_SRC, 'crypto/password.ts'), 'utf-8');
     // Check for XOR-based comparison pattern
@@ -95,18 +96,20 @@ describe('OWASP A02: Cryptographic Strength', () => {
     expect(content).toContain('charCodeAt');
   });
 
-  it('CSRF verification uses constant-time comparison', () => {
-    const content = fs.readFileSync(path.join(API_SRC, 'crypto/csrf.ts'), 'utf-8');
-    expect(content).toContain('diff |=');
+  it('CSRF protection uses hono/csrf with origin check (no custom HMAC token)', () => {
+    const content = fs.readFileSync(path.join(API_SRC, 'index.ts'), 'utf-8');
+    expect(content).toContain("from 'hono/csrf'");
+    expect(content).toContain('csrf({ origin:');
   });
 });
 
 // ── A04: Insecure Design ──
 
 describe('OWASP A04: Secure Design Patterns', () => {
-  it('CSRF protection is required on schedule creation', () => {
-    const content = fs.readFileSync(path.join(API_SRC, 'routes/schedules.ts'), 'utf-8');
-    expect(content).toContain('requireCSRF');
+  it('CSRF protection is applied globally via hono/csrf in index.ts', () => {
+    const content = fs.readFileSync(path.join(API_SRC, 'index.ts'), 'utf-8');
+    expect(content).toContain("from 'hono/csrf'");
+    expect(content).toContain('csrf({ origin:');
   });
 
   it('authentication is required on all schedule routes', () => {
@@ -126,7 +129,7 @@ describe('OWASP A04: Secure Design Patterns', () => {
 
   it('schedule DELETE includes user_id check', () => {
     const content = fs.readFileSync(path.join(API_SRC, 'routes/schedules.ts'), 'utf-8');
-    const deleteSection = content.slice(content.indexOf("scheduleRoutes.delete"));
+    const deleteSection = content.slice(content.indexOf('scheduleRoutes.delete'));
     expect(deleteSection).toContain('user_id = ?');
   });
 });
@@ -149,7 +152,9 @@ describe('OWASP A05: Security Configuration', () => {
 
   it('cookies are httpOnly', () => {
     const files = readAllFiles(API_SRC, ['.ts']);
-    const cookieFiles = files.filter((f) => f.content.includes('setCookie') || f.content.includes('Set-Cookie'));
+    const cookieFiles = files.filter(
+      (f) => f.content.includes('setCookie') || f.content.includes('Set-Cookie'),
+    );
     for (const file of cookieFiles) {
       if (file.content.includes('httpOnly')) {
         expect(file.content).toContain('httpOnly');

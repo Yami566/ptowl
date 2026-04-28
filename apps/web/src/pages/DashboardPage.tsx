@@ -28,6 +28,7 @@ interface EditorData {
   sessionsPerWeek: number;
   durationWeeks: number;
   appointmentTime: string;
+  patientEmail?: string; // optional — enables 24h + 1h reminder emails
 }
 
 export function DashboardPage() {
@@ -158,7 +159,9 @@ export function DashboardPage() {
         // Handle both array and paginated response
         const data = Array.isArray(r.data) ? r.data : (r.data as unknown as Schedule[]) || [];
         // #8 Restore saved order
-        const savedOrder: string[] = JSON.parse(localStorage.getItem('ptowl-schedule-order') || '[]');
+        const savedOrder: string[] = JSON.parse(
+          localStorage.getItem('ptowl-schedule-order') || '[]',
+        );
         if (savedOrder.length > 0) {
           data.sort((a, b) => {
             const ai = savedOrder.indexOf(a.id);
@@ -173,7 +176,9 @@ export function DashboardPage() {
       }
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Focus the modal input when it opens
@@ -188,7 +193,12 @@ export function DashboardPage() {
     (e: KeyboardEvent) => {
       // Don't fire if user is typing in an input/textarea
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      )
+        return;
       if (showInitialsModal || creating || editorData || previewScheduleId || showWizard) return;
 
       if (e.key === '1') {
@@ -242,7 +252,8 @@ export function DashboardPage() {
           method: 'POST',
           body: JSON.stringify({ initials: cleaned }),
         });
-        const alias = aliasResult.ok && aliasResult.data ? aliasResult.data.alias : cleaned.toUpperCase();
+        const alias =
+          aliasResult.ok && aliasResult.data ? aliasResult.data.alias : cleaned.toUpperCase();
 
         // Generate schedule with rrule
         const today = new Date().toISOString().split('T')[0]!;
@@ -294,10 +305,24 @@ export function DashboardPage() {
       });
 
       if (schedResult.ok && schedResult.data) {
+        // If clinic supplied a patient email in the wizard, enable reminders
+        // for the new schedule (best-effort — failure is non-fatal).
+        if (editorData.patientEmail) {
+          await apiRequest(`/schedules/${schedResult.data.schedule.id}/reminders`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              patient_email: editorData.patientEmail,
+              reminders_enabled: true,
+            }),
+          }).catch(() => {});
+        }
+
         // Refresh schedules list, then open the preview overlay
         const refreshed = await apiRequest<Schedule[]>('/schedules');
         if (refreshed.ok) {
-          const data = Array.isArray(refreshed.data) ? refreshed.data : (refreshed.data as unknown as Schedule[]) || [];
+          const data = Array.isArray(refreshed.data)
+            ? refreshed.data
+            : (refreshed.data as unknown as Schedule[]) || [];
           setSchedules(data);
         }
         openPreview(schedResult.data.schedule.id);
@@ -348,6 +373,7 @@ export function DashboardPage() {
         sessionsPerWeek: result.sessionsPerWeek,
         durationWeeks: result.durationWeeks,
         appointmentTime: result.appointmentTime,
+        patientEmail: result.patientEmail,
       });
     } catch {
       toast.error('Failed to generate preview. Please try again.');
@@ -361,308 +387,413 @@ export function DashboardPage() {
 
   return (
     <PageLayout>
-    <div style={styles.page}>
-      <header style={styles.header} className="ptowl-header">
-        <OwlLogo size="md" linkTo="/" />
-        <div style={styles.headerRight} className="ptowl-header-actions">
-          <button style={styles.headerBtn} onClick={() => navigate('/customize')}>Customize</button>
-          <button style={styles.headerBtn} onClick={() => navigate('/profile')}>Profile</button>
-          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
-        </div>
-      </header>
-
-      <main id="main-content" style={styles.main} className="ptowl-main">
-        <OnboardingChecklist />
-        <div style={styles.welcome}>
-          <h1 style={styles.welcomeTitle} className="ptowl-page-title">{greeting}</h1>
-          <p style={styles.welcomeText}>
-            Create a new schedule below, or press 2-6 for a preset
-            {patientCount > 0 && (
-              <span style={styles.patientBadge}>{patientCount} patient{patientCount !== 1 ? 's' : ''}</span>
-            )}
-            {streak > 1 && (
-              <span style={styles.streakBadge}>{streak}-day streak</span>
-            )}
-          </p>
-        </div>
-
-        {/* #1 Today's Appointments Card */}
-        {activeToday.length > 0 && (
-          <div style={styles.todayCard}>
-            <div style={styles.todayHeader}>
-              <span style={styles.todayDot} />
-              <strong>Today</strong>
-              <span style={styles.todayCount}>{activeToday.length} active schedule{activeToday.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div style={styles.todayList}>
-              {activeToday.map((s) => (
-                <button key={s.id} style={styles.todayItem} onClick={() => openPreview(s.id)}>
-                  <span style={{ fontWeight: 600 }}>{s.patient_alias || s.patient_initials}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--gray-text)' }}>{s.sessions_per_week}x/wk</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Quick Actions Row */}
-        <div style={styles.quickActionsRow}>
-          <button style={styles.quickAction} onClick={() => setShowWizard(true)}>
-            <span style={styles.quickActionIcon}>&#10010;</span>
-            <span style={styles.quickActionLabel}>New Schedule</span>
-          </button>
-          {schedules.length > 0 && (
-            <button style={styles.quickAction} onClick={() => navigate(`/schedule/${schedules[0]!.id}`)}>
-              <span style={styles.quickActionIcon}>&#128424;</span>
-              <span style={styles.quickActionLabel}>Print Last</span>
+      <div style={styles.page}>
+        <header style={styles.header} className="ptowl-header">
+          <OwlLogo size="md" linkTo="/" />
+          <div style={styles.headerRight} className="ptowl-header-actions">
+            <button style={styles.headerBtn} onClick={() => navigate('/customize')}>
+              Customize
             </button>
-          )}
-          {schedules.length > 0 && (
-            <button style={styles.quickAction} onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(window.location.href);
-                toast.success('Link copied!');
-              } catch {
-                // ignore
-              }
-            }}>
-              <span style={styles.quickActionIcon}>&#128279;</span>
-              <span style={styles.quickActionLabel}>Copy Link</span>
+            <button style={styles.headerBtn} onClick={() => navigate('/profile')}>
+              Profile
             </button>
-          )}
-        </div>
-
-        {/* Inline Mouse-Friendly Wizard */}
-        <DashboardWizard onComplete={handleWizardComplete} />
-
-        {/* Quick Presets */}
-        <div style={styles.presetsSection}>
-          <div style={styles.presetsHeader}>
-            <h3 style={styles.presetsTitle}>Quick Presets</h3>
-            <button
-              style={styles.keyboardHint}
-              onClick={() => setShowWizard(true)}
-              title="Open keyboard-only wizard (hotkey: 1)"
-            >
-              <span style={styles.keyBadge}>1</span> Keyboard Mode
+            <button style={styles.logoutBtn} onClick={logout}>
+              Logout
             </button>
           </div>
-          <div style={styles.presetsGrid} className="dash-presets-grid">
-            {templates.map((tmpl) => (
-              <div key={tmpl.id} style={styles.presetCardWrap}>
-                <button
-                  style={styles.presetCard}
-                  className="dash-preset-card"
-                  onClick={() => {
-                    setSelectedTemplate(tmpl);
-                    setShowInitialsModal(true);
-                    setInitials('');
-                  }}
-                  title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
-                  aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
-                >
-                  <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
-                  <div style={styles.presetText}>
-                    <span style={styles.presetName}>{tmpl.name}</span>
-                    <span style={styles.presetInfo}>
-                      {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
-                    </span>
-                  </div>
-                </button>
-                <button
-                  style={styles.deleteTemplateBtn}
-                  title="Delete template"
-                  aria-label={`Delete template ${tmpl.name}`}
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (!confirm(`Delete template "${tmpl.name}"?`)) return;
-                    const res = await apiRequest(`/templates/${tmpl.id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                      setTemplates((prev) => prev.filter((t) => t.id !== tmpl.id));
-                      toast.success('Template deleted');
-                    } else {
-                      toast.error('Failed to delete template');
-                    }
-                  }}
-                >
-                  &#10005;
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        </header>
 
-        {/* #6 Keyboard Shortcut Cheat Sheet */}
-        <div style={styles.shortcutsWrap}>
-          <button style={styles.shortcutsToggle} onClick={() => setShowShortcuts(!showShortcuts)}>
-            {showShortcuts ? 'Hide Shortcuts' : 'Show Shortcuts'}
-          </button>
-          {showShortcuts && (
-            <div style={styles.shortcutsGrid}>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>1</kbd> Open wizard</div>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>2</kbd>-<kbd style={styles.kbd}>6</kbd> Quick preset</div>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>Cmd+K</kbd> Command palette</div>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>Enter</kbd> Confirm / Generate</div>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>Esc</kbd> Close modal</div>
-              <div style={styles.shortcutItem}><kbd style={styles.kbd}>P</kbd> Print (on schedule page)</div>
-            </div>
-          )}
-        </div>
-
-        {/* #3 Mini Calendar Heatmap */}
-        {schedules.length > 0 && (
-          <div style={styles.heatmapWrap}>
-            <h4 style={styles.heatmapTitle}>30-Day Activity</h4>
-            <div style={styles.heatmapGrid}>
-              {heatmapDays.map((day) => (
-                <div
-                  key={day.date}
-                  title={day.date}
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '2px',
-                    background: day.isToday
-                      ? 'var(--orange-mid)'
-                      : day.active
-                        ? 'var(--green-mid)'
-                        : 'var(--gray-light)',
-                    border: day.isToday ? '1px solid var(--orange-mid)' : 'none',
-                  }}
-                />
-              ))}
-            </div>
-            <div style={styles.heatmapLegend}>
-              <span style={styles.heatmapLegendDot}><span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--gray-light)', display: 'inline-block' }} /> No activity</span>
-              <span style={styles.heatmapLegendDot}><span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--green-mid)', display: 'inline-block' }} /> Active</span>
-              <span style={styles.heatmapLegendDot}><span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--orange-mid)', display: 'inline-block' }} /> Today</span>
-            </div>
-          </div>
-        )}
-
-        {/* Saved Schedules */}
-        {schedules.length > 0 ? (
-          <div style={styles.savedSection}>
-            <h3 style={styles.savedTitle}>Saved Schedules</h3>
-            <div style={styles.savedList}>
-              {schedules.map((sched, idx) => (
-                <button
-                  key={sched.id}
-                  style={{
-                    ...styles.savedCard,
-                    ...(dragIdx === idx ? { opacity: 0.5 } : {}),
-                  }}
-                  className="dash-saved-card"
-                  draggable
-                  onDragStart={() => handleDragStart(idx)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(idx)}
-                  onDragEnd={() => setDragIdx(null)}
-                  onClick={() => openPreview(sched.id)}
-                  aria-label={`Schedule for ${sched.patient_alias || sched.patient_initials}`}
-                >
-                  <span style={styles.dragHandle}>&#8942;&#8942;</span>
-                  <span style={styles.savedAlias}>{sched.patient_alias || sched.patient_initials}</span>
-                  <span style={styles.savedInfo}>
-                    {sched.sessions_per_week}x/wk &middot; {sched.duration_weeks} wks &middot; {sched.start_date}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyText}>No schedules yet. Create your first one above!</p>
-          </div>
-        )}
-      </main>
-
-      {/* Initials Modal */}
-      {showInitialsModal && selectedTemplate && (
-        <div
-          style={styles.modalOverlay}
-          onClick={() => setShowInitialsModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Enter patient initials"
-        >
-          <div style={styles.modal} className="dash-modal" onClick={(e) => e.stopPropagation()}>
-            <h3 style={styles.modalTitle}>{selectedTemplate.name}</h3>
-            <p style={styles.modalSubtitle}>
-              {selectedTemplate.sessions_per_week}x/wk &middot; {selectedTemplate.duration_weeks} weeks
+        <main id="main-content" style={styles.main} className="ptowl-main">
+          <OnboardingChecklist />
+          <div style={styles.welcome}>
+            <h1 style={styles.welcomeTitle} className="ptowl-page-title">
+              {greeting}
+            </h1>
+            <p style={styles.welcomeText}>
+              Create a new schedule below, or press 2-6 for a preset
+              {patientCount > 0 && (
+                <span style={styles.patientBadge}>
+                  {patientCount} patient{patientCount !== 1 ? 's' : ''}
+                </span>
+              )}
+              {streak > 1 && <span style={styles.streakBadge}>{streak}-day streak</span>}
             </p>
-            <label style={styles.modalLabel}>
-              Patient Initials (2 letters)
-              <input
-                ref={modalInputRef}
-                type="text"
-                value={initials}
-                onChange={(e) => handleInitialsChange(e.target.value)}
-                style={styles.modalInput}
-                maxLength={2}
-                autoFocus
-                placeholder="JB"
-                aria-label="Patient initials, 2 letters"
-              />
-            </label>
           </div>
-        </div>
-      )}
 
-      {/* Schedule Editor (drag-and-drop calendar) */}
-      {editorData && (
-        <ScheduleEditor
-          appointments={editorData.appointments}
-          patientInitials={editorData.initials}
-          patientAlias={editorData.alias}
-          startDate={editorData.startDate}
-          endDate={editorData.endDate}
-          sessionsPerWeek={editorData.sessionsPerWeek}
-          durationWeeks={editorData.durationWeeks}
-          appointmentTime={editorData.appointmentTime}
-          onSave={handleEditorSave}
-          onCancel={handleEditorCancel}
-        />
-      )}
+          {/* #1 Today's Appointments Card */}
+          {activeToday.length > 0 && (
+            <div style={styles.todayCard}>
+              <div style={styles.todayHeader}>
+                <span style={styles.todayDot} />
+                <strong>Today</strong>
+                <span style={styles.todayCount}>
+                  {activeToday.length} active schedule{activeToday.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <div style={styles.todayList}>
+                {activeToday.map((s) => (
+                  <button key={s.id} style={styles.todayItem} onClick={() => openPreview(s.id)}>
+                    <span style={{ fontWeight: 600 }}>{s.patient_alias || s.patient_initials}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--gray-text)' }}>
+                      {s.sessions_per_week}x/wk
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {(creating || generatingPreview) && (
-        <LoadingOverlay message={creating ? 'Saving schedule...' : 'Generating preview...'} />
-      )}
+          {/* Quick Actions Row */}
+          <div style={styles.quickActionsRow}>
+            <button style={styles.quickAction} onClick={() => setShowWizard(true)}>
+              <span style={styles.quickActionIcon}>&#10010;</span>
+              <span style={styles.quickActionLabel}>New Schedule</span>
+            </button>
+            {schedules.length > 0 && (
+              <button
+                style={styles.quickAction}
+                onClick={() => navigate(`/schedule/${schedules[0]!.id}`)}
+              >
+                <span style={styles.quickActionIcon}>&#128424;</span>
+                <span style={styles.quickActionLabel}>Print Last</span>
+              </button>
+            )}
+            {schedules.length > 0 && (
+              <button
+                style={styles.quickAction}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    toast.success('Link copied!');
+                  } catch {
+                    // ignore
+                  }
+                }}
+              >
+                <span style={styles.quickActionIcon}>&#128279;</span>
+                <span style={styles.quickActionLabel}>Copy Link</span>
+              </button>
+            )}
+          </div>
 
-      {/* Keyboard-only Schedule Wizard */}
-      {showWizard && (
-        <ScheduleWizard
-          onComplete={handleWizardComplete}
-          onCancel={() => setShowWizard(false)}
-        />
-      )}
+          {/* Inline Mouse-Friendly Wizard */}
+          <DashboardWizard onComplete={handleWizardComplete} />
 
-      {/* Schedule Preview Overlay */}
-      {previewLoading && <LoadingOverlay message="Loading schedule..." />}
-      {previewScheduleId && previewSchedule && (
-        <SchedulePreviewOverlay
-          schedule={previewSchedule}
-          appointments={previewAppointments}
-          stats={previewStats}
-          onClose={closePreview}
-          onToggleReminder={(apptId, newValue) => {
-            // Overlay already called the PATCH API — just update local state
-            updateAppointment(apptId, { reminder_sent: newValue });
-          }}
-        />
-      )}
-    </div>
+          {/* Quick Presets */}
+          <div style={styles.presetsSection}>
+            <div style={styles.presetsHeader}>
+              <h3 style={styles.presetsTitle}>Quick Presets</h3>
+              <button
+                style={styles.keyboardHint}
+                onClick={() => setShowWizard(true)}
+                title="Open keyboard-only wizard (hotkey: 1)"
+              >
+                <span style={styles.keyBadge}>1</span> Keyboard Mode
+              </button>
+            </div>
+            <div style={styles.presetsGrid} className="dash-presets-grid">
+              {templates.map((tmpl) => (
+                <div key={tmpl.id} style={styles.presetCardWrap}>
+                  <button
+                    style={styles.presetCard}
+                    className="dash-preset-card"
+                    onClick={() => {
+                      setSelectedTemplate(tmpl);
+                      setShowInitialsModal(true);
+                      setInitials('');
+                    }}
+                    title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
+                    aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
+                  >
+                    <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
+                    <div style={styles.presetText}>
+                      <span style={styles.presetName}>{tmpl.name}</span>
+                      <span style={styles.presetInfo}>
+                        {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
+                      </span>
+                    </div>
+                  </button>
+                  <button
+                    style={styles.deleteTemplateBtn}
+                    title="Delete template"
+                    aria-label={`Delete template ${tmpl.name}`}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!confirm(`Delete template "${tmpl.name}"?`)) return;
+                      const res = await apiRequest(`/templates/${tmpl.id}`, { method: 'DELETE' });
+                      if (res.ok) {
+                        setTemplates((prev) => prev.filter((t) => t.id !== tmpl.id));
+                        toast.success('Template deleted');
+                      } else {
+                        toast.error('Failed to delete template');
+                      }
+                    }}
+                  >
+                    &#10005;
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* #6 Keyboard Shortcut Cheat Sheet */}
+          <div style={styles.shortcutsWrap}>
+            <button style={styles.shortcutsToggle} onClick={() => setShowShortcuts(!showShortcuts)}>
+              {showShortcuts ? 'Hide Shortcuts' : 'Show Shortcuts'}
+            </button>
+            {showShortcuts && (
+              <div style={styles.shortcutsGrid}>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>1</kbd> Open wizard
+                </div>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>2</kbd>-<kbd style={styles.emptyKbd}>6</kbd> Quick
+                  preset
+                </div>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>Cmd+K</kbd> Command palette
+                </div>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>Enter</kbd> Confirm / Generate
+                </div>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>Esc</kbd> Close modal
+                </div>
+                <div style={styles.shortcutItem}>
+                  <kbd style={styles.emptyKbd}>P</kbd> Print (on schedule page)
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* #3 Mini Calendar Heatmap */}
+          {schedules.length > 0 && (
+            <div style={styles.heatmapWrap}>
+              <h4 style={styles.heatmapTitle}>30-Day Activity</h4>
+              <div style={styles.heatmapGrid}>
+                {heatmapDays.map((day) => (
+                  <div
+                    key={day.date}
+                    title={day.date}
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '2px',
+                      background: day.isToday
+                        ? 'var(--orange-mid)'
+                        : day.active
+                          ? 'var(--green-mid)'
+                          : 'var(--gray-light)',
+                      border: day.isToday ? '1px solid var(--orange-mid)' : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+              <div style={styles.heatmapLegend}>
+                <span style={styles.heatmapLegendDot}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: 'var(--gray-light)',
+                      display: 'inline-block',
+                    }}
+                  />{' '}
+                  No activity
+                </span>
+                <span style={styles.heatmapLegendDot}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: 'var(--green-mid)',
+                      display: 'inline-block',
+                    }}
+                  />{' '}
+                  Active
+                </span>
+                <span style={styles.heatmapLegendDot}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: 'var(--orange-mid)',
+                      display: 'inline-block',
+                    }}
+                  />{' '}
+                  Today
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Saved Schedules */}
+          {schedules.length > 0 ? (
+            <div style={styles.savedSection}>
+              <h3 style={styles.savedTitle}>Saved Schedules</h3>
+              <div style={styles.savedList}>
+                {schedules.map((sched, idx) => (
+                  <button
+                    key={sched.id}
+                    style={{
+                      ...styles.savedCard,
+                      ...(dragIdx === idx ? { opacity: 0.5 } : {}),
+                    }}
+                    className="dash-saved-card"
+                    draggable
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(idx)}
+                    onDragEnd={() => setDragIdx(null)}
+                    onClick={() => openPreview(sched.id)}
+                    aria-label={`Schedule for ${sched.patient_alias || sched.patient_initials}`}
+                  >
+                    <span style={styles.dragHandle}>&#8942;&#8942;</span>
+                    <span style={styles.savedAlias}>
+                      {sched.patient_alias || sched.patient_initials}
+                    </span>
+                    <span style={styles.savedInfo}>
+                      {sched.sessions_per_week}x/wk &middot; {sched.duration_weeks} wks &middot;{' '}
+                      {sched.start_date}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={styles.emptyState} role="status" aria-live="polite">
+              <div style={styles.emptyIcon} aria-hidden="true">
+                🦉
+              </div>
+              <h3 style={styles.emptyTitle}>You haven't created a schedule yet</h3>
+              <p style={styles.emptyText}>
+                Press <kbd style={styles.emptyKbd}>1</kbd> to launch the wizard, or one of{' '}
+                <kbd style={styles.emptyKbd}>2</kbd>–<kbd style={styles.emptyKbd}>6</kbd> for a
+                preset template. From phone in to printed schedule in three keypresses.
+              </p>
+              <p style={styles.emptyHint}>
+                New here? The{' '}
+                <a href="/about" style={styles.emptyLink}>
+                  about page
+                </a>{' '}
+                walks through the workflow in 90 seconds.
+              </p>
+            </div>
+          )}
+        </main>
+
+        {/* Initials Modal */}
+        {showInitialsModal && selectedTemplate && (
+          <div
+            style={styles.modalOverlay}
+            onClick={() => setShowInitialsModal(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Enter patient initials"
+          >
+            <div style={styles.modal} className="dash-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 style={styles.modalTitle}>{selectedTemplate.name}</h3>
+              <p style={styles.modalSubtitle}>
+                {selectedTemplate.sessions_per_week}x/wk &middot; {selectedTemplate.duration_weeks}{' '}
+                weeks
+              </p>
+              <label style={styles.modalLabel}>
+                Patient Initials (2 letters)
+                <input
+                  ref={modalInputRef}
+                  type="text"
+                  value={initials}
+                  onChange={(e) => handleInitialsChange(e.target.value)}
+                  style={styles.modalInput}
+                  maxLength={2}
+                  autoFocus
+                  placeholder="JB"
+                  aria-label="Patient initials, 2 letters"
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Editor (drag-and-drop calendar) */}
+        {editorData && (
+          <ScheduleEditor
+            appointments={editorData.appointments}
+            patientInitials={editorData.initials}
+            patientAlias={editorData.alias}
+            startDate={editorData.startDate}
+            endDate={editorData.endDate}
+            sessionsPerWeek={editorData.sessionsPerWeek}
+            durationWeeks={editorData.durationWeeks}
+            appointmentTime={editorData.appointmentTime}
+            onSave={handleEditorSave}
+            onCancel={handleEditorCancel}
+          />
+        )}
+
+        {(creating || generatingPreview) && (
+          <LoadingOverlay message={creating ? 'Saving schedule...' : 'Generating preview...'} />
+        )}
+
+        {/* Keyboard-only Schedule Wizard */}
+        {showWizard && (
+          <ScheduleWizard onComplete={handleWizardComplete} onCancel={() => setShowWizard(false)} />
+        )}
+
+        {/* Schedule Preview Overlay */}
+        {previewLoading && <LoadingOverlay message="Loading schedule..." />}
+        {previewScheduleId && previewSchedule && (
+          <SchedulePreviewOverlay
+            schedule={previewSchedule}
+            appointments={previewAppointments}
+            stats={previewStats}
+            onClose={closePreview}
+            onToggleReminder={(apptId, newValue) => {
+              // Overlay already called the PATCH API — just update local state
+              updateAppointment(apptId, { reminder_sent: newValue });
+            }}
+          />
+        )}
+      </div>
     </PageLayout>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   page: { minHeight: '100vh', background: 'var(--off-white)' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)' },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '1rem 2rem',
+    background: 'var(--white)',
+    borderBottom: '1px solid var(--gray-mid)',
+  },
   headerRight: { display: 'flex', gap: '0.5rem' },
-  headerBtn: { padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)' },
-  logoutBtn: { padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500 },
-  main: { maxWidth: 'clamp(320px, 95vw, 1400px)', margin: '0 auto', padding: '2rem clamp(1rem, 3vw, 3rem)' },
+  headerBtn: {
+    padding: '0.625rem 1rem',
+    background: 'var(--gray-light)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: 'var(--dark)',
+  },
+  logoutBtn: {
+    padding: '0.5rem 1rem',
+    background: 'var(--red-light)',
+    color: 'var(--red-mid)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+  },
+  main: {
+    maxWidth: 'clamp(320px, 95vw, 1400px)',
+    margin: '0 auto',
+    padding: '2rem clamp(1rem, 3vw, 3rem)',
+  },
   welcome: { marginBottom: '1.5rem' },
   quickActionsRow: {
     display: 'flex',
@@ -691,11 +822,21 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: 'var(--dark)',
   },
-  welcomeTitle: { fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.5rem' },
+  welcomeTitle: {
+    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+    fontWeight: 700,
+    color: 'var(--dark)',
+    marginBottom: '0.5rem',
+  },
   welcomeText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
   // Quick Presets
   presetsSection: { marginBottom: '2rem' },
-  presetsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' },
+  presetsHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.75rem',
+  },
   presetsTitle: { fontSize: '1rem', fontWeight: 600, color: 'var(--dark)' },
   keyboardHint: {
     display: 'flex',
@@ -796,13 +937,70 @@ const styles: Record<string, React.CSSProperties> = {
 
   // Saved Schedules
   savedSection: { marginTop: '1rem' },
-  savedTitle: { fontSize: '1.1rem', fontWeight: 600, color: 'var(--dark)', marginBottom: '0.75rem' },
+  savedTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    marginBottom: '0.75rem',
+  },
   savedList: { display: 'flex', flexDirection: 'column' as const, gap: '0.5rem' },
-  savedCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', textAlign: 'left' as const, cursor: 'pointer' },
+  savedCard: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.875rem 1rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--gray-mid)',
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+  },
   savedAlias: { fontWeight: 600, color: 'var(--dark)' },
   savedInfo: { fontSize: '0.8rem', color: 'var(--gray-text)' },
-  emptyState: { textAlign: 'center' as const, padding: '2rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--gray-mid)', marginTop: '1rem' },
-  emptyText: { color: 'var(--gray-text)', fontSize: '0.9rem' },
+  emptyState: {
+    textAlign: 'center' as const,
+    padding: '2.5rem 2rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    border: '1px dashed var(--gray-mid)',
+    marginTop: '1rem',
+  },
+  emptyIcon: { fontSize: '2.5rem', marginBottom: '0.75rem' },
+  emptyTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    margin: '0 0 0.75rem',
+  },
+  emptyText: {
+    color: 'var(--dark-alt)',
+    fontSize: '0.95rem',
+    lineHeight: 1.6,
+    maxWidth: '480px',
+    margin: '0 auto 1rem',
+  },
+  emptyHint: {
+    color: 'var(--gray-text)',
+    fontSize: '0.85rem',
+    margin: 0,
+  },
+  emptyLink: {
+    color: 'var(--green-mid)',
+    fontWeight: 500,
+    textDecoration: 'underline',
+  },
+  emptyKbd: {
+    display: 'inline-block',
+    padding: '0.125rem 0.4rem',
+    background: 'var(--gray-light)',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: '4px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.85em',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    margin: '0 0.125rem',
+  },
 
   // #9 Smart Greeting + #5 Patient Count + #2 Streak
   patientBadge: {
@@ -952,10 +1150,46 @@ const styles: Record<string, React.CSSProperties> = {
   },
 
   // Modals
-  modalOverlay: { position: 'fixed' as const, inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  modal: { background: 'var(--white)', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '100%', maxWidth: '360px', textAlign: 'center' as const },
-  modalTitle: { fontSize: '1.25rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.25rem' },
+  modalOverlay: {
+    position: 'fixed' as const,
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 100,
+  },
+  modal: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '2rem',
+    width: '100%',
+    maxWidth: '360px',
+    textAlign: 'center' as const,
+  },
+  modalTitle: {
+    fontSize: '1.25rem',
+    fontWeight: 700,
+    color: 'var(--dark)',
+    marginBottom: '0.25rem',
+  },
   modalSubtitle: { color: 'var(--gray-text)', fontSize: '0.875rem', marginBottom: '1.5rem' },
-  modalLabel: { display: 'flex', flexDirection: 'column' as const, gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500 },
-  modalInput: { padding: '1rem', fontSize: '2rem', textAlign: 'center' as const, fontFamily: 'var(--font-mono)', fontWeight: 700, letterSpacing: '0.5rem', border: '2px solid var(--green-mid)', borderRadius: 'var(--radius)', textTransform: 'uppercase' as const },
+  modalLabel: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+  },
+  modalInput: {
+    padding: '1rem',
+    fontSize: '2rem',
+    textAlign: 'center' as const,
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    letterSpacing: '0.5rem',
+    border: '2px solid var(--green-mid)',
+    borderRadius: 'var(--radius)',
+    textTransform: 'uppercase' as const,
+  },
 };

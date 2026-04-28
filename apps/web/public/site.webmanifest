@@ -1,16 +1,53 @@
 {
-  "name": "PTOWL",
-  "short_name": "PTOWL",
-  "description": "Fast schedule printing for medical providers",
+  "id": "/?source=pwa",
+  "name": "Patient Owl",
+  "short_name": "PtOwl",
+  "description": "Fast PT schedule generator — create and print patient schedules in under 5 keypresses.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#FAFCFA",
   "theme_color": "#1B5E20",
+  "categories": ["medical", "productivity", "health"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-120.svg",
+      "sizes": "120x120",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New schedule",
+      "short_name": "New",
+      "description": "Open the schedule wizard",
+      "url": "/dashboard?wizard=1",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "My schedules",
+      "short_name": "Schedules",
+      "description": "List of schedules linked to my account",
+      "url": "/my-schedules",
+      "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
 }

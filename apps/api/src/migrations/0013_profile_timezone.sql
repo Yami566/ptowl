@@ -1,0 +1,14 @@
+-- Migration 0013: Clinic timezone for accurate reminder timing
+--
+-- Reminder cron previously treated appointment_date + appointment_time
+-- as UTC, which skewed reminders by the clinic's local UTC offset
+-- (a clinic in EST received 24h reminders ~5h too early). Stores the
+-- inferred IANA timezone string per clinic profile so the reminder
+-- service can convert appointment_at into the clinic's local wall
+-- clock before computing the 24h / 1h send windows.
+--
+-- The timezone is inferred from clinic_address via Cloudflare Workers
+-- AI on profile update (services/timezone.ts). NULL means inference
+-- hasn't run yet — the cron falls back to UTC (current behavior),
+-- preserving backward compat.
+ALTER TABLE profiles ADD COLUMN timezone TEXT DEFAULT NULL;

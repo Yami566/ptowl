@@ -49,6 +49,8 @@ export interface Schedule {
   notes: string;
   view_preference: 'table' | 'calendar';
   share_token: string | null;
+  reminders_enabled?: 0 | 1;
+  has_patient_email?: 0 | 1; // derived: 1 iff patient_email_encrypted IS NOT NULL
   created_at: string;
   updated_at: string;
 }

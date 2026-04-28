@@ -1,39 +1,54 @@
 /**
- * Email service — sends transactional emails via Resend SDK.
+ * Email service — sends transactional emails via MailChannels API
+ * (Cloudflare-Workers-native, no SDK needed, no Node dependencies).
  *
- * Uses the official `resend` npm package (MIT, 500k+ weekly downloads)
- * instead of raw fetch calls. The SDK provides TypeScript types,
- * structured error handling, and receives security patches from Resend.
- *
- * Requires two secrets (set via `wrangler secret put`):
- *   ADMIN_EMAIL  — destination for admin notifications (e.g. help@ptowl.com)
- *   EMAIL_API_KEY — Resend API key (re_...)
+ * MailChannels migration notes:
+ *   - Replaces the Resend SDK. Same env var (EMAIL_API_KEY) is reused —
+ *     just swap the secret value via `wrangler secret put EMAIL_API_KEY`.
+ *   - Production deliverability requires DKIM TXT records and an SPF
+ *     record on ptowl.com. See docs/EMAIL.md.
+ *   - As of 2024, MailChannels requires a paid plan + API key. Free
+ *     "Workers can send for free" pitch is no longer accurate.
  *
  * Gracefully degrades: if EMAIL_API_KEY is missing, logs a warning
  * and returns without throwing. Registration should never fail
  * because email delivery failed.
  */
 
-import { Resend } from 'resend';
-
-const FROM_ADDRESS = 'PTOWL <noreply@ptowl.com>';
+const MAILCHANNELS_URL = 'https://api.mailchannels.net/tx/v1/send';
+const FROM_NAME = 'PTOWL';
+const FROM_EMAIL = 'noreply@ptowl.com';
 
 /**
- * Low-level email sender via Resend SDK.
+ * Low-level email sender. Posts to MailChannels' transactional API.
  * Returns true on success, false on failure (never throws).
  */
-async function sendEmail(apiKey: string, params: { to: string; subject: string; html: string }): Promise<boolean> {
+async function sendEmail(
+  apiKey: string,
+  params: { to: string; subject: string; html: string },
+): Promise<boolean> {
+  if (!apiKey) {
+    console.warn('EMAIL_API_KEY not set — skipping email');
+    return false;
+  }
+
   try {
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: FROM_ADDRESS,
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
+    const response = await fetch(MAILCHANNELS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: params.to }] }],
+        from: { email: FROM_EMAIL, name: FROM_NAME },
+        subject: params.subject,
+        content: [{ type: 'text/html', value: params.html }],
+      }),
     });
 
-    if (error) {
-      console.error('Email send failed:', error.message);
+    if (!response.ok) {
+      console.error('Email send failed:', response.status);
       return false;
     }
 
@@ -47,7 +62,6 @@ async function sendEmail(apiKey: string, params: { to: string; subject: string; 
 /**
  * Notify admin that a new user registered and needs approval.
  * Uses the user's championship team alias for PII protection.
- * Includes a one-click approval link.
  */
 export async function notifyAdminNewRegistration(
   adminEmail: string,
@@ -55,11 +69,6 @@ export async function notifyAdminNewRegistration(
   teamAlias: string,
   approvalUrl: string,
 ): Promise<void> {
-  if (!apiKey) {
-    console.warn('EMAIL_API_KEY not set — skipping notification');
-    return;
-  }
-
   const subject = `[PTOWL] New signup: ${teamAlias}`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
@@ -92,11 +101,6 @@ export async function notifyUserApproved(
   userEmail: string,
   displayName: string,
 ): Promise<void> {
-  if (!apiKey) {
-    console.warn('EMAIL_API_KEY not set — skipping notification');
-    return;
-  }
-
   const name = displayName || 'there';
   const subject = 'Your PTOWL account has been approved!';
   const html = `
@@ -122,15 +126,7 @@ export async function notifyUserApproved(
 /**
  * Notify a user that their account has been denied.
  */
-export async function notifyUserDenied(
-  apiKey: string,
-  userEmail: string,
-): Promise<void> {
-  if (!apiKey) {
-    console.warn('EMAIL_API_KEY not set — skipping notification');
-    return;
-  }
-
+export async function notifyUserDenied(apiKey: string, userEmail: string): Promise<void> {
   const subject = 'PTOWL account update';
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
@@ -157,11 +153,6 @@ export async function sendAdminVerificationCode(
   adminEmail: string,
   code: string,
 ): Promise<void> {
-  if (!apiKey) {
-    console.warn('EMAIL_API_KEY not set — skipping notification');
-    return;
-  }
-
   const subject = '[PTOWL] Your admin verification code';
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">

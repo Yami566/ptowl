@@ -53,7 +53,21 @@ function DemoCalendarSection() {
   if (!dayGridPlugin) return <div style={{ minHeight: '300px' }} />;
 
   return (
-    <Suspense fallback={<div style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-text)' }}>Loading calendar...</div>}>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--gray-text)',
+          }}
+        >
+          Loading calendar...
+        </div>
+      }
+    >
       <LazyFullCalendar
         plugins={[dayGridPlugin]}
         initialView="dayGridMonth"
@@ -72,7 +86,13 @@ export function LandingPage() {
   usePageTitle('Log In');
   const { user, loading, login } = useAuth();
   const [userType, setUserType] = useState<'clinic' | 'patient'>('clinic');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(() => {
+    // Remember last-used phone across sessions for one-tap return.
+    // Phone alone is not a secret — it's the address, not the credential.
+    // Cleared on /auth/logout (see AuthContext).
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('ptowl-last-phone') || '';
+  });
   const [code, setCode] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [step, setStep] = useState<'phone' | 'code' | 'mfa'>('phone');
@@ -87,6 +107,12 @@ export function LandingPage() {
   const mfaInputRef = useRef<HTMLInputElement>(null);
   const [alienActive, setAlienActive] = useState(false);
   const alienTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // True iff we restored a phone from localStorage on first render.
+  const [hadSavedPhone] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!localStorage.getItem('ptowl-last-phone');
+  });
 
   // Alien easter egg — triggers when user highlights "until the aliens come."
   const handleAlienSelect = useCallback(() => {
@@ -112,7 +138,9 @@ export function LandingPage() {
     return (
       <main style={{ ...styles.page, justifyContent: 'center', alignItems: 'center' }}>
         <OwlLogo size="lg" linkTo="/" />
-        <p style={{ ...styles.subheadline, marginTop: '2rem' }}>Welcome back — restoring your session...</p>
+        <p style={{ ...styles.subheadline, marginTop: '2rem' }}>
+          Welcome back — restoring your session...
+        </p>
       </main>
     );
   }
@@ -121,8 +149,20 @@ export function LandingPage() {
   if (user) return null;
 
   // Format phone for display: (XXX) XXX-XXXX
+  // Tolerates pasted/autofilled values:
+  //   "+15551234567" → 5551234567 → (555) 123-4567   (E.164 with country code)
+  //   "1 (555) 123-4567" → same
+  //   "5551234567" → same
+  //   "(555) 123-4567" → same
   const formatPhone = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 10);
+    let digits = val.replace(/\D/g, '');
+    // Drop a leading "1" country code when the user/autofill supplied an
+    // 11-digit US/Canada number. Without this, autofilling +15551234567
+    // would slice to 1555123456, which is wrong.
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.slice(1);
+    }
+    digits = digits.slice(0, 10);
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
@@ -147,6 +187,12 @@ export function LandingPage() {
       const result = await sendPhoneCode(e164, 'recaptcha-container');
       setConfirmationResult(result);
       setStep('code');
+      // Persist the validated phone for one-tap return next visit.
+      try {
+        localStorage.setItem('ptowl-last-phone', phone);
+      } catch {
+        /* localStorage may be disabled / quota exceeded — non-fatal */
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to send code';
       if (msg.includes('too-many-requests')) {
@@ -231,19 +277,9 @@ export function LandingPage() {
     setSending(false);
   };
 
-  /** Exchange a Firebase user's ID token for our backend session */
-  const exchangeTokenWithBackend = async (firebaseUser: { getIdToken: () => Promise<string> }) => {
-    const idToken = await firebaseUser.getIdToken();
-    const result = await apiRequest<{ user: { id: string; email: string; phone: string; display_name: string; role: string; tier: string }; csrfToken: string; isNewUser: boolean }>('/auth/firebase', {
-      method: 'POST',
-      body: JSON.stringify({ idToken, rememberMe, user_type: userType }),
-    });
-
-    if (result.ok && result.data) {
-      login(result.data.user, result.data.csrfToken);
-    } else {
-      setError(result.error?.message || 'Authentication failed');
-    }
+  /** After Firebase verification, sync the AuthContext with /auth/me. */
+  const exchangeTokenWithBackend = async (_firebaseUser: { getIdToken: () => Promise<string> }) => {
+    await login();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
@@ -265,14 +301,12 @@ export function LandingPage() {
           )}
         </div>
         <h1 style={styles.headline}>The fastest schedule assistant on earth.</h1>
-        <p
-          style={styles.alienSubtext}
-          onMouseUp={handleAlienSelect}
-          onTouchEnd={handleAlienSelect}
-        >until the aliens come.</p>
+        <p style={styles.alienSubtext} onMouseUp={handleAlienSelect} onTouchEnd={handleAlienSelect}>
+          until the aliens come.
+        </p>
         <p style={styles.subheadline}>
-          Create and print patient schedules in under <strong>5 keypresses</strong>.
-          Built for physical therapists who value speed over clicks.
+          Create and print patient schedules in under <strong>5 keypresses</strong>. Built for
+          physical therapists who value speed over clicks.
         </p>
 
         {/* Phone Auth — clean, single-flow like Uber/WhatsApp */}
@@ -282,14 +316,19 @@ export function LandingPage() {
               <div style={styles.stepBadge}>Security check</div>
               <h2 style={styles.authTitle}>MFA verification</h2>
               <p style={styles.authSubtitle}>Enter the 6-digit code texted to your phone.</p>
-              <label htmlFor="mfa-input" className="sr-only">MFA code</label>
+              <label htmlFor="mfa-input" className="sr-only">
+                MFA code
+              </label>
               <input
                 id="mfa-input"
                 ref={mfaInputRef}
                 type="text"
                 inputMode="numeric"
                 value={mfaCode}
-                onChange={(e) => { setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                onChange={(e) => {
+                  setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setError('');
+                }}
                 onKeyDown={(e) => handleKeyDown(e, handleMfaVerify)}
                 placeholder="000000"
                 style={styles.codeInput}
@@ -305,7 +344,12 @@ export function LandingPage() {
               </button>
               <button
                 style={styles.backBtn}
-                onClick={() => { setStep('phone'); setMfaCode(''); setError(''); setMfaResolver(null); }}
+                onClick={() => {
+                  setStep('phone');
+                  setMfaCode('');
+                  setError('');
+                  setMfaResolver(null);
+                }}
               >
                 Start over
               </button>
@@ -315,60 +359,128 @@ export function LandingPage() {
               {/* User type selector */}
               <div style={styles.userTypeRow}>
                 <button
-                  style={{ ...styles.userTypeBtn, ...(userType === 'clinic' ? styles.userTypeBtnActive : {}) }}
+                  style={{
+                    ...styles.userTypeBtn,
+                    ...(userType === 'clinic' ? styles.userTypeBtnActive : {}),
+                  }}
                   onClick={() => setUserType('clinic')}
-                >I'm a Provider</button>
+                >
+                  I'm a Provider
+                </button>
                 <button
-                  style={{ ...styles.userTypeBtn, ...(userType === 'patient' ? styles.userTypeBtnActive : {}) }}
+                  style={{
+                    ...styles.userTypeBtn,
+                    ...(userType === 'patient' ? styles.userTypeBtnActive : {}),
+                  }}
                   onClick={() => setUserType('patient')}
-                >I'm a Patient</button>
+                >
+                  I'm a Patient
+                </button>
               </div>
               {userType === 'patient' && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--gray-text)', marginBottom: '0.75rem', textAlign: 'center' as const }}>
+                <p
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--gray-text)',
+                    marginBottom: '0.75rem',
+                    textAlign: 'center' as const,
+                  }}
+                >
                   Your PT clinic will give you a code to view your schedule.
                 </p>
               )}
               <div style={styles.stepBadge}>Step 1 of 2</div>
               <h2 style={styles.authTitle}>Enter your phone number</h2>
               <p style={styles.authSubtitle}>
-                {userType === 'patient'
-                  ? 'Sign up to view your PT schedule. Your clinic will text you a code to link it.'
-                  : <>New here? We&apos;ll create your account.<br />Already registered? We&apos;ll log you right in.</>
-                }
+                {userType === 'patient' ? (
+                  'Sign up to view your PT schedule. Your clinic will text you a code to link it.'
+                ) : (
+                  <>
+                    New here? We&apos;ll create your account.
+                    <br />
+                    Already registered? We&apos;ll log you right in.
+                  </>
+                )}
               </p>
-              <label htmlFor="phone-input" className="sr-only">Phone number</label>
-              <div style={styles.phoneRow}>
-                <span style={styles.countryCode}>+1</span>
-                <input
-                  id="phone-input"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(e, handleSendCode)}
-                  placeholder="(555) 123-4567"
-                  style={styles.phoneInput}
-                  autoFocus
-                  autoComplete="tel"
-                />
-              </div>
-              <label style={styles.termsRow}>
-                <input
-                  type="checkbox"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  style={styles.rememberCheck}
-                />
-                <span style={styles.termsText}>
-                  I agree to the <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>Terms of Service</a> and <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>Privacy Policy</a>
-                </span>
+              <label htmlFor="phone-input" className="sr-only">
+                Phone number
               </label>
-              <button
-                style={{ ...styles.authBtn, opacity: (sending || !agreedToTerms) ? 0.6 : 1 }}
-                onClick={handleSendCode}
-                disabled={sending || !agreedToTerms}
+              {/*
+                Wrap phone entry in a real <form> with proper name + autoComplete.
+                Without this, iOS Safari + Android Chrome don't surface the
+                contact-card autofill chip. autoComplete="tel" matches the
+                broadest set of saved-number sources (E.164, formatted national,
+                or raw digits); "tel-national" is more specific but less
+                commonly populated.
+              */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!sending && agreedToTerms) handleSendCode();
+                }}
+                noValidate
               >
-                {sending ? 'Sending code...' : 'Continue'}
-              </button>
+                <div style={styles.phoneRow}>
+                  <span style={styles.countryCode} aria-hidden="true">
+                    +1
+                  </span>
+                  <input
+                    id="phone-input"
+                    name="tel"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    placeholder="(555) 123-4567"
+                    style={styles.phoneInput}
+                    autoFocus
+                    autoComplete="tel"
+                    inputMode="tel"
+                    enterKeyHint="next"
+                    aria-label="Phone number"
+                  />
+                </div>
+                {hadSavedPhone && phone && (
+                  <button
+                    type="button"
+                    style={styles.useDifferent}
+                    onClick={() => {
+                      setPhone('');
+                      try {
+                        localStorage.removeItem('ptowl-last-phone');
+                      } catch {
+                        /* non-fatal */
+                      }
+                    }}
+                  >
+                    Use a different number
+                  </button>
+                )}
+                <label style={styles.termsRow}>
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    style={styles.rememberCheck}
+                  />
+                  <span style={styles.termsText}>
+                    I agree to the{' '}
+                    <a href="/terms" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                      Terms of Service
+                    </a>{' '}
+                    and{' '}
+                    <a href="/privacy" target="_blank" style={{ color: 'var(--green-mid)' }}>
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
+                <button
+                  type="submit"
+                  style={{ ...styles.authBtn, opacity: sending || !agreedToTerms ? 0.6 : 1 }}
+                  disabled={sending || !agreedToTerms}
+                >
+                  {sending ? 'Sending code...' : 'Continue'}
+                </button>
+              </form>
               <label style={styles.rememberRow}>
                 <input
                   type="checkbox"
@@ -378,7 +490,9 @@ export function LandingPage() {
                 />
                 <span style={styles.rememberText}>Keep me signed in for 14 days</span>
               </label>
-              <p style={styles.authFootnote}>We'll text you a verification code. Standard rates apply.</p>
+              <p style={styles.authFootnote}>
+                We'll text you a verification code. Standard rates apply.
+              </p>
             </>
           ) : (
             <>
@@ -387,14 +501,19 @@ export function LandingPage() {
               <p style={styles.authSubtitle}>
                 We sent a 6-digit code to <strong>{phone}</strong>
               </p>
-              <label htmlFor="code-input" className="sr-only">Verification code</label>
+              <label htmlFor="code-input" className="sr-only">
+                Verification code
+              </label>
               <input
                 id="code-input"
                 ref={codeInputRef}
                 type="text"
                 inputMode="numeric"
                 value={code}
-                onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                onChange={(e) => {
+                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setError('');
+                }}
                 onKeyDown={(e) => handleKeyDown(e, handleVerifyCode)}
                 placeholder="000000"
                 style={styles.codeInput}
@@ -410,13 +529,26 @@ export function LandingPage() {
               </button>
               <button
                 style={styles.backBtn}
-                onClick={() => { setStep('phone'); setCode(''); setError(''); setConfirmationResult(null); }}
+                onClick={() => {
+                  setStep('phone');
+                  setCode('');
+                  setError('');
+                  setConfirmationResult(null);
+                }}
               >
                 Use a different number
               </button>
             </>
           )}
-          <p style={{ ...styles.authError, visibility: error ? 'visible' : 'hidden', margin: error ? undefined : 0 }} aria-live="assertive" role="alert">
+          <p
+            style={{
+              ...styles.authError,
+              visibility: error ? 'visible' : 'hidden',
+              margin: error ? undefined : 0,
+            }}
+            aria-live="assertive"
+            role="alert"
+          >
             {error ? `Error: ${error}` : '\u00A0'}
           </p>
           <div id="recaptcha-container" />
@@ -426,19 +558,32 @@ export function LandingPage() {
       {/* Demo Calendar */}
       <section style={styles.demoSection} className="landing-fade-in landing-fade-in-delay-1">
         <h2 style={styles.demoTitle}>What your patients get</h2>
-        <p style={styles.demoSubtitle}>A clean, organized schedule — generated in seconds, not minutes.</p>
+        <p style={styles.demoSubtitle}>
+          A clean, organized schedule — generated in seconds, not minutes.
+        </p>
         <div style={styles.demoCard} className="landing-demo-card">
           <DemoCalendarSection />
         </div>
       </section>
 
       {/* Footer — minimal */}
-      <footer style={styles.footer} className="landing-fade-in landing-fade-in-delay-2 landing-footer">
+      <footer
+        style={styles.footer}
+        className="landing-fade-in landing-fade-in-delay-2 landing-footer"
+      >
         <div style={styles.footerLinks}>
-          <a href="/about" style={styles.footerLink}>About</a>
-          <a href="/privacy" style={styles.footerLink}>Privacy</a>
-          <a href="/terms" style={styles.footerLink}>Terms</a>
-          <a href="/security" style={styles.footerLink}>Security</a>
+          <a href="/about" style={styles.footerLink}>
+            About
+          </a>
+          <a href="/privacy" style={styles.footerLink}>
+            Privacy
+          </a>
+          <a href="/terms" style={styles.footerLink}>
+            Terms
+          </a>
+          <a href="/security" style={styles.footerLink}>
+            Security
+          </a>
         </div>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
@@ -457,9 +602,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   hero: {
     textAlign: 'center' as const,
-    padding: '5rem 1.5rem 3rem',
+    // Padding tightened so the auth card sits closer to the optical center
+    // of the viewport on first paint. Was 5rem 1.5rem 3rem.
+    padding: '2.5rem 1.5rem 2rem',
     maxWidth: 'clamp(320px, 90vw, 800px)',
     margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box' as const,
   },
   headline: {
     fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
@@ -485,15 +634,29 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '2.5rem',
   },
 
-  // Phone Auth Card
+  // Phone Auth Card — promoted to be the visual centerpiece on first paint.
   authCard: {
     background: 'var(--white)',
     borderRadius: 'var(--radius-lg)',
-    padding: '2rem',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    padding: '2.5rem 2rem',
+    boxShadow: '0 12px 32px rgba(27, 94, 32, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
     border: '1px solid var(--green-bg)',
-    maxWidth: '380px',
+    maxWidth: '420px',
     margin: '0 auto',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+  },
+  useDifferent: {
+    display: 'block',
+    width: '100%',
+    marginTop: '0.5rem',
+    padding: '0.375rem',
+    background: 'transparent',
+    color: 'var(--gray-text)',
+    fontSize: '0.8rem',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'underline',
   },
   userTypeRow: {
     display: 'flex',

@@ -1,14 +1,12 @@
+import { getFirebaseIdToken } from '../firebase.js';
+
 const API_BASE = '/api/v1';
 
-let csrfToken: string | null = null;
-
-export function setCSRFToken(token: string) {
-  csrfToken = token;
-}
-
-export function getCSRFToken(): string | null {
-  return csrfToken;
-}
+// Hard request timeout. Without one, an API outage would freeze the
+// SPA on auth flows for tens of seconds. 8s is generous for a healthy
+// Worker (P99 < 200 ms typical) and short enough that public pages
+// stay responsive when the API is degraded.
+const DEFAULT_TIMEOUT_MS = 8_000;
 
 type ApiResult<T> = {
   ok: boolean;
@@ -27,6 +25,21 @@ async function parseResponse<T>(response: Response): Promise<ApiResult<T>> {
   }
 }
 
+function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+/**
+ * apiRequest — every API call carries the current Firebase ID token
+ * as `Authorization: Bearer ...`. The Firebase SDK auto-refreshes
+ * tokens behind the scenes (default 1h lifetime), so the client just
+ * asks for a fresh one each time. The Worker verifies against
+ * Google's JWKS in apps/api/src/auth/firebase-verify.ts.
+ *
+ * Replaces the previous httpOnly-cookie + /auth/refresh dance.
+ */
 export async function apiRequest<T = unknown>(
   path: string,
   options: RequestInit = {},
@@ -39,52 +52,28 @@ export async function apiRequest<T = unknown>(
     ...(options.headers as Record<string, string>),
   };
 
-  // Add CSRF token for state-mutating requests
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && csrfToken) {
-    headers['X-CSRF-Token'] = csrfToken;
+  // Attach the Firebase ID token if the user is signed in. Public
+  // endpoints (calendar feed, share-token routes) tolerate the absence;
+  // protected endpoints reject with 401.
+  const idToken = await getFirebaseIdToken().catch(() => null);
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`;
   }
 
   let response: Response;
   try {
-    response = await fetch(url, {
-      ...options,
-      method,
-      headers,
-      credentials: 'include', // Include httpOnly cookies
-    });
-  } catch {
-    return { ok: false, error: { code: 'NETWORK_ERROR', message: 'Network error. Check your connection.' } };
-  }
-
-  // Handle 401 - try refresh (skip for auth status checks and auth endpoints)
-  const skipRefresh = ['/auth/refresh', '/auth/me', '/auth/firebase'];
-  if (response.status === 401 && !skipRefresh.some((p) => path.includes(p))) {
-    try {
-      const refreshResult = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (refreshResult.ok) {
-        const refreshData = await parseResponse<{ csrfToken?: string }>(refreshResult);
-        if (refreshData.data?.csrfToken) {
-          csrfToken = refreshData.data.csrfToken;
-        }
-        // Retry original request with new CSRF token
-        if (csrfToken && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-          headers['X-CSRF-Token'] = csrfToken;
-        }
-        const retryResponse = await fetch(url, { ...options, method, headers, credentials: 'include' });
-        return parseResponse<T>(retryResponse);
-      }
-    } catch {
-      // Refresh failed
-    }
-
-    // Refresh failed - clear CSRF and return error
-    // AuthContext handles redirect to /login via React Router (no hard reload)
-    csrfToken = null;
-    return { ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } };
+    response = await fetchWithTimeout(url, { ...options, method, headers }, DEFAULT_TIMEOUT_MS);
+  } catch (err) {
+    const aborted = err instanceof DOMException && err.name === 'AbortError';
+    return {
+      ok: false,
+      error: {
+        code: aborted ? 'TIMEOUT' : 'NETWORK_ERROR',
+        message: aborted
+          ? 'Request timed out. The server may be unreachable.'
+          : 'Network error. Check your connection.',
+      },
+    };
   }
 
   return parseResponse<T>(response);

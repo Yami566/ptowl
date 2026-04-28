@@ -9,42 +9,81 @@
     <!-- Favicon & PWA -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="https://ptowl.com/" />
     <meta name="theme-color" content="#1B5E20" />
+    <meta name="color-scheme" content="light dark" />
 
-    <!-- Open Graph / Social -->
+    <!-- iOS PWA — "Add to Home Screen" -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PtOwl" />
+    <link rel="apple-touch-icon" href="/logo-120.svg" />
+
+    <!-- Microsoft tiles (Windows pinned site) -->
+    <meta name="application-name" content="Patient Owl" />
+    <meta name="msapplication-TileColor" content="#1B5E20" />
+
+    <!-- Open Graph / Social — used by iMessage, Slack, WhatsApp, FB, etc.
+         Apple Messages caches link previews aggressively (~7 days, per
+         device + iCloud LP service). If the preview shows no image after
+         updating these tags, share with a cache-busting query string
+         like https://ptowl.com/?v=2 to force a fresh fetch. -->
+    <meta property="og:site_name" content="Patient Owl" />
     <meta property="og:title" content="PTOWL — Patient Owl" />
     <meta property="og:description" content="The fastest schedule assistant on earth. Create and print patient schedules in under 5 keypresses." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://ptowl.com" />
+    <meta property="og:url" content="https://ptowl.com/" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:image" content="https://ptowl.com/og-image.png" />
+    <meta property="og:image:secure_url" content="https://ptowl.com/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Patient Owl logo on a green background with the wordmark PTOWL — fast schedule printing for medical providers" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="PTOWL — Patient Owl" />
     <meta name="twitter:description" content="The fastest schedule assistant on earth. Create and print patient schedules in under 5 keypresses." />
     <meta name="twitter:image" content="https://ptowl.com/og-image.png" />
+    <meta name="twitter:image:alt" content="Patient Owl logo and wordmark" />
+
+    <!-- Older crawlers (some chat apps still use this) -->
+    <link rel="image_src" href="https://ptowl.com/og-image.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <noscript>
+      <div style="padding: 24px; font-family: system-ui, sans-serif; color: #1B5E20; text-align: center;">
+        Patient Owl needs JavaScript. If you're viewing this from inside an in-app browser
+        (Messages, Mail, etc.), tap the Share icon and choose "Open in Safari".
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!--Start of Tawk.to Script-->
-    <script type="text/javascript">
-    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-    (function(){
-    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-    s1.async=true;
-    s1.src='https://embed.tawk.to/69c2330f46a6c41c341aa7c6/1jkf9et9r';
-    s1.charset='UTF-8';
-    s1.setAttribute('crossorigin','*');
-    s0.parentNode.insertBefore(s1,s0);
-    })();
-    </script>
-    <!--End of Tawk.to Script-->
+
+    <!--
+      Cloudflare Web Analytics
+      ─────────────────────────
+      Enabled via Pages dashboard auto-insert (no manual script needed):
+      Cloudflare → Workers & Pages → ptowl → Analytics & Logs →
+      Web Analytics → Enable. Auto-inserts the beacon at edge,
+      privacy-friendly, no cookies, no GDPR banner needed.
+
+      If you prefer a manual <script> tag instead of dashboard auto-insert,
+      paste the snippet from the Web Analytics dashboard here.
+    -->
+
+    <!--
+      Tawk.to chat removed: the inline loader was blocked by the strict
+      production CSP (`script-src 'self' …` with no `'unsafe-inline'`),
+      so the widget was silently non-functional. Re-add via Cloudflare
+      Zaraz custom HTML (docs/THIRD-PARTY.md) if/when chat is needed —
+      Zaraz proxies the script through the same origin so no CSP
+      allow-list change is required.
+    -->
   </body>
 </html>

@@ -3,4 +3,3 @@ export * from './constants/index.js';
 export * from './validators/index.js';
 export * from './utils/schedule-generator.js';
 export * from './utils/rrule-generator.js';
-export * from './utils/ics-generator.js';

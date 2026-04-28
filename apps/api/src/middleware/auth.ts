@@ -1,111 +1,108 @@
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types/env.js';
-import { verifyJWT } from '../crypto/jwt.js';
-import { verifyCSRFToken } from '../crypto/csrf.js';
-import { getCookie } from 'hono/cookie';
+import { verifyFirebaseIdToken } from '../auth/firebase-verify.js';
+import { resolveOrProvisionUser, type AuthUser } from '../auth/provision.js';
 
 type Variables = {
-  user: { id: string; email: string; role: string; tier: string; user_type?: string; admin_verified?: boolean } | null;
+  user: AuthUser | null;
 };
 
-// Auth middleware: verifies JWT from httpOnly cookie
+/**
+ * requireAuth — verifies a Firebase ID token from the
+ * `Authorization: Bearer ...` header on every request.
+ *
+ * On success, `c.get('user')` returns the D1 user row. On first
+ * authenticated request (legacy user or genuine signup), the row is
+ * auto-provisioned — see resolveOrProvisionUser.
+ *
+ * Replaces the previous JWT-cookie + /auth/refresh + /auth/firebase
+ * dance (HOTFIX 2 stage A). Firebase's client SDK auto-refreshes the
+ * ID token, so there's nothing to manage server-side.
+ */
 export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
-    const token = getCookie(c, 'token');
-    if (!token) {
-      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
+    const authHeader = c.req.header('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return c.json(
+        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        401,
+      );
     }
 
-    const payload = await verifyJWT(token, c.env.JWT_SECRET);
-    if (!payload) {
-      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' } }, 401);
+    const idToken = authHeader.slice('Bearer '.length).trim();
+    const claims = await verifyFirebaseIdToken(idToken, c.env.FIREBASE_PROJECT_ID);
+    if (!claims) {
+      return c.json(
+        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' } },
+        401,
+      );
     }
 
-    c.set('user', {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      tier: payload.tier,
-      user_type: (payload as Record<string, unknown>).user_type as string | undefined,
-      admin_verified: payload.admin_verified,
-    });
-
-    await next();
-  },
-);
-
-// CSRF middleware: validates signed X-CSRF-Token header on state-mutating requests
-export const requireCSRF = createMiddleware<{ Bindings: Env; Variables: Variables }>(
-  async (c, next) => {
-    const method = c.req.method;
-    if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      return next();
-    }
-
-    const csrfToken = c.req.header('X-CSRF-Token');
-    if (!csrfToken) {
-      return c.json({ ok: false, error: { code: 'CSRF_MISSING', message: 'CSRF token required' } }, 403);
-    }
-
-    const user = c.get('user');
+    const ip = c.req.header('cf-connecting-ip') || '';
+    const user = await resolveOrProvisionUser(c.env, claims, ip);
     if (!user) {
-      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
+      return c.json(
+        { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Could not resolve user' } },
+        500,
+      );
     }
 
-    const valid = await verifyCSRFToken(csrfToken, c.env.JWT_SECRET, user.id);
-    if (!valid) {
-      return c.json({ ok: false, error: { code: 'CSRF_INVALID', message: 'Invalid CSRF token' } }, 403);
+    if (user.status === 'denied' || user.status === 'suspended') {
+      return c.json(
+        { ok: false, error: { code: 'ACCOUNT_DISABLED', message: 'Account has been disabled' } },
+        403,
+      );
     }
 
+    c.set('user', user);
     await next();
   },
 );
 
-// Admin middleware: requires admin role + email 2FA verification
+/**
+ * requireAdmin — gated behind requireAuth. Re-checks the role against
+ * the current D1 row so a downgrade takes effect immediately, rather
+ * than waiting for a token to expire (Firebase ID tokens last 1h).
+ *
+ * The previous email-OTP verification bit was removed — Stage B
+ * (HOTFIX 2) puts /admin behind Cloudflare Access, where the OTP step
+ * happens at the edge before the request ever reaches the Worker.
+ */
 export const requireAdmin = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
     const user = c.get('user');
-    if (!user || user.role !== 'admin') {
-      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Admin access required' } }, 403);
+    if (!user) {
+      return c.json(
+        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        401,
+      );
     }
-    if (!user.admin_verified) {
-      return c.json({ ok: false, error: { code: 'ADMIN_2FA_REQUIRED', message: '2FA verification required' } }, 403);
-    }
-    // H6 FIX: Revalidate admin role against DB (JWT could be stale)
     const dbUser = await c.env.DB.prepare('SELECT role, status FROM users WHERE id = ?')
       .bind(user.id)
       .first<{ role: string; status: string }>();
     if (!dbUser || dbUser.role !== 'admin' || dbUser.status !== 'approved') {
-      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Admin access revoked' } }, 403);
+      return c.json(
+        { ok: false, error: { code: 'FORBIDDEN', message: 'Admin access required' } },
+        403,
+      );
     }
     await next();
   },
 );
 
-// Clinic-only middleware: requires user_type === 'clinic'
+/**
+ * requireClinic — kept as a separate middleware for symmetry with the
+ * routes that mount it; identical to requireAuth now that the patient
+ * portal is gone (every authenticated user is a clinic).
+ */
 export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
     const user = c.get('user');
     if (!user) {
-      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
-    }
-    // Block patients explicitly; legacy users without user_type default to clinic
-    if (user.user_type === 'patient') {
-      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Clinic access required' } }, 403);
-    }
-    await next();
-  },
-);
-
-// Patient-only middleware: requires user_type === 'patient'
-export const requirePatient = createMiddleware<{ Bindings: Env; Variables: Variables }>(
-  async (c, next) => {
-    const user = c.get('user');
-    if (!user) {
-      return c.json({ ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, 401);
-    }
-    if (user.user_type !== 'patient') {
-      return c.json({ ok: false, error: { code: 'FORBIDDEN', message: 'Patient access required' } }, 403);
+      return c.json(
+        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
+        401,
+      );
     }
     await next();
   },
