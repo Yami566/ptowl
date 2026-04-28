@@ -11,8 +11,6 @@ import { profileRoutes } from './routes/profile.js';
 import { adminRoutes } from './routes/admin.js';
 import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
-import { patientRoutes } from './routes/patient.js';
-import { codeRoutes } from './routes/codes.js';
 import { remindersRoutes } from './routes/reminders.js';
 import {
   findAndEnqueueDueReminders,
@@ -175,8 +173,6 @@ app.route('/api/v1/profile', profileRoutes);
 app.route('/api/v1/admin', adminRoutes);
 app.route('/api/v1/alias', aliasRoutes);
 app.route('/api/v1/cal', calendarRoutes);
-app.route('/api/v1/patient', patientRoutes);
-app.route('/api/v1/codes', codeRoutes);
 app.route('/api/v1/reminders', remindersRoutes);
 
 // 404 handler
@@ -214,11 +210,6 @@ async function cleanupExpiredData(db: D1Database): Promise<void> {
     .run();
   await db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
   await db.prepare(`DELETE FROM audit_log WHERE created_at < datetime('now', '-2190 days')`).run();
-  await db
-    .prepare(
-      `DELETE FROM patient_codes WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
-    )
-    .run();
 }
 
 export default {

@@ -50,7 +50,6 @@ interface DueRow {
   patient_initials: string;
   patient_alias: string;
   patient_email_encrypted: string | null;
-  linked_patient_email: string | null;
   clinic_name: string | null;
   clinic_timezone: string | null;
 }
@@ -88,8 +87,9 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
 
   const sentColumn = type === '24h' ? 'reminder_24h_sent_at' : 'reminder_1h_sent_at';
 
-  // Linked patient email = users.email for the patient_schedules.patient_id,
-  // but only if it's a real email (not the placeholder *@phone.ptowl.local).
+  // Patient email comes from the schedule's encrypted column. The
+  // legacy `linked_patient_email` lookup against patient_schedules was
+  // dropped with the patient portal removal.
   const sql = `
     SELECT
       a.id AS appointment_id,
@@ -99,14 +99,6 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
       s.patient_initials,
       s.patient_alias,
       s.patient_email_encrypted,
-      (
-        SELECT u.email FROM patient_schedules ps
-        JOIN users u ON u.id = ps.patient_id
-        WHERE ps.schedule_id = s.id
-          AND u.email IS NOT NULL
-          AND u.email NOT LIKE '%@phone.ptowl.local'
-        LIMIT 1
-      ) AS linked_patient_email,
       p.clinic_name,
       p.timezone AS clinic_timezone
     FROM appointments a
@@ -131,9 +123,9 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
     const drift = Math.abs(apptUtc.getTime() - targetUtc);
     if (drift > halfWindowMs) continue;
 
-    // Resolve email: prefer linked-user, fall back to clinic-entered.
-    let email: string | null = row.linked_patient_email;
-    if (!email && row.patient_email_encrypted) {
+    // Decrypt the clinic-entered patient email.
+    let email: string | null = null;
+    if (row.patient_email_encrypted) {
       try {
         email = await decryptEmail(row.patient_email_encrypted, env.EMAIL_ENCRYPTION_KEY);
       } catch {

@@ -150,7 +150,8 @@ authRoutes.post('/firebase', async (c) => {
       );
     }
 
-    const userType = body.user_type === 'patient' ? 'patient' : 'clinic';
+    // Patient portal removed — every signup is a clinic.
+    const userType = 'clinic';
 
     // Look up user by phone
     let user = await c.env.DB.prepare(
@@ -204,8 +205,8 @@ authRoutes.post('/firebase', async (c) => {
         )
         .run();
 
-      // Clinic users get a profile and default templates; patients don't need them
-      if (userType !== 'patient') {
+      // Every new user gets a profile and default templates.
+      {
         const profileId = crypto.randomUUID().replace(/-/g, '');
         await c.env.DB.prepare('INSERT INTO profiles (id, user_id) VALUES (?, ?)')
           .bind(profileId, userId)
@@ -243,8 +244,9 @@ authRoutes.post('/firebase', async (c) => {
         )
         .run();
 
-      // Only notify admin and generate approval link for clinic providers
-      if (userType !== 'patient') {
+      // Notify admin of every new signup (informational; users are
+      // auto-approved at line 188 — the legacy approval link is a no-op).
+      {
         const approvalPayload = `${userId}:${Date.now() + 7 * 24 * 60 * 60 * 1000}`;
         const encoder = new TextEncoder();
         const hmacKey = await crypto.subtle.importKey(

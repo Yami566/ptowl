@@ -2,13 +2,7 @@ import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import {
-  AuthProvider,
-  ProtectedRoute,
-  ClinicRoute,
-  AdminRoute,
-  PatientRoute,
-} from './contexts/AuthContext.js';
+import { AuthProvider, ProtectedRoute, ClinicRoute, AdminRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { CommandPalette } from './components/CommandPalette.js';
@@ -61,12 +55,6 @@ const AboutPage = lazy(() =>
 );
 const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage.js').then((m) => ({ default: m.NotFoundPage })),
-);
-const PatientHomePage = lazy(() =>
-  import('./pages/PatientHomePage.js').then((m) => ({ default: m.PatientHomePage })),
-);
-const PatientSchedulePage = lazy(() =>
-  import('./pages/PatientSchedulePage.js').then((m) => ({ default: m.PatientSchedulePage })),
 );
 
 export function App() {
@@ -177,32 +165,6 @@ export function App() {
                     <ClinicRoute>
                       <ProfilePage />
                     </ClinicRoute>
-                  }
-                />
-
-                {/* Patient routes — require patient user_type */}
-                <Route
-                  path="/my-schedules"
-                  element={
-                    <PatientRoute>
-                      <PatientHomePage />
-                    </PatientRoute>
-                  }
-                />
-                <Route
-                  path="/my-schedules/:id"
-                  element={
-                    <PatientRoute>
-                      <PatientSchedulePage />
-                    </PatientRoute>
-                  }
-                />
-                <Route
-                  path="/link/:code"
-                  element={
-                    <PatientRoute>
-                      <PatientHomePage />
-                    </PatientRoute>
                   }
                 />
 

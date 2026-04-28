@@ -41,8 +41,6 @@ test.describe('Security boundaries — protected routes reject unauthenticated c
     ['PUT', '/profile', [401, 403]],
     ['POST', '/alias', [401, 403]],
     ['GET', '/admin/users', [401, 403]],
-    ['POST', '/codes', [401, 403]],
-    ['GET', '/patient/schedules', [401, 403]],
   ];
 
   for (const [method, path, allowed] of protectedRoutes) {

@@ -76,7 +76,9 @@ export const requireAdmin = createMiddleware<{ Bindings: Env; Variables: Variabl
   },
 );
 
-// Clinic-only middleware: requires user_type === 'clinic'
+// Clinic-only middleware: requires an authenticated user. The legacy
+// patient_type='patient' branch was dropped along with the patient
+// portal — every authenticated user is a clinic.
 export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
     const user = c.get('user');
@@ -84,33 +86,6 @@ export const requireClinic = createMiddleware<{ Bindings: Env; Variables: Variab
       return c.json(
         { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
         401,
-      );
-    }
-    // Block patients explicitly; legacy users without user_type default to clinic
-    if (user.user_type === 'patient') {
-      return c.json(
-        { ok: false, error: { code: 'FORBIDDEN', message: 'Clinic access required' } },
-        403,
-      );
-    }
-    await next();
-  },
-);
-
-// Patient-only middleware: requires user_type === 'patient'
-export const requirePatient = createMiddleware<{ Bindings: Env; Variables: Variables }>(
-  async (c, next) => {
-    const user = c.get('user');
-    if (!user) {
-      return c.json(
-        { ok: false, error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } },
-        401,
-      );
-    }
-    if (user.user_type !== 'patient') {
-      return c.json(
-        { ok: false, error: { code: 'FORBIDDEN', message: 'Patient access required' } },
-        403,
       );
     }
     await next();

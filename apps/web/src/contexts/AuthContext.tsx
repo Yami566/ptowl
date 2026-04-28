@@ -13,7 +13,6 @@ interface AuthUser {
   status?: string;
   role: string;
   tier: string;
-  user_type?: 'clinic' | 'patient';
   clinic_name?: string;
   clinic_address?: string;
   clinic_phone?: string;
@@ -32,8 +31,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const PUBLIC_PATHS = ['/', '/pending', '/about', '/privacy', '/terms', '/security'];
-const PATIENT_PATHS = ['/my-schedules'];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,8 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else if (user && user.status !== 'pending' && location.pathname === '/pending') {
       navigate('/dashboard', { replace: true });
     } else if (user && user.status !== 'pending' && location.pathname === '/') {
-      const home = user.user_type === 'patient' ? '/my-schedules' : '/dashboard';
-      navigate(home, { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [user, loading, location.pathname, navigate]);
 
@@ -120,9 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   // Public paths render immediately — they don't depend on the user. The
-  // per-route guards (ProtectedRoute, ClinicRoute, PatientRoute, AdminRoute)
-  // still gate protected components on `loading`, so there's no flash of
-  // protected content. Blocking globally caused white-screen-on-link-tap in
+  // per-route guards (ProtectedRoute, ClinicRoute, AdminRoute) still gate
+  // protected components on `loading`, so there's no flash of protected
+  // content. Blocking globally caused white-screen-on-link-tap in
   // sandboxed in-app browsers (iMessage / SFSafariViewController) where
   // Firebase's localStorage persistence can hang for seconds.
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
@@ -172,8 +168,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 }
 
 /**
- * ClinicRoute — route guard that requires clinic user_type (or legacy users without user_type).
- * Redirects patients to /my-schedules.
+ * ClinicRoute — every authenticated, non-pending user is a clinic since
+ * the patient portal was removed.
  */
 export function ClinicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -181,20 +177,6 @@ export function ClinicRoute({ children }: { children: ReactNode }) {
   if (loading) return <LoadingOverlay message="Verifying session..." />;
   if (!user) return <Navigate to="/" replace />;
   if (user.status === 'pending') return <Navigate to="/pending" replace />;
-  if (user.user_type === 'patient') return <Navigate to="/my-schedules" replace />;
-
-  return <>{children}</>;
-}
-
-/**
- * PatientRoute — route guard that requires patient user_type.
- */
-export function PatientRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-
-  if (loading) return <LoadingOverlay message="Verifying session..." />;
-  if (!user) return <Navigate to="/" replace />;
-  if (user.user_type !== 'patient') return <Navigate to="/dashboard" replace />;
 
   return <>{children}</>;
 }
