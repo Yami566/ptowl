@@ -111,14 +111,17 @@ describe('Data Leakage Prevention', () => {
 // ── API Security ──
 
 describe('API Communication Security', () => {
-  it('API client uses credentials: include', () => {
+  it('API client attaches Firebase ID token as Authorization: Bearer', () => {
     const clientFile = fs.readFileSync(path.join(WEB_SRC, 'api/client.ts'), 'utf-8');
-    expect(clientFile).toContain("credentials: 'include'");
+    expect(clientFile).toContain('getFirebaseIdToken');
+    expect(clientFile).toContain('Bearer ${idToken}');
+    // No more httpOnly cookies or credentials: 'include' — Stage A
+    // moved off server-side session state.
+    expect(clientFile).not.toContain("credentials: 'include'");
   });
 
   it('client relies on browser-sent Origin for CSRF (no token in headers)', () => {
     const clientFile = fs.readFileSync(path.join(WEB_SRC, 'api/client.ts'), 'utf-8');
-    // No custom CSRF header logic — server uses hono/csrf which validates Origin/Referer.
     expect(clientFile).not.toContain('X-CSRF-Token');
     expect(clientFile).not.toContain('csrfToken');
   });
@@ -142,10 +145,13 @@ describe('Authentication Security', () => {
 
   it('phone auth uses Firebase (no local password form)', () => {
     const landingFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LandingPage.tsx'), 'utf-8');
-    // Firebase phone auth — SMS handled by Firebase, token exchanged with backend
+    // Firebase phone auth — SMS + verification handled by Firebase. The
+    // /auth/firebase token-exchange endpoint was retired in Stage A;
+    // the frontend now calls login() directly after Firebase verification
+    // and the AuthContext fetches /auth/me with the Bearer token.
     expect(landingFile).toContain('sendPhoneCode');
-    expect(landingFile).toContain('/auth/firebase');
     expect(landingFile).toContain('inputMode="numeric"');
+    expect(landingFile).not.toContain('/auth/firebase');
   });
 
   it('login page redirects to landing (phone auth is inline)', () => {

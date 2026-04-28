@@ -43,39 +43,37 @@ function readAllFiles(dir: string, ext: string[]): Array<{ path: string; content
 describe('Auth Middleware Security', () => {
   const authMiddleware = () => readFile('middleware/auth.ts');
 
-  it('requireAuth reads JWT from httpOnly cookie (not Authorization header)', () => {
+  it('requireAuth reads Firebase ID token from Authorization: Bearer header', () => {
     const code = authMiddleware();
-    // Must use getCookie to read the token
-    expect(code).toContain("getCookie(c, 'token')");
-    // Must NOT read from Authorization header
-    expect(code).not.toMatch(/c\.req\.header\(\s*['"]Authorization['"]\s*\)/);
+    expect(code).toMatch(/c\.req\.header\(['"]Authorization['"]\)/);
+    expect(code).toContain("startsWith('Bearer ')");
+    // Must NOT fall back to cookies
+    expect(code).not.toContain("getCookie(c, 'token')");
   });
 
-  it('requireAuth does not read JWT from query parameters', () => {
+  it('requireAuth does not read tokens from query parameters', () => {
     const code = authMiddleware();
-    // Must NOT read token from query string
     expect(code).not.toMatch(/c\.req\.query\(\s*['"]token['"]\s*\)/);
     expect(code).not.toMatch(/c\.req\.query\(\s*['"]jwt['"]\s*\)/);
-    expect(code).not.toMatch(/c\.req\.query\(\s*['"]access_token['"]\s*\)/);
+    expect(code).not.toMatch(/c\.req\.query\(\s*['"]idToken['"]\s*\)/);
   });
 
-  it('requireAuth verifies JWT with server secret from environment', () => {
+  it('requireAuth verifies the token via Firebase JWKS', () => {
     const code = authMiddleware();
-    expect(code).toContain('verifyJWT(token, c.env.JWT_SECRET)');
+    expect(code).toContain('verifyFirebaseIdToken');
+    expect(code).toContain('FIREBASE_PROJECT_ID');
   });
 
-  it('requireAuth returns 401 for missing cookie', () => {
+  it('requireAuth returns 401 for missing Authorization header', () => {
     const code = authMiddleware();
-    // When token is falsy, respond with 401
-    expect(code).toContain('if (!token)');
     expect(code).toContain("'UNAUTHORIZED'");
     expect(code).toContain('401');
+    expect(code).toContain('Not authenticated');
   });
 
   it('requireAuth returns 401 for invalid/expired token', () => {
     const code = authMiddleware();
-    // When payload is null (verification failed), respond with 401
-    expect(code).toContain('if (!payload)');
+    expect(code).toContain('if (!claims)');
     expect(code).toContain("'Invalid or expired token'");
     expect(code).toContain('401');
   });
@@ -86,20 +84,20 @@ describe('Auth Middleware Security', () => {
     expect(indexCode).toContain('csrf({ origin:');
   });
 
-  it('requireAdmin checks role === admin and admin_verified === true', () => {
+  it('requireAdmin checks role === admin (CF Access provides 2FA at the edge)', () => {
     const code = authMiddleware();
-    expect(code).toContain("user.role !== 'admin'");
-    expect(code).toContain('!user.admin_verified');
-    expect(code).toContain('ADMIN_2FA_REQUIRED');
+    expect(code).toContain("dbUser.role !== 'admin'");
+    // The legacy email-OTP admin_verified bit is gone — Stage B routes
+    // /admin through Cloudflare Access where the OTP happens at the edge
+    // before requests reach the Worker.
+    expect(code).not.toContain('admin_verified');
   });
 
-  it('requireAdmin revalidates role against database (H6 FIX — stale JWT protection)', () => {
+  it('requireAdmin revalidates role against database (stale-token protection)', () => {
     const code = authMiddleware();
-    // H6 FIX: Must query DB to ensure admin role is still valid
     expect(code).toContain('SELECT role, status FROM users WHERE id = ?');
     expect(code).toContain("dbUser.role !== 'admin'");
     expect(code).toContain("dbUser.status !== 'approved'");
-    expect(code).toContain("'Admin access revoked'");
   });
 });
 
@@ -421,42 +419,30 @@ describe('Error Handling Security', () => {
 // 6. Cookie Security (6 tests)
 // ══════════════════════════════════════════════════════════════════
 
-describe('Cookie Security', () => {
-  // User login is handled by Firebase phone auth → /auth/firebase sets cookies
-  it('firebase auth endpoint issues cookies with httpOnly flag', () => {
+describe('Stateless Auth (no server-side session cookies)', () => {
+  // Stage A removed httpOnly JWT cookies in favor of direct Firebase
+  // ID token verification on every request. Documenting that
+  // expectation here so a future refactor doesn't accidentally
+  // re-introduce cookie-based session state.
+  it('routes/auth.ts does not import setCookie / deleteCookie', () => {
     const code = readFile('routes/auth.ts');
-    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
-    expect(firebaseSection).toContain('httpOnly: true');
+    expect(code).not.toContain('setCookie');
+    expect(code).not.toContain('deleteCookie');
   });
 
-  it('firebase auth endpoint issues cookies with sameSite attribute', () => {
-    const code = readFile('routes/auth.ts');
-    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
-    expect(firebaseSection).toContain('sameSite:');
-    expect(firebaseSection).toContain("'Lax'");
+  it('middleware/auth.ts does not read cookies', () => {
+    const code = readFile('middleware/auth.ts');
+    expect(code).not.toContain('getCookie');
   });
 
-  it('firebase auth endpoint issues cookies with path set to root', () => {
-    const code = readFile('routes/auth.ts');
-    const firebaseSection = code.slice(code.indexOf("'/firebase'"));
-    expect(firebaseSection).toContain("path: '/'");
-  });
-
-  it('auth refresh endpoint issues cookies with same security attributes', () => {
-    const code = readFile('routes/auth.ts');
-    const refreshSection = code.slice(code.indexOf("'/refresh'"));
-    expect(refreshSection).toContain('httpOnly: true');
-    expect(refreshSection).toContain('secure: isProduction');
-    expect(refreshSection).toContain('sameSite:');
-    expect(refreshSection).toContain("path: '/'");
-  });
-
-  it('admin verify-code cookie uses httpOnly and secure flags', () => {
-    const code = readFile('routes/admin.ts');
-    const verifySection = code.slice(code.indexOf("'/verify-code'"), code.indexOf("'/users'"));
-    expect(verifySection).toContain('httpOnly: true');
-    expect(verifySection).toContain('secure: isProduction');
-    expect(verifySection).toContain('sameSite:');
+  it('Firebase ID tokens are verified on every request, not exchanged once', () => {
+    const code = readFile('middleware/auth.ts');
+    expect(code).toContain('verifyFirebaseIdToken');
+    // No /auth/refresh route — tokens auto-refresh client-side via
+    // Firebase SDK; the server is stateless.
+    const authCode = readFile('routes/auth.ts');
+    expect(authCode).not.toContain("'/refresh'");
+    expect(authCode).not.toContain("'/firebase'");
   });
 });
 
@@ -590,12 +576,13 @@ describe('Account Lockout Protection', () => {
 });
 
 describe('Anti-Enumeration Protection', () => {
-  // Phone auth uses Firebase which does not reveal whether a phone number is registered.
-  // Firebase handles SMS delivery and code verification.
-  // Backend returns generic "Invalid or expired token" for bad Firebase tokens.
-  it('firebase endpoint returns generic error for invalid tokens (no user enumeration)', () => {
-    const code = readFile('routes/auth.ts');
-    expect(code).toContain('INVALID_TOKEN');
+  // Phone auth uses Firebase, which does not reveal whether a phone
+  // number is registered. The middleware returns a generic
+  // "Invalid or expired token" for bad Firebase tokens — no path that
+  // distinguishes "user not found" from "wrong credentials".
+  it('auth middleware returns generic error for invalid tokens', () => {
+    const code = readFile('middleware/auth.ts');
+    expect(code).toContain('UNAUTHORIZED');
     expect(code).toContain('Invalid or expired token');
   });
 });

@@ -370,23 +370,28 @@ describe('Security Headers & CSP', () => {
 // Backend verifies Firebase ID tokens using Google JWKS.
 
 describe('Firebase Phone Auth Security', () => {
-  it('firebase endpoint verifies ID token using Google JWKS', () => {
-    const code = readFile('routes/auth.ts');
-    expect(code).toContain('verifyFirebaseToken');
-    expect(code).toContain('FIREBASE_JWKS_URL');
+  it('JWKS verifier hits the documented Google securetoken endpoint', () => {
+    const code = readFile('auth/firebase-verify.ts');
+    expect(code).toContain('securetoken@system.gserviceaccount.com');
+    // Use the off-the-shelf jose JWKS handler instead of hand-rolled
+    // RSA verification; it manages caching, cooldown, and refresh.
+    expect(code).toContain('createRemoteJWKSet');
+    expect(code).toContain('jwtVerify');
   });
 
-  it('firebase endpoint validates issuer and audience against project ID', () => {
-    const code = readFile('routes/auth.ts');
-    expect(code).toContain('securetoken.google.com');
-    expect(code).toContain('payload.aud !== projectId');
-    expect(code).toContain('payload.iss !==');
+  it('JWKS verifier validates issuer and audience against project ID', () => {
+    const code = readFile('auth/firebase-verify.ts');
+    expect(code).toContain('securetoken.google.com/${projectId}');
+    expect(code).toContain('audience: projectId');
+    expect(code).toContain("algorithms: ['RS256']");
   });
 
-  it('firebase endpoint extracts phone number from token', () => {
-    const code = readFile('routes/auth.ts');
-    expect(code).toContain('phone_number');
-    expect(code).toContain('normalizePhone');
+  it('user provisioning extracts phone number from claims', () => {
+    const code = readFile('auth/provision.ts');
+    expect(code).toContain('claims.phone_number');
+    // Match-on-phone fallback links legacy users to firebase_uid.
+    expect(code).toContain('WHERE phone = ?');
+    expect(code).toContain('UPDATE users SET firebase_uid = ?');
   });
 
   it('FIREBASE_PROJECT_ID is in Env type (not hardcoded)', () => {

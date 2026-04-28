@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { apiRequest } from '../api/client.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
-import { waitForFirebaseUser, auth as firebaseAuth } from '../firebase.js';
-import { signOut } from 'firebase/auth';
+import { auth as firebaseAuth } from '../firebase.js';
 
 interface AuthUser {
   id: string;
@@ -23,7 +24,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
-  login: (user: AuthUser) => void;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -31,16 +32,17 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const PUBLIC_PATHS = ['/', '/pending', '/about', '/privacy', '/terms', '/security'];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Fetch the current user from /auth/me. apiRequest attaches the
+  // Bearer token automatically; the Worker provisions a D1 row on
+  // first call (apps/api/src/auth/provision.ts).
   const refreshUser = useCallback(async () => {
-    // Refresh JWT cookie if it's near expiry (CSRF is now origin-based, no token to manage)
-    await apiRequest('/auth/refresh', { method: 'POST' });
-
     const result = await apiRequest<AuthUser>('/auth/me');
     if (result.ok && result.data) {
       setUser(result.data);
@@ -49,48 +51,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // On mount: check Firebase first, then try JWT cookie refresh
+  // Single source of truth: Firebase's onAuthStateChanged. Fires once
+  // synchronously on mount with the persisted user (if any), then on
+  // every sign-in / sign-out. The custom JWT cookie + /auth/refresh
+  // chain is gone — Firebase auto-refreshes the ID token internally.
   useEffect(() => {
-    (async () => {
-      // 1. Try JWT cookie refresh (fastest path — cookie may still be valid)
-      const refreshResult = await apiRequest('/auth/refresh', { method: 'POST' });
-      if (refreshResult.ok) {
-        const meResult = await apiRequest<AuthUser>('/auth/me');
-        if (meResult.ok && meResult.data) {
-          setUser(meResult.data);
-          setLoading(false);
-          return;
-        }
+    const unsub = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+      if (fbUser) {
+        await refreshUser();
+      } else {
+        setUser(null);
       }
-
-      // 2. Cookie expired — check if Firebase still has a session (localStorage persistence)
-      const firebaseUser = await waitForFirebaseUser();
-      if (firebaseUser) {
-        const idToken = await firebaseUser.getIdToken();
-        // Re-authenticate with backend using Firebase token
-        const authResult = await apiRequest<{ user: AuthUser }>('/auth/firebase', {
-          method: 'POST',
-          body: JSON.stringify({ idToken }),
-        });
-        if (authResult.ok && authResult.data) {
-          setUser(authResult.data.user);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // 3. No valid session anywhere
-      setUser(null);
       setLoading(false);
-    })();
-  }, []);
+    });
+    return unsub;
+  }, [refreshUser]);
 
-  // Redirect logic — runs AFTER loading completes
+  // Redirect logic runs AFTER loading completes.
   useEffect(() => {
     if (loading) return;
-
     const isPublic = PUBLIC_PATHS.includes(location.pathname);
-
     if (!user && !isPublic) {
       navigate('/', { replace: true });
     } else if (user && user.status === 'pending' && location.pathname !== '/pending') {
@@ -102,25 +82,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, location.pathname, navigate]);
 
-  // Called by the phone auth form after successful verification
-  const login = useCallback((userData: AuthUser) => {
-    setUser(userData);
-    // Navigation handled by redirect logic above
-  }, []);
+  // Called by the phone auth form after successful Firebase verification.
+  // onAuthStateChanged also fires; refreshUser there is the canonical
+  // path. This explicit call exists so the dashboard renders without
+  // waiting for the Firebase listener microtask.
+  const login = useCallback(async () => {
+    await refreshUser();
+  }, [refreshUser]);
 
   const logout = useCallback(async () => {
-    await apiRequest('/auth/logout', { method: 'POST' });
     await signOut(firebaseAuth).catch(() => {});
     setUser(null);
     navigate('/', { replace: true });
   }, [navigate]);
 
-  // Public paths render immediately — they don't depend on the user. The
-  // per-route guards (ProtectedRoute, ClinicRoute, AdminRoute) still gate
-  // protected components on `loading`, so there's no flash of protected
-  // content. Blocking globally caused white-screen-on-link-tap in
-  // sandboxed in-app browsers (iMessage / SFSafariViewController) where
-  // Firebase's localStorage persistence can hang for seconds.
+  // Public paths render immediately — they don't depend on the user.
+  // Per-route guards (ProtectedRoute, ClinicRoute, AdminRoute) still
+  // gate protected components on `loading`, so there's no flash of
+  // protected content. Blocking globally caused white-screen-on-link-
+  // tap in sandboxed in-app browsers (iMessage / SFSafariViewController)
+  // where Firebase's localStorage persistence can hang for seconds.
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
   if (loading && !isPublicPath) {
     return (
@@ -144,26 +125,14 @@ export function useAuth() {
 }
 
 /**
- * ProtectedRoute — route guard that prevents component mounting for
- * unauthenticated users. Used in App.tsx to wrap all authenticated routes.
- *
- * This is the primary defense: if auth resolves with no user,
- * the child component is NEVER mounted (no constructor, no useEffect,
- * no DOM elements, nothing to inspect in DevTools).
+ * ProtectedRoute — generic guard for any authenticated route. If auth
+ * resolves with no user, the child is never mounted.
  */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
-
-  // Should not happen since AuthProvider blocks rendering while loading,
-  // but guard defensively anyway.
   if (loading) return <LoadingOverlay message="Verifying session..." />;
-
-  // No user = not authenticated → redirect to landing page
   if (!user) return <Navigate to="/" replace />;
-
-  // Pending users can only see /pending
   if (user.status === 'pending') return <Navigate to="/pending" replace />;
-
   return <>{children}</>;
 }
 
@@ -173,25 +142,21 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
  */
 export function ClinicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
-
   if (loading) return <LoadingOverlay message="Verifying session..." />;
   if (!user) return <Navigate to="/" replace />;
   if (user.status === 'pending') return <Navigate to="/pending" replace />;
-
   return <>{children}</>;
 }
 
 /**
- * AdminRoute — additional guard that requires admin role + 2FA verification.
- * The AdminPage component handles the 2FA step internally, so this only
- * checks basic auth + admin role.
+ * AdminRoute — Firebase-authenticated user with role='admin' in D1.
+ * Stage B will move /admin behind Cloudflare Access at the edge; this
+ * stays as a defense-in-depth check.
  */
 export function AdminRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
-
   if (loading) return <LoadingOverlay message="Verifying session..." />;
   if (!user) return <Navigate to="/" replace />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
-
   return <>{children}</>;
 }

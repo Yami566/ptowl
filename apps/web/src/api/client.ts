@@ -1,10 +1,11 @@
+import { getFirebaseIdToken } from '../firebase.js';
+
 const API_BASE = '/api/v1';
 
-// Hard request timeout. AuthProvider blocks rendering on the initial
-// /auth/refresh fetch; without a timeout, an API outage (or a reverse-
-// proxy hang) freezes the SPA on "Verifying session..." for ~30s.
-// 8s is generous for a healthy worker (P99 < 200ms typical) and short
-// enough that public pages stay responsive when the API is degraded.
+// Hard request timeout. Without one, an API outage would freeze the
+// SPA on auth flows for tens of seconds. 8s is generous for a healthy
+// Worker (P99 < 200 ms typical) and short enough that public pages
+// stay responsive when the API is degraded.
 const DEFAULT_TIMEOUT_MS = 8_000;
 
 type ApiResult<T> = {
@@ -30,6 +31,15 @@ function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Pr
   return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
+/**
+ * apiRequest — every API call carries the current Firebase ID token
+ * as `Authorization: Bearer ...`. The Firebase SDK auto-refreshes
+ * tokens behind the scenes (default 1h lifetime), so the client just
+ * asks for a fresh one each time. The Worker verifies against
+ * Google's JWKS in apps/api/src/auth/firebase-verify.ts.
+ *
+ * Replaces the previous httpOnly-cookie + /auth/refresh dance.
+ */
 export async function apiRequest<T = unknown>(
   path: string,
   options: RequestInit = {},
@@ -42,17 +52,17 @@ export async function apiRequest<T = unknown>(
     ...(options.headers as Record<string, string>),
   };
 
-  // CSRF protection is enforced server-side by hono/csrf via Origin/Referer.
-  // Browsers automatically send Origin on cross-origin POST/PUT/PATCH/DELETE,
-  // so the client doesn't need to attach a token.
+  // Attach the Firebase ID token if the user is signed in. Public
+  // endpoints (calendar feed, share-token routes) tolerate the absence;
+  // protected endpoints reject with 401.
+  const idToken = await getFirebaseIdToken().catch(() => null);
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`;
+  }
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(
-      url,
-      { ...options, method, headers, credentials: 'include' },
-      DEFAULT_TIMEOUT_MS,
-    );
+    response = await fetchWithTimeout(url, { ...options, method, headers }, DEFAULT_TIMEOUT_MS);
   } catch (err) {
     const aborted = err instanceof DOMException && err.name === 'AbortError';
     return {
@@ -64,32 +74,6 @@ export async function apiRequest<T = unknown>(
           : 'Network error. Check your connection.',
       },
     };
-  }
-
-  // Handle 401 — try refresh (skip for auth status checks and auth endpoints)
-  const skipRefresh = ['/auth/refresh', '/auth/me', '/auth/firebase'];
-  if (response.status === 401 && !skipRefresh.some((p) => path.includes(p))) {
-    try {
-      const refreshResult = await fetchWithTimeout(
-        `${API_BASE}/auth/refresh`,
-        { method: 'POST', credentials: 'include' },
-        DEFAULT_TIMEOUT_MS,
-      );
-
-      if (refreshResult.ok) {
-        const retryResponse = await fetchWithTimeout(
-          url,
-          { ...options, method, headers, credentials: 'include' },
-          DEFAULT_TIMEOUT_MS,
-        );
-        return parseResponse<T>(retryResponse);
-      }
-    } catch {
-      // Refresh failed (timeout or network)
-    }
-
-    // AuthContext handles redirect to /login via React Router (no hard reload)
-    return { ok: false, error: { code: 'UNAUTHORIZED', message: 'Session expired' } };
   }
 
   return parseResponse<T>(response);

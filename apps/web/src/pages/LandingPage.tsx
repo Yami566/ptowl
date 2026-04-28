@@ -277,29 +277,9 @@ export function LandingPage() {
     setSending(false);
   };
 
-  /** Exchange a Firebase user's ID token for our backend session */
-  const exchangeTokenWithBackend = async (firebaseUser: { getIdToken: () => Promise<string> }) => {
-    const idToken = await firebaseUser.getIdToken();
-    const result = await apiRequest<{
-      user: {
-        id: string;
-        email: string;
-        phone: string;
-        display_name: string;
-        role: string;
-        tier: string;
-      };
-      isNewUser: boolean;
-    }>('/auth/firebase', {
-      method: 'POST',
-      body: JSON.stringify({ idToken, rememberMe, user_type: userType }),
-    });
-
-    if (result.ok && result.data) {
-      login(result.data.user);
-    } else {
-      setError(result.error?.message || 'Authentication failed');
-    }
+  /** After Firebase verification, sync the AuthContext with /auth/me. */
+  const exchangeTokenWithBackend = async (_firebaseUser: { getIdToken: () => Promise<string> }) => {
+    await login();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
