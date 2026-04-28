@@ -180,8 +180,12 @@ authRoutes.post('/firebase', async (c) => {
       // Assign a championship team alias for PII-safe admin notifications
       const teamAlias = getTeamAliasName(phone);
 
-      // Patients get instant access; clinic providers require admin approval
-      const initialStatus = userType === 'patient' ? 'approved' : 'pending';
+      // Auto-approve every new signup. The legacy admin-approval gate
+      // stranded new clinics on /pending until an admin clicked the
+      // approval email, which made the dashboard appear broken on first
+      // login. Admin still gets the new-registration notification below
+      // for visibility — the "approve" link is a harmless no-op.
+      const initialStatus = 'approved';
 
       await c.env.DB.prepare(
         'INSERT INTO users (id, email, password_hash, phone, display_name, status, role, tier, user_alias, user_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
