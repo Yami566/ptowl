@@ -41,6 +41,18 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Apply any pending D1 migrations BEFORE the new Worker code goes
+      # live. wrangler skips migrations that are already applied, so this
+      # is idempotent on every deploy. Without this step, schema changes
+      # ship without a corresponding DB update and the new Worker breaks.
+      - name: Apply D1 migrations (production)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          command: d1 migrations apply ptowl-db --remote
+
       - name: Deploy API to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
