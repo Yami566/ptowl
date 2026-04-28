@@ -88,6 +88,45 @@ export function SchedulePage() {
     }
   }, [schedule]);
 
+  // Add-to-Calendar: lazily fetch the public share token (creates one if
+  // missing), then surface three one-tap subscribe links — Apple via
+  // webcal://, Google via the official ?cid= flow, and a plain .ics URL
+  // for everything else (Outlook, Android default, Fantastical, etc.).
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarToken, setCalendarToken] = useState<string | null>(null);
+
+  const openAddToCalendar = useCallback(async () => {
+    if (!id) return;
+    if (!calendarToken) {
+      const r = await apiRequest<{ share_token: string }>(`/schedules/${id}/share`, {
+        method: 'POST',
+      });
+      if (!r.ok || !r.data?.share_token) {
+        toast.error('Could not generate calendar link');
+        return;
+      }
+      setCalendarToken(r.data.share_token);
+    }
+    setCalendarOpen(true);
+  }, [id, calendarToken]);
+
+  const calendarHttpsUrl = calendarToken ? `https://ptowl.com/api/v1/cal/${calendarToken}.ics` : '';
+  const calendarWebcalUrl = calendarToken
+    ? `webcal://ptowl.com/api/v1/cal/${calendarToken}.ics`
+    : '';
+  const calendarGoogleUrl = calendarToken
+    ? `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(calendarHttpsUrl)}`
+    : '';
+
+  const copyCalendarUrl = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(calendarHttpsUrl);
+      toast.success('Calendar URL copied');
+    } catch {
+      toast.success('Copy this URL: ' + calendarHttpsUrl);
+    }
+  }, [calendarHttpsUrl]);
+
   useEffect(() => {
     if (!id) return;
     apiRequest<{ schedule: Schedule; appointments: Appointment[] }>(`/schedules/${id}`).then(
@@ -172,6 +211,9 @@ export function SchedulePage() {
               }}
             >
               Share
+            </button>
+            <button style={styles.viewToggle} onClick={openAddToCalendar}>
+              Add to Calendar
             </button>
             <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>
               Back
@@ -379,6 +421,43 @@ export function SchedulePage() {
           </div>
         )}
       </div>
+
+      {calendarOpen && calendarToken && (
+        <div
+          className="no-print"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-to-calendar-title"
+          style={styles.calBackdrop}
+          onClick={() => setCalendarOpen(false)}
+        >
+          <div style={styles.calCard} onClick={(e) => e.stopPropagation()}>
+            <h3 id="add-to-calendar-title" style={styles.calTitle}>
+              Add to Calendar
+            </h3>
+            <p style={styles.calSubtitle}>
+              Subscribes the patient&apos;s appointments. Future edits sync automatically.
+            </p>
+            <a href={calendarWebcalUrl} style={styles.calRow}>
+              📅 Apple Calendar (iOS / macOS)
+            </a>
+            <a
+              href={calendarGoogleUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={styles.calRow}
+            >
+              📆 Google Calendar
+            </a>
+            <button type="button" onClick={copyCalendarUrl} style={styles.calRow}>
+              📋 Copy link (Outlook / Android / other)
+            </button>
+            <button type="button" onClick={() => setCalendarOpen(false)} style={styles.calClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 }
@@ -396,6 +475,55 @@ const statusStyles: Record<string, React.CSSProperties> = {
 };
 
 const styles: Record<string, React.CSSProperties> = {
+  calBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '1rem',
+  },
+  calCard: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '1.5rem',
+    width: '100%',
+    maxWidth: '420px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+  },
+  calTitle: { fontSize: '1.125rem', fontWeight: 700, color: 'var(--dark)', margin: 0 },
+  calSubtitle: {
+    fontSize: '0.85rem',
+    color: 'var(--gray-text)',
+    marginTop: '0.25rem',
+    marginBottom: '1rem',
+  },
+  calRow: {
+    display: 'block',
+    width: '100%',
+    padding: '0.75rem 1rem',
+    margin: '0.5rem 0',
+    background: 'var(--off-white)',
+    border: '1px solid var(--gray-mid)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.95rem',
+    color: 'var(--dark)',
+    textDecoration: 'none',
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+  },
+  calClose: {
+    width: '100%',
+    padding: '0.5rem',
+    marginTop: '0.75rem',
+    background: 'transparent',
+    border: 'none',
+    color: 'var(--gray-text)',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+  },
   page: { minHeight: '100vh', background: 'var(--off-white)' },
   loading: {
     display: 'flex',
