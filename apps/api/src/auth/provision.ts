@@ -1,7 +1,6 @@
 import type { Env } from '../types/env.js';
 import type { FirebaseClaims } from './firebase-verify.js';
 import { DEFAULT_TEMPLATES, getTeamAliasName } from '@ptowl/shared';
-import { notifyAdminNewRegistration } from '../services/email.js';
 
 export interface AuthUser {
   id: string;
@@ -24,16 +23,20 @@ interface UserRow {
 
 /**
  * Resolve a Firebase-authenticated request to a D1 user row, creating
- * one on first call. Three-step lookup:
+ * one on first call. Lookup order:
  *
  *   1. SELECT WHERE firebase_uid = ?   (steady-state: every request
  *                                       after the user has been linked)
  *   2. SELECT WHERE phone = ?          (legacy users registered before
  *                                       the firebase_uid column existed
  *                                       — link them on first call)
- *   3. INSERT new row                  (genuine first-time signup;
- *                                       provisions profile + templates +
- *                                       audit log + admin notification)
+ *   3. SELECT WHERE email = ?          (Firebase user signed in with
+ *                                       Google/email-link who already
+ *                                       has an account under the same
+ *                                       email — link them on first call)
+ *   4. INSERT new row                  (genuine first-time signup —
+ *                                       phone, Google, email-link, or
+ *                                       Apple, all share this path).
  */
 export async function resolveOrProvisionUser(
   env: Env,
@@ -63,14 +66,34 @@ export async function resolveOrProvisionUser(
     }
   }
 
-  // 3. First-time signup. Provision the full clinic shape.
+  // 3. Email-link (skip placeholder emails so a phone user doesn't
+  // accidentally collide with a separate Google identity).
+  if (claims.email && !claims.email.endsWith('@phone.ptowl.local')) {
+    const byEmail = await env.DB.prepare(
+      'SELECT id, email, phone, role, tier, status, firebase_uid FROM users WHERE email = ?',
+    )
+      .bind(claims.email)
+      .first<UserRow>();
+    if (byEmail) {
+      await env.DB.prepare('UPDATE users SET firebase_uid = ? WHERE id = ?')
+        .bind(claims.sub, byEmail.id)
+        .run();
+      return toAuthUser(byEmail);
+    }
+  }
+
+  // 4. First-time signup. Provision the full clinic shape.
   const phone = claims.phone_number || null;
   const userId = crypto.randomUUID().replace(/-/g, '');
-  const placeholderEmail = phone
-    ? `${phone.replace('+', '')}@phone.ptowl.local`
-    : `${claims.sub}@firebase.ptowl.local`;
+  // Prefer the real email when Firebase gave us one (Google / email-link
+  // / Apple). Fall back to a synthetic placeholder for phone-only users.
+  const realEmail =
+    claims.email && !claims.email.endsWith('@phone.ptowl.local') ? claims.email : null;
+  const placeholderEmail =
+    realEmail ||
+    (phone ? `${phone.replace('+', '')}@phone.ptowl.local` : `${claims.sub}@firebase.ptowl.local`);
   const placeholderHash = crypto.randomUUID() + crypto.randomUUID();
-  const teamAlias = phone ? getTeamAliasName(phone) : 'New User';
+  const teamAlias = phone ? getTeamAliasName(phone) : 'New Clinic';
 
   await env.DB.prepare(
     `INSERT INTO users
@@ -110,17 +133,6 @@ export async function resolveOrProvisionUser(
   )
     .bind(crypto.randomUUID().replace(/-/g, ''), userId, 'signup_firebase', phone || claims.sub, ip)
     .run();
-
-  // Fire-and-forget admin notification. Failure here must not block
-  // the request — the user is already provisioned in D1.
-  notifyAdminNewRegistration(
-    env.ADMIN_EMAIL || '',
-    env.EMAIL_API_KEY || '',
-    teamAlias,
-    `${env.FRONTEND_URL}/admin`,
-  ).catch((err) => {
-    console.error('Admin notification failed:', err instanceof Error ? err.message : err);
-  });
 
   return {
     id: userId,

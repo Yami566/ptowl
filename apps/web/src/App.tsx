@@ -2,12 +2,11 @@ import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { AuthProvider, ProtectedRoute, ClinicRoute, AdminRoute } from './contexts/AuthContext.js';
+import { AuthProvider, ClinicRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
 import { CommandPalette } from './components/CommandPalette.js';
 import { KeyboardShortcutsOverlay } from './components/KeyboardShortcutsOverlay.js';
-import { IdleTimeoutGuard } from './components/IdleTimeoutGuard.js';
 import { OfflineBanner } from './components/OfflineBanner.js';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -20,9 +19,6 @@ import { DashboardPage } from './pages/DashboardPage.js';
 import { LandingPage } from './pages/LandingPage.js';
 
 // Lazy-loaded routes — split into separate chunks
-const PendingPage = lazy(() =>
-  import('./pages/PendingPage.js').then((m) => ({ default: m.PendingPage })),
-);
 const SchedulePage = lazy(() =>
   import('./pages/SchedulePage.js').then((m) => ({ default: m.SchedulePage })),
 );
@@ -31,9 +27,6 @@ const CustomizePage = lazy(() =>
 );
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage.js').then((m) => ({ default: m.ProfilePage })),
-);
-const AdminPage = lazy(() =>
-  import('./pages/AdminPage.js').then((m) => ({ default: m.AdminPage })),
 );
 const TemplateEditorPage = lazy(() =>
   import('./pages/TemplateEditorPage.js').then((m) => ({ default: m.TemplateEditorPage })),
@@ -94,7 +87,6 @@ export function App() {
         <AuthProvider>
           <Toaster position="top-right" richColors closeButton />
           <OfflineBanner />
-          <IdleTimeoutGuard />
           <CommandPalette
             open={cmdOpen}
             onOpenChange={setCmdOpen}
@@ -112,13 +104,12 @@ export function App() {
               <Routes>
                 {/* Public routes — accessible without authentication */}
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/pending" element={<PendingPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
                 <Route path="/security" element={<SecurityPage />} />
 
-                {/* Protected routes — require authenticated + approved user */}
+                {/* Protected routes — require authenticated user */}
                 <Route
                   path="/dashboard"
                   element={
@@ -165,16 +156,6 @@ export function App() {
                     <ClinicRoute>
                       <ProfilePage />
                     </ClinicRoute>
-                  }
-                />
-
-                {/* Admin route — requires admin role */}
-                <Route
-                  path="/admin"
-                  element={
-                    <AdminRoute>
-                      <AdminPage />
-                    </AdminRoute>
                   }
                 />
 

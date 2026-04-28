@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { apiRequest } from '../api/client.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
 import { auth as firebaseAuth } from '../firebase.js';
@@ -11,7 +10,6 @@ interface AuthUser {
   email: string;
   phone?: string;
   display_name: string;
-  status?: string;
   role: string;
   tier: string;
   clinic_name?: string;
@@ -31,7 +29,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const PUBLIC_PATHS = ['/', '/pending', '/about', '/privacy', '/terms', '/security'];
+const PUBLIC_PATHS = ['/', '/about', '/privacy', '/terms', '/security'];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -53,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Single source of truth: Firebase's onAuthStateChanged. Fires once
   // synchronously on mount with the persisted user (if any), then on
-  // every sign-in / sign-out. The custom JWT cookie + /auth/refresh
-  // chain is gone — Firebase auto-refreshes the ID token internally.
+  // every sign-in / sign-out. Firebase auto-refreshes the ID token
+  // internally.
   useEffect(() => {
     const unsub = onAuthStateChanged(firebaseAuth, async (fbUser) => {
       if (fbUser) {
@@ -73,16 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isPublic = PUBLIC_PATHS.includes(location.pathname);
     if (!user && !isPublic) {
       navigate('/', { replace: true });
-    } else if (user && user.status === 'pending' && location.pathname !== '/pending') {
-      navigate('/pending', { replace: true });
-    } else if (user && user.status !== 'pending' && location.pathname === '/pending') {
-      navigate('/dashboard', { replace: true });
-    } else if (user && user.status !== 'pending' && location.pathname === '/') {
+    } else if (user && location.pathname === '/') {
       navigate('/dashboard', { replace: true });
     }
   }, [user, loading, location.pathname, navigate]);
 
-  // Called by the phone auth form after successful Firebase verification.
+  // Called by the auth UI after successful Firebase verification.
   // onAuthStateChanged also fires; refreshUser there is the canonical
   // path. This explicit call exists so the dashboard renders without
   // waiting for the Firebase listener microtask.
@@ -97,11 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   // Public paths render immediately — they don't depend on the user.
-  // Per-route guards (ProtectedRoute, ClinicRoute, AdminRoute) still
-  // gate protected components on `loading`, so there's no flash of
-  // protected content. Blocking globally caused white-screen-on-link-
-  // tap in sandboxed in-app browsers (iMessage / SFSafariViewController)
-  // where Firebase's localStorage persistence can hang for seconds.
+  // Per-route guards (ProtectedRoute, ClinicRoute) still gate protected
+  // components on `loading`, so there's no flash of protected content.
+  // Blocking globally caused white-screen-on-link-tap in sandboxed
+  // in-app browsers (iMessage / SFSafariViewController) where
+  // Firebase's localStorage persistence can hang for seconds.
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
   if (loading && !isPublicPath) {
     return (
@@ -132,31 +126,16 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingOverlay message="Verifying session..." />;
   if (!user) return <Navigate to="/" replace />;
-  if (user.status === 'pending') return <Navigate to="/pending" replace />;
   return <>{children}</>;
 }
 
 /**
- * ClinicRoute — every authenticated, non-pending user is a clinic since
- * the patient portal was removed.
+ * ClinicRoute — every authenticated user is a clinic. Kept as a
+ * separate name for symmetry with the routes that mount it.
  */
 export function ClinicRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingOverlay message="Verifying session..." />;
   if (!user) return <Navigate to="/" replace />;
-  if (user.status === 'pending') return <Navigate to="/pending" replace />;
-  return <>{children}</>;
-}
-
-/**
- * AdminRoute — Firebase-authenticated user with role='admin' in D1.
- * Stage B will move /admin behind Cloudflare Access at the edge; this
- * stays as a defense-in-depth check.
- */
-export function AdminRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingOverlay message="Verifying session..." />;
-  if (!user) return <Navigate to="/" replace />;
-  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
