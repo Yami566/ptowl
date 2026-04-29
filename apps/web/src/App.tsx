@@ -22,9 +22,6 @@ import { LandingPage } from './pages/LandingPage.js';
 const SchedulePage = lazy(() =>
   import('./pages/SchedulePage.js').then((m) => ({ default: m.SchedulePage })),
 );
-const CustomizePage = lazy(() =>
-  import('./pages/CustomizePage.js').then((m) => ({ default: m.CustomizePage })),
-);
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage.js').then((m) => ({ default: m.ProfilePage })),
 );
@@ -123,14 +120,6 @@ export function App() {
                   element={
                     <ClinicRoute>
                       <SchedulePage />
-                    </ClinicRoute>
-                  }
-                />
-                <Route
-                  path="/customize"
-                  element={
-                    <ClinicRoute>
-                      <CustomizePage />
                     </ClinicRoute>
                   }
                 />

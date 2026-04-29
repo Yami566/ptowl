@@ -57,9 +57,6 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: Props) {
               <Command.Item onSelect={() => go('/profile')} style={s.item}>
                 <span style={s.icon}>&#128100;</span> Profile
               </Command.Item>
-              <Command.Item onSelect={() => go('/customize')} style={s.item}>
-                <span style={s.icon}>&#9881;&#65039;</span> Customize
-              </Command.Item>
               <Command.Item onSelect={() => go('/customize/templates')} style={s.item}>
                 <span style={s.icon}>&#128196;</span> Templates
               </Command.Item>

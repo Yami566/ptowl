@@ -77,7 +77,6 @@ describe('Data Leakage Prevention', () => {
       'firebase.ts', // Firebase auth persistence (browserLocalPersistence)
       'useTheme.ts', // dark/light mode toggle
       'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
-      'OnboardingChecklist.tsx', // onboarding step progress
       // Phone number is the address (login identifier), not the credential.
       // Firebase OTP is the actual auth — knowing the number alone gains no access.
       // Persisting it is a one-tap-return UX win, not a sensitive-data leak.
@@ -154,11 +153,6 @@ describe('Authentication Security', () => {
     expect(landingFile).not.toContain('/auth/firebase');
   });
 
-  it('login page redirects to landing (phone auth is inline)', () => {
-    const loginFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LoginPage.tsx'), 'utf-8');
-    // LoginPage is a redirect stub — phone auth lives on LandingPage
-    expect(loginFile).toContain("navigate('/'");
-  });
 });
 
 // ── PII Protection ──

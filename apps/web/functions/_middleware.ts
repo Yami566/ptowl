@@ -28,7 +28,7 @@ interface JWTPayload {
 }
 
 /** Routes that require an authenticated, approved user */
-const PROTECTED_PREFIXES = ['/dashboard', '/schedule', '/customize', '/profile', '/admin'];
+const PROTECTED_PREFIXES = ['/dashboard', '/schedule', '/customize', '/profile'];
 
 /** Routes accessible without authentication */
 const PUBLIC_PATHS = ['/', '/pending', '/privacy', '/terms', '/security'];
@@ -76,11 +76,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const payload = await verifyJWTSignature(token, secret, 14 * 24 * 60 * 60);
   if (!payload) {
     return redirectTo(context.request.url, '/');
-  }
-
-  // Admin routes require admin role
-  if (path.startsWith('/admin') && payload.role !== 'admin') {
-    return redirectTo(context.request.url, '/dashboard');
   }
 
   // Signature valid — serve the page

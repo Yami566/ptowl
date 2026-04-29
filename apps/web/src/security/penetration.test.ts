@@ -302,22 +302,6 @@ describe('Route Protection & Auth Security', () => {
   });
 });
 
-// ── CustomizePage Navigation Security ──
-
-describe('CustomizePage Navigation Security', () => {
-  const customizeCode = () => readFile('pages/CustomizePage.tsx');
-
-  it('customize page uses react-router navigate (not window.location)', () => {
-    const code = customizeCode();
-    expect(code).toContain('useNavigate');
-    expect(code).toContain("navigate('/customize/templates')");
-    expect(code).toContain("navigate('/customize/print')");
-    // Should not use raw location manipulation
-    expect(code).not.toContain('window.location.href');
-    expect(code).not.toContain('window.location.assign');
-  });
-});
-
 // ── OwlLogo Navigation Security ──
 
 describe('OwlLogo Navigation Security', () => {
@@ -342,7 +326,6 @@ describe('OwlLogo Navigation Security', () => {
 
   it('auth pages do NOT pass linkTo to OwlLogo (not clickable)', () => {
     const authPages = [
-      'LoginPage.tsx',
       'RegisterPage.tsx',
       'ForgotPasswordPage.tsx',
       'ResetPasswordPage.tsx',
