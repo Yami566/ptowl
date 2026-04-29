@@ -1,0 +1,20 @@
+# Cloudflare Pages SPA fallback.
+#
+# React Router (BrowserRouter) handles client-side navigation, but when a
+# user pastes a URL like https://ptowl.com/dashboard directly into the
+# browser, refreshes on a deep route, or follows an external link, the
+# request hits CF Pages BEFORE React Router exists. CF looks for a real
+# file at /dashboard, doesn't find one, and 404s.
+#
+# This rule says: for ANY path (`/*`) where no real file exists, serve
+# index.html with a 200 status. The browser then loads the SPA, React
+# Router parses the URL, and the right page renders.
+#
+# Without this, /dashboard, /about, /privacy, /terms, /security, /profile,
+# /customize/templates, /customize/print, and /schedule/:id would all
+# 404 on direct access.
+#
+# CF Pages uses this only when no static asset matches. Real assets like
+# /assets/foo.js, /favicon.svg, /logo.svg etc. continue to serve normally.
+
+/*    /index.html   200
