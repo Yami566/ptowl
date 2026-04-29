@@ -1,13 +1,11 @@
 name: Deploy PtOwl
 
-# Fires only after the CI workflow succeeds on `main`. This gates the
-# production deploy on lint + typecheck + test + build all passing — so a
-# red CI can no longer coexist with a green deploy. Manual runs still work
-# via workflow_dispatch when you need to redeploy without a fresh push.
+# Fires on push to main directly. The build + verify steps below act as the
+# gate: if typecheck, tests, or build fail, the wrangler deploy steps
+# never run — production stays on the previous version. workflow_dispatch
+# is also enabled for manual re-runs from the Actions tab.
 on:
-  workflow_run:
-    workflows: ['CI']
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
 
@@ -21,10 +19,8 @@ concurrency:
 
 jobs:
   deploy:
-    # Skip if CI didn't succeed; manual dispatch always runs.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     environment:
       name: production
       url: https://ptowl.com
@@ -46,6 +42,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Self-gating: each of these steps fails the workflow if the
+      # corresponding check fails, so wrangler never deploys broken code.
+      - name: Typecheck (all workspaces)
+        run: pnpm -r typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
 
       - name: Build
         run: pnpm build
