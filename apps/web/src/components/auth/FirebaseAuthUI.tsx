@@ -34,25 +34,19 @@ export function FirebaseAuthUI() {
     ui.start(containerRef.current, {
       signInFlow: 'popup',
       signInOptions: [
-        // Phone — the existing path; new users still see this tile
-        {
-          provider: firebaseCompat.auth.PhoneAuthProvider.PROVIDER_ID,
-          recaptchaParameters: { size: 'invisible' },
-          defaultCountry: 'US',
-        },
-        // Google — enabled in Firebase console
-        firebaseCompat.auth.GoogleAuthProvider.PROVIDER_ID,
-        // Email-link (passwordless) — enabled in Firebase console
+        // Email + password only — simple, traditional sign-in flow.
+        // FirebaseUI renders email/password inputs, "Forgot password?"
+        // link (sends reset email via Firebase), and toggles between
+        // sign-in vs sign-up automatically based on whether the email
+        // already exists. No additional code needed.
+        //
+        // Requires Firebase Console → Authentication → Sign-in method
+        // → "Email/Password" enabled (with the Email link sub-option
+        // disabled if you only want password).
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
-          signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
-          forceSameDevice: false,
+          requireDisplayName: false,
         },
-        // Apple — only renders if enabled in Firebase console (requires
-        // an Apple Developer account + Services ID configuration). No
-        // harm leaving the entry here when disabled; FirebaseUI just
-        // omits the tile.
-        'apple.com',
       ],
       tosUrl: '/terms',
       privacyPolicyUrl: '/privacy',
