@@ -310,7 +310,10 @@ describe('OwlLogo Navigation Security', () => {
   it('OwlLogo uses react-router Link (not raw anchor)', () => {
     const code = logoCode();
     expect(code).toContain('import { Link }');
-    expect(code).toContain('<Link to={linkTo}');
+    // Whitespace-tolerant: prettier may reformat <Link> across multiple lines
+    // depending on attribute count; the security property is "uses Link with
+    // a `to` prop", not a literal one-line shape.
+    expect(code).toMatch(/<Link\s+to=\{linkTo\}/);
   });
 
   it('OwlLogo linkTo is only applied when prop is provided', () => {
@@ -325,11 +328,7 @@ describe('OwlLogo Navigation Security', () => {
   });
 
   it('auth pages do NOT pass linkTo to OwlLogo (not clickable)', () => {
-    const authPages = [
-      'RegisterPage.tsx',
-      'ForgotPasswordPage.tsx',
-      'ResetPasswordPage.tsx',
-    ];
+    const authPages = ['RegisterPage.tsx', 'ForgotPasswordPage.tsx', 'ResetPasswordPage.tsx'];
     for (const page of authPages) {
       try {
         const code = fs.readFileSync(path.join(WEB_SRC, 'pages', page), 'utf-8');
