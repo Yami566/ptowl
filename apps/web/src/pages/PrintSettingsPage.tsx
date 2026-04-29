@@ -1,25 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { PageLayout } from '../components/layout/PageLayout.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { usePrintSettings } from '../hooks/usePrintSettings.js';
-import { useOwlReaction } from '../hooks/useOwlReaction.js';
 
 export function PrintSettingsPage() {
   usePageTitle('Print Settings');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { settings, updateSettings, resetSettings } = usePrintSettings();
-  const owlReaction = useOwlReaction();
 
   if (!user) return null;
-
-  const handleSave = () => {
-    owlReaction.onSaveSuccess();
-    toast.success('Settings saved!');
-  };
 
   return (
     <PageLayout>
@@ -27,8 +19,15 @@ export function PrintSettingsPage() {
       <header style={s.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/" />
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
-          <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
-          <button style={s.logoutBtn} onClick={logout}>Logout</button>
+          <details style={s.menuRoot} className="ptowl-menu">
+            <summary style={s.menuSummary} aria-label="Open profile menu">Profile &#9662;</summary>
+            <div style={s.menuPanel} role="menu">
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/dashboard')}>Dashboard</button>
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/profile')}>Profile &amp; Clinic Info</button>
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/customize/templates')}>Edit Templates</button>
+              <button style={{ ...s.menuItem, ...s.menuItemDanger }} role="menuitem" onClick={logout}>Sign out</button>
+            </div>
+          </details>
         </div>
       </header>
 
@@ -145,15 +144,12 @@ export function PrintSettingsPage() {
           </div>
         </div>
 
+        <p style={s.autoSaveNote}>
+          Settings save automatically as you change them.
+        </p>
         <div style={s.actions} className="print-settings-actions">
           <button style={s.resetBtn} onClick={resetSettings}>Reset to Defaults</button>
           <button style={s.previewBtn} onClick={() => window.print()}>Print Preview</button>
-          <button
-            style={s.saveBtn}
-            onClick={handleSave}
-          >
-            Save Settings
-          </button>
         </div>
       </main>
     </div>
@@ -167,12 +163,11 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)',
   },
-  backBtn: {
-    padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
-  },
-  logoutBtn: {
-    padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
-  },
+  menuRoot: { position: 'relative' as const },
+  menuSummary: { listStyle: 'none' as const, cursor: 'pointer', padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', userSelect: 'none' as const },
+  menuPanel: { position: 'absolute' as const, top: 'calc(100% + 0.25rem)', right: 0, minWidth: '12rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: '0.25rem', display: 'flex', flexDirection: 'column' as const, gap: '0.125rem', zIndex: 50 },
+  menuItem: { textAlign: 'left' as const, padding: '0.5rem 0.75rem', background: 'transparent', border: 'none', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', cursor: 'pointer' },
+  menuItemDanger: { color: 'var(--red-mid)', marginTop: '0.25rem', borderTop: '1px solid var(--gray-mid)', paddingTop: '0.5rem', borderRadius: 0 },
   main: { maxWidth: 'clamp(500px, 45vw, 840px)', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },
@@ -205,8 +200,8 @@ const s: Record<string, React.CSSProperties> = {
     padding: '0.5rem 1rem', background: 'var(--orange-light)', color: 'var(--dark)',
     borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer',
   },
-  saveBtn: {
-    padding: '0.5rem 1.25rem', background: 'var(--green-mid)', color: 'white',
-    borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
+  autoSaveNote: {
+    fontSize: '0.75rem', color: 'var(--gray-text)', fontStyle: 'italic' as const,
+    marginTop: '0.5rem', marginBottom: '0', textAlign: 'right' as const,
   },
 };

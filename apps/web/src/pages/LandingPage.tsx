@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, Suspense, lazy } from 'react';
+import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
@@ -77,18 +77,6 @@ function DemoCalendarSection() {
 export function LandingPage() {
   usePageTitle('Log In');
   const { user, loading } = useAuth();
-  const [alienActive, setAlienActive] = useState(false);
-
-  // Alien easter egg — triggers when user highlights "until the aliens come."
-  const handleAlienSelect = useCallback(() => {
-    const sel = window.getSelection()?.toString().trim().toLowerCase();
-    if (sel && sel.includes('until the aliens come')) {
-      setAlienActive(true);
-      const t = setTimeout(() => setAlienActive(false), 4000);
-      return () => clearTimeout(t);
-    }
-    return undefined;
-  }, []);
 
   // Show loading while session restores — warm message for returning users
   if (loading) {
@@ -111,22 +99,21 @@ export function LandingPage() {
       <section style={styles.hero} className="landing-fade-in landing-hero">
         <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.5rem' }}>
           <OwlLogo size="lg" linkTo="/" />
-          {alienActive && (
-            <div className="alien-easter-egg" aria-hidden="true">
-              <span className="alien-ufo">&#128760;</span>
-              <span className="alien-beam" />
-              <span className="alien-cow">&#128004;</span>
-            </div>
-          )}
         </div>
-        <h1 style={styles.headline}>The fastest schedule assistant on earth.</h1>
-        <p style={styles.alienSubtext} onMouseUp={handleAlienSelect} onTouchEnd={handleAlienSelect}>
-          until the aliens come.
-        </p>
+        <h1 style={styles.headline}>Stop scheduling. Start treating.</h1>
         <p style={styles.subheadline}>
           Create and print patient schedules in under <strong>5 keypresses</strong>. Built for
-          physical therapists who value speed over clicks.
+          medical and dental providers, because your schedule shouldn&apos;t take longer than your
+          coffee order.
         </p>
+
+        {/* Beta badge — sits directly above the auth card so it's
+            visible at the moment of conversion (sign-in). */}
+        <div style={styles.betaBadge} aria-label="Free beta, powered by Claude">
+          <span style={styles.betaPill}>Free beta</span>
+          <span style={styles.betaSep}>·</span>
+          <span style={styles.betaPoweredBy}>Powered by Claude</span>
+        </div>
 
         {/* FirebaseUI — Google's drop-in pre-built sign-in widget. The
             providers it renders (Phone, Google, Email-link, optionally
@@ -153,19 +140,25 @@ export function LandingPage() {
         className="landing-fade-in landing-fade-in-delay-2 landing-footer"
       >
         <div style={styles.footerLinks}>
-          <a href="/about" style={styles.footerLink}>
-            About
-          </a>
-          <a href="/privacy" style={styles.footerLink}>
-            Privacy
-          </a>
-          <a href="/terms" style={styles.footerLink}>
-            Terms
-          </a>
-          <a href="/security" style={styles.footerLink}>
-            Security
-          </a>
+          <a href="/about" style={styles.footerLink}>About</a>
+          <a href="/privacy" style={styles.footerLink}>Privacy</a>
+          <a href="/terms" style={styles.footerLink}>Terms</a>
+          <a href="/security" style={styles.footerLink}>Security</a>
+          <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">Status</a>
+          <a href="mailto:help@ptowl.com" style={styles.footerLink}>Help</a>
         </div>
+        <p style={styles.footerPoweredBy}>
+          Powered by{' '}
+          <a
+            href="https://www.anthropic.com/api"
+            style={styles.footerPoweredByLink}
+            rel="noopener"
+            target="_blank"
+          >
+            Claude
+          </a>
+          {' '}&middot; Free during beta
+        </p>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
         </p>
@@ -195,16 +188,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--dark)',
     lineHeight: 1.15,
     margin: '1.5rem 0 1rem',
-  },
-  alienSubtext: {
-    fontSize: '0.8rem',
-    color: 'var(--gray-text)',
-    opacity: 0.5,
-    fontStyle: 'italic',
-    marginTop: '-0.5rem',
-    marginBottom: '0.75rem',
-    cursor: 'default',
-    userSelect: 'all' as const,
   },
   subheadline: {
     fontSize: '1.1rem',
@@ -257,8 +240,9 @@ const styles: Record<string, React.CSSProperties> = {
   footerLinks: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '1.5rem',
-    marginBottom: '0.75rem',
+    gap: '1rem',
+    marginBottom: '0.5rem',
+    flexWrap: 'wrap' as const,
   },
   footerLink: {
     fontSize: '0.85rem',
@@ -267,9 +251,43 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.5rem 0.75rem',
     display: 'inline-block',
   },
+  footerPoweredBy: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    marginBottom: '0.25rem',
+  },
+  footerPoweredByLink: {
+    color: 'var(--green-dark)',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
   footerCopy: {
     fontSize: '0.75rem',
     color: 'var(--gray-text)',
     opacity: 0.6,
+  },
+  betaBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.375rem 0.875rem',
+    margin: '0 auto 1rem',
+    background: 'var(--green-bg)',
+    border: '1px solid var(--green-light)',
+    borderRadius: '999px',
+    fontSize: '0.75rem',
+    color: 'var(--green-dark)',
+    fontWeight: 600,
+    letterSpacing: '0.02em',
+  },
+  betaPill: {
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.06em',
+  },
+  betaSep: {
+    opacity: 0.5,
+  },
+  betaPoweredBy: {
+    color: 'var(--green-dark)',
   },
 };

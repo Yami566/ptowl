@@ -14,11 +14,13 @@ export function TermsOfServicePage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Terms of Service</h1>
-          <p style={styles.updated}>Last updated: March 21, 2026</p>
+          <p style={styles.updated}>Last updated: April 29, 2026</p>
 
           <p style={styles.intro}>
             Welcome to Patient Owl. By using our service, you agree to these terms. They are
             straightforward — we want you to understand exactly what you are signing up for.
+            Patient Owl is currently in free beta; we may introduce paid plans in the future and
+            will give existing users advance notice before any pricing change.
           </p>
 
           <section style={styles.section}>
@@ -53,11 +55,16 @@ export function TermsOfServicePage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>3. Account Registration</h2>
             <p style={styles.text}>
-              To use Patient Owl, you must create an account using Google Sign-In or phone SMS
-              verification. You are responsible for maintaining the security of your account
-              credentials and for all activity that occurs under your account. If you suspect
-              unauthorized access, notify us immediately at{' '}
+              To use Patient Owl, you must create an account by signing in via Google, Apple,
+              email magic link, or SMS (handled through Firebase Authentication). You are
+              responsible for maintaining the security of your account credentials and for all
+              activity that occurs under your account. If you suspect unauthorized access, notify
+              us immediately at{' '}
               <a href="mailto:help@ptowl.com" style={styles.inlineLink}>help@ptowl.com</a>.
+            </p>
+            <p style={styles.text}>
+              You may request deletion of your account and associated data at any time by emailing
+              the same address. We&apos;ll process the request within 30 days.
             </p>
           </section>
 

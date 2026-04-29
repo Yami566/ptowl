@@ -19,9 +19,14 @@ export function NotFoundPage() {
             It may have been moved, removed, or never existed.
           </p>
 
-          <Link to="/dashboard" style={styles.button}>
-            Back to Dashboard
-          </Link>
+          <div style={styles.buttonRow}>
+            <Link to="/dashboard" style={styles.button}>
+              Back to Dashboard
+            </Link>
+            <Link to="/" style={styles.buttonSecondary}>
+              Home
+            </Link>
+          </div>
         </div>
       </div>
     </main>
@@ -46,6 +51,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   brand: {
     marginBottom: '2rem',
+    transition: 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    cursor: 'pointer',
   },
   card: {
     background: 'var(--white)',
@@ -76,11 +83,28 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.6,
     marginBottom: '2rem',
   },
+  buttonRow: {
+    display: 'flex',
+    gap: '0.5rem',
+    justifyContent: 'center',
+    flexWrap: 'wrap' as const,
+  },
   button: {
     display: 'inline-block',
     padding: '0.75rem 1.5rem',
     background: 'var(--green-mid)',
     color: 'white',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+  buttonSecondary: {
+    display: 'inline-block',
+    padding: '0.75rem 1.5rem',
+    background: 'var(--white)',
+    color: 'var(--green-dark)',
+    border: '1px solid var(--green-mid)',
     borderRadius: 'var(--radius)',
     fontSize: '1rem',
     fontWeight: 600,

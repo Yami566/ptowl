@@ -21,12 +21,14 @@ export function SecurityPage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Security</h1>
-          <p style={styles.updated}>Last updated: March 21, 2026</p>
+          <p style={styles.updated}>Last updated: April 29, 2026</p>
 
           <p style={styles.intro}>
             Security is not an afterthought at Patient Owl — it is baked into every layer of the
-            stack. Here is a transparent look at how we protect your data, and more importantly, how
-            we designed the system so there is less to protect in the first place.
+            stack. Here is a transparent look at how we protect your data, and more importantly,
+            how we designed the system so there is less to protect in the first place. Sign-in is
+            handled by Firebase Authentication (Google, Apple, email magic link, or SMS); the API
+            verifies Firebase ID tokens against Google&apos;s JWKS on every request.
           </p>
 
           <section style={styles.section}>
@@ -34,11 +36,17 @@ export function SecurityPage() {
             <div style={styles.highlight}>
               <p style={styles.highlightText}>
                 The most secure data is data that was never collected. Patient Owl is architected
-                around this principle. Our proprietary de-identification methodology ensures that
-                real patient names and protected health information are never stored in our system.
-                We do not collect diagnoses, treatment plans, insurance details, or any clinical
-                records. This means the traditional attack surface that healthcare software must
-                defend against simply does not exist in Patient Owl.
+                around this principle. We collect: provider phone/email, clinic info, patient
+                initials (mapped to sports aliases), and an optional patient email (encrypted,
+                used only for reminder delivery). We don&apos;t collect: real patient names,
+                diagnoses, treatment plans, insurance details, or any clinical records. The
+                traditional attack surface that healthcare software must defend against simply
+                does not exist in Patient Owl.
+              </p>
+              <p style={styles.highlightText}>
+                <strong>Patient Owl is not a HIPAA-compliant system.</strong> The sports-alias
+                approach is a privacy failsafe, not a substitute for HIPAA. Don&apos;t use Patient
+                Owl as the system of record for protected health information.
               </p>
             </div>
           </section>

@@ -107,16 +107,36 @@ export function TemplateEditorPage() {
       <header style={s.header} className="ptowl-header">
         <OwlLogo size="md" linkTo="/" />
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
-          <button style={s.backBtn} onClick={() => navigate('/customize')}>Back to Customize</button>
-          <button style={s.logoutBtn} onClick={logout}>Logout</button>
+          <details style={s.menuRoot} className="ptowl-menu">
+            <summary style={s.menuSummary} aria-label="Open profile menu">Profile &#9662;</summary>
+            <div style={s.menuPanel} role="menu">
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/dashboard')}>Dashboard</button>
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/profile')}>Profile &amp; Clinic Info</button>
+              <button style={s.menuItem} role="menuitem" onClick={() => navigate('/customize/print')}>Print Settings</button>
+              <button style={{ ...s.menuItem, ...s.menuItemDanger }} role="menuitem" onClick={logout}>Sign out</button>
+            </div>
+          </details>
         </div>
       </header>
 
       <main id="main-content" style={s.main} className="ptowl-main">
         <h1 style={s.title}>Edit Templates</h1>
         <p style={s.subtitle}>
-          Customize your 6 schedule templates. Changes only affect new schedules.
+          Customize your schedule templates. Changes only affect new schedules.
         </p>
+
+        {templates.length === 0 && (
+          <div style={s.emptyState} role="status" aria-live="polite">
+            <div style={s.emptyIcon} aria-hidden="true">🦉</div>
+            <h3 style={s.emptyTitle}>You&apos;ve removed all templates.</h3>
+            <p style={s.emptyText}>
+              Templates power the dashboard hotkeys (2-6) for one-press schedule creation.
+              Email <a href="mailto:help@ptowl.com" style={s.emptyLink}>help@ptowl.com</a> to
+              restore the defaults, or use the keyboard wizard (press <kbd style={s.emptyKbd}>1</kbd>
+              {' '}on the dashboard) to create custom schedules without a template.
+            </p>
+          </div>
+        )}
 
         <div style={s.grid} className="template-grid">
           {templates.map((template) => (
@@ -220,12 +240,17 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     padding: '1rem 2rem', background: 'var(--white)', borderBottom: '1px solid var(--gray-mid)',
   },
-  backBtn: {
-    padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem',
-  },
-  logoutBtn: {
-    padding: '0.5rem 1rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500,
-  },
+  menuRoot: { position: 'relative' as const },
+  menuSummary: { listStyle: 'none' as const, cursor: 'pointer', padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', userSelect: 'none' as const },
+  menuPanel: { position: 'absolute' as const, top: 'calc(100% + 0.25rem)', right: 0, minWidth: '12rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: '0.25rem', display: 'flex', flexDirection: 'column' as const, gap: '0.125rem', zIndex: 50 },
+  menuItem: { textAlign: 'left' as const, padding: '0.5rem 0.75rem', background: 'transparent', border: 'none', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', cursor: 'pointer' },
+  menuItemDanger: { color: 'var(--red-mid)', marginTop: '0.25rem', borderTop: '1px solid var(--gray-mid)', paddingTop: '0.5rem', borderRadius: 0 },
+  emptyState: { textAlign: 'center' as const, padding: '3rem 1.5rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px dashed var(--gray-mid)', marginBottom: '1.5rem' },
+  emptyIcon: { fontSize: '2.5rem', marginBottom: '0.5rem' },
+  emptyTitle: { fontSize: '1.1rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '0.5rem' },
+  emptyText: { color: 'var(--gray-text)', fontSize: '0.9rem', lineHeight: 1.6, maxWidth: '480px', margin: '0 auto' },
+  emptyLink: { color: 'var(--green-dark)', fontWeight: 600 },
+  emptyKbd: { display: 'inline-block', padding: '0.125rem 0.375rem', background: 'var(--gray-light)', border: '1px solid var(--gray-mid)', borderRadius: '3px', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 600 },
   main: { maxWidth: 'clamp(320px, 92vw, 1200px)', margin: '0 auto', padding: '2rem 1.5rem' },
   title: { fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' },
   subtitle: { color: 'var(--gray-text)', marginBottom: '1.5rem' },

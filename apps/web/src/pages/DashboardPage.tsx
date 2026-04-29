@@ -12,7 +12,6 @@ import { SchedulePreviewOverlay } from '../components/schedule/SchedulePreviewOv
 import { ScheduleWizard } from '../components/schedule/ScheduleWizard.js';
 import { DashboardWizard } from '../components/schedule/DashboardWizard.js';
 import { ScheduleEditor } from '../components/schedule/ScheduleEditor.js';
-import { OnboardingChecklist } from '../components/OnboardingChecklist.js';
 import type { WizardResult } from '../components/schedule/wizard-constants.js';
 import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
 import { generateScheduleWithRRule } from '@ptowl/shared';
@@ -65,14 +64,60 @@ export function DashboardPage() {
   // #8 Drag-to-reorder state
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
-  // #9 Smart Greeting — time-of-day aware
+  // Smart Greeting — hour bucket picks tone bracket; day-of-week picks variant.
+  // No RNG: deterministic per visit so the same user opening the dashboard
+  // twice in a row at the same hour sees the same line. ~28 variants total.
   const greeting = useMemo(() => {
-    const h = new Date().getHours();
+    const now = new Date();
+    const h = now.getHours();
+    const dow = now.getDay(); // Sun=0..Sat=6
     const name = user?.display_name;
-    if (h < 12) return name ? `Good morning, ${name}` : 'Good morning';
-    if (h < 17) return name ? `Good afternoon, ${name}` : 'Good afternoon';
-    if (h < 20) return name ? `Good evening, ${name}` : 'Good evening';
-    return name ? `Working late, ${name}?` : 'Working late?';
+    const sub = (s: string): string => (name ? s.replace(/\{Name\}/g, name) : s.replace(/, \{Name\}/g, '').replace(/ \{Name\}/g, '').replace(/\{Name\}/g, ''));
+
+    // Morning < 12, afternoon < 17, evening < 20, late >= 20.
+    // Each bucket has 7 variants indexed by day-of-week (Sun=0..Sat=6).
+    const variants: string[] =
+      h < 12
+        ? [
+            'Sunday rounds, {Name}. Owls work weekends.',
+            "Game day, Coach. Let's start the week strong.",
+            "Charts cleared, {Name}. Tuesday's looking clean.",
+            'Hump day. The owl believes in you, {Name}.',
+            'Almost Friday, Coach. Hold the line.',
+            'Friday, {Name}. Schedules first, weekend second.',
+            'Saturday rounds, {Name}? The owl is impressed.',
+          ]
+        : h < 17
+          ? [
+              'Sunday afternoon. Easy schedules ahead, {Name}.',
+              "Monday halftime, Coach. You're winning.",
+              "Afternoon, {Name}. Schedule like nobody's watching.",
+              'Mid-week, {Name}. 5 keys and done — go.',
+              "Thursday's a good day to be a doctor, {Name}.",
+              'Friday afternoon, Coach. Almost home.',
+              "Saturday clinic, {Name}? You're a hero.",
+            ]
+          : h < 20
+            ? [
+                'Sunday evening prep, {Name}. The week is yours.',
+                'Monday wrap, Coach. Mark it as a win.',
+                'Tuesday evening, {Name}. Easy charts before dinner.',
+                'Wednesday wrap-up. The owl is proud, {Name}.',
+                'Thursday evening, Coach. One more push to Friday.',
+                'Friday evening, {Name}. Schedule. Print. Go home.',
+                'Saturday evening rounds? You earned the night, {Name}.',
+              ]
+            : [
+                'Sunday night, {Name}? The owl is concerned but supportive.',
+                "Monday night clinic? You're built different, Coach.",
+                'Late Tuesday, {Name}. Hydrate.',
+                'Wednesday late shift. The owl salutes you, {Name}.',
+                'Late Thursday, Coach. Tomorrow is the last whistle.',
+                'Friday night, {Name}? Print and run.',
+                'Saturday night clinic, {Name}? The owl is impressed and worried.',
+              ];
+
+    return sub(variants[dow] ?? variants[0]!);
   }, [user?.display_name]);
 
   // #1 Today's active schedules
@@ -81,51 +126,6 @@ export function DashboardPage() {
     () => schedules.filter((s) => s.start_date <= todayStr && s.end_date >= todayStr),
     [schedules, todayStr],
   );
-
-  // #5 Patient count — unique patient initials
-  const patientCount = useMemo(
-    () => new Set(schedules.map((s) => s.patient_initials)).size,
-    [schedules],
-  );
-
-  // #2 Schedule streak counter
-  const [streak, setStreak] = useState(0);
-  useEffect(() => {
-    const key = 'ptowl-streak-dates';
-    const stored: string[] = JSON.parse(localStorage.getItem(key) || '[]');
-    const today = new Date().toISOString().split('T')[0]!;
-    if (!stored.includes(today)) stored.push(today);
-    // Keep last 60 days only
-    const recent = stored.filter((d) => {
-      const diff = (new Date(today).getTime() - new Date(d).getTime()) / 86400000;
-      return diff < 60;
-    });
-    localStorage.setItem(key, JSON.stringify(recent));
-    // Count consecutive days ending today
-    let count = 0;
-    const sorted = [...recent].sort().reverse();
-    for (let i = 0; i < sorted.length; i++) {
-      const expected = new Date(today);
-      expected.setDate(expected.getDate() - i);
-      if (sorted[i] === expected.toISOString().split('T')[0]) count++;
-      else break;
-    }
-    setStreak(count);
-  }, []);
-
-  // #3 Mini calendar heatmap data — 30 days from today
-  const heatmapDays = useMemo(() => {
-    const days: Array<{ date: string; active: boolean; isToday: boolean }> = [];
-    const now = new Date();
-    for (let i = -14; i <= 15; i++) {
-      const d = new Date(now);
-      d.setDate(d.getDate() + i);
-      const iso = d.toISOString().split('T')[0]!;
-      const active = schedules.some((s) => s.start_date <= iso && s.end_date >= iso);
-      days.push({ date: iso, active, isToday: i === 0 });
-    }
-    return days;
-  }, [schedules]);
 
   // #8 Drag-to-reorder handlers
   const handleDragStart = useCallback((idx: number) => setDragIdx(idx), []);
@@ -391,32 +391,51 @@ export function DashboardPage() {
         <header style={styles.header} className="ptowl-header">
           <OwlLogo size="md" linkTo="/" />
           <div style={styles.headerRight} className="ptowl-header-actions">
-            <button style={styles.headerBtn} onClick={() => navigate('/customize')}>
-              Customize
-            </button>
-            <button style={styles.headerBtn} onClick={() => navigate('/profile')}>
-              Profile
-            </button>
-            <button style={styles.logoutBtn} onClick={logout}>
-              Logout
-            </button>
+            <details style={styles.menuRoot} className="ptowl-menu">
+              <summary style={styles.menuSummary} aria-label="Open profile menu">
+                Profile &#9662;
+              </summary>
+              <div style={styles.menuPanel} role="menu">
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/profile')}
+                >
+                  Profile &amp; Clinic Info
+                </button>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/customize/templates')}
+                >
+                  Edit Templates
+                </button>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/customize/print')}
+                >
+                  Print Settings
+                </button>
+                <button
+                  style={{ ...styles.menuItem, ...styles.menuItemDanger }}
+                  role="menuitem"
+                  onClick={logout}
+                >
+                  Sign out
+                </button>
+              </div>
+            </details>
           </div>
         </header>
 
         <main id="main-content" style={styles.main} className="ptowl-main">
-          <OnboardingChecklist />
           <div style={styles.welcome}>
             <h1 style={styles.welcomeTitle} className="ptowl-page-title">
               {greeting}
             </h1>
             <p style={styles.welcomeText}>
-              Create a new schedule below, or press 2-6 for a preset
-              {patientCount > 0 && (
-                <span style={styles.patientBadge}>
-                  {patientCount} patient{patientCount !== 1 ? 's' : ''}
-                </span>
-              )}
-              {streak > 1 && <span style={styles.streakBadge}>{streak}-day streak</span>}
+              Create a new schedule below, or press 2-6 for a preset.
             </p>
           </div>
 
@@ -566,101 +585,54 @@ export function DashboardPage() {
             )}
           </div>
 
-          {/* #3 Mini Calendar Heatmap */}
-          {schedules.length > 0 && (
-            <div style={styles.heatmapWrap}>
-              <h4 style={styles.heatmapTitle}>30-Day Activity</h4>
-              <div style={styles.heatmapGrid}>
-                {heatmapDays.map((day) => (
-                  <div
-                    key={day.date}
-                    title={day.date}
-                    style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '2px',
-                      background: day.isToday
-                        ? 'var(--orange-mid)'
-                        : day.active
-                          ? 'var(--green-mid)'
-                          : 'var(--gray-light)',
-                      border: day.isToday ? '1px solid var(--orange-mid)' : 'none',
-                    }}
-                  />
-                ))}
-              </div>
-              <div style={styles.heatmapLegend}>
-                <span style={styles.heatmapLegendDot}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 2,
-                      background: 'var(--gray-light)',
-                      display: 'inline-block',
-                    }}
-                  />{' '}
-                  No activity
-                </span>
-                <span style={styles.heatmapLegendDot}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 2,
-                      background: 'var(--green-mid)',
-                      display: 'inline-block',
-                    }}
-                  />{' '}
-                  Active
-                </span>
-                <span style={styles.heatmapLegendDot}>
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: 2,
-                      background: 'var(--orange-mid)',
-                      display: 'inline-block',
-                    }}
-                  />{' '}
-                  Today
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Saved Schedules */}
           {schedules.length > 0 ? (
             <div style={styles.savedSection}>
               <h3 style={styles.savedTitle}>Saved Schedules</h3>
               <div style={styles.savedList}>
-                {schedules.map((sched, idx) => (
-                  <button
-                    key={sched.id}
-                    style={{
-                      ...styles.savedCard,
-                      ...(dragIdx === idx ? { opacity: 0.5 } : {}),
-                    }}
-                    className="dash-saved-card"
-                    draggable
-                    onDragStart={() => handleDragStart(idx)}
-                    onDragOver={handleDragOver}
-                    onDrop={() => handleDrop(idx)}
-                    onDragEnd={() => setDragIdx(null)}
-                    onClick={() => openPreview(sched.id)}
-                    aria-label={`Schedule for ${sched.patient_alias || sched.patient_initials}`}
-                  >
-                    <span style={styles.dragHandle}>&#8942;&#8942;</span>
-                    <span style={styles.savedAlias}>
-                      {sched.patient_alias || sched.patient_initials}
-                    </span>
-                    <span style={styles.savedInfo}>
-                      {sched.sessions_per_week}x/wk &middot; {sched.duration_weeks} wks &middot;{' '}
-                      {sched.start_date}
-                    </span>
-                  </button>
-                ))}
+                {schedules.map((sched, idx) => {
+                  const status =
+                    sched.end_date < todayStr
+                      ? 'past'
+                      : sched.start_date > todayStr
+                        ? 'upcoming'
+                        : 'active';
+                  const chipStyle =
+                    status === 'active'
+                      ? styles.chipActive
+                      : status === 'upcoming'
+                        ? styles.chipUpcoming
+                        : styles.chipPast;
+                  const chipLabel =
+                    status === 'active' ? 'Active' : status === 'upcoming' ? 'Upcoming' : 'Past';
+                  return (
+                    <button
+                      key={sched.id}
+                      style={{
+                        ...styles.savedCard,
+                        ...(dragIdx === idx ? { opacity: 0.5 } : {}),
+                      }}
+                      className="dash-saved-card"
+                      draggable
+                      onDragStart={() => handleDragStart(idx)}
+                      onDragOver={handleDragOver}
+                      onDrop={() => handleDrop(idx)}
+                      onDragEnd={() => setDragIdx(null)}
+                      onClick={() => openPreview(sched.id)}
+                      aria-label={`Schedule for ${sched.patient_alias || sched.patient_initials} (${chipLabel.toLowerCase()})`}
+                    >
+                      <span style={styles.dragHandle}>&#8942;&#8942;</span>
+                      <span style={styles.savedAlias}>
+                        {sched.patient_alias || sched.patient_initials}
+                      </span>
+                      <span style={{ ...styles.statusChip, ...chipStyle }}>{chipLabel}</span>
+                      <span style={styles.savedInfo}>
+                        {sched.sessions_per_week}x/wk &middot; {sched.duration_weeks} wks &middot;{' '}
+                        {sched.start_date}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -668,11 +640,11 @@ export function DashboardPage() {
               <div style={styles.emptyIcon} aria-hidden="true">
                 🦉
               </div>
-              <h3 style={styles.emptyTitle}>You haven't created a schedule yet</h3>
+              <h3 style={styles.emptyTitle}>You haven&apos;t created a schedule yet</h3>
               <p style={styles.emptyText}>
                 Press <kbd style={styles.emptyKbd}>1</kbd> to launch the wizard, or one of{' '}
                 <kbd style={styles.emptyKbd}>2</kbd>–<kbd style={styles.emptyKbd}>6</kbd> for a
-                preset template. From phone in to printed schedule in three keypresses.
+                preset template. From phone in to printed schedule in five keypresses.
               </p>
               <p style={styles.emptyHint}>
                 New here? The{' '}
@@ -773,21 +745,52 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid var(--gray-mid)',
   },
   headerRight: { display: 'flex', gap: '0.5rem' },
-  headerBtn: {
+  menuRoot: {
+    position: 'relative' as const,
+  },
+  menuSummary: {
+    listStyle: 'none' as const,
+    cursor: 'pointer',
     padding: '0.625rem 1rem',
     background: 'var(--gray-light)',
     borderRadius: 'var(--radius)',
     fontSize: '0.875rem',
     fontWeight: 500,
     color: 'var(--dark)',
+    userSelect: 'none' as const,
   },
-  logoutBtn: {
-    padding: '0.5rem 1rem',
-    background: 'var(--red-light)',
-    color: 'var(--red-mid)',
+  menuPanel: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 0.25rem)',
+    right: 0,
+    minWidth: '12rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--gray-mid)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+    padding: '0.25rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.125rem',
+    zIndex: 50,
+  },
+  menuItem: {
+    textAlign: 'left' as const,
+    padding: '0.5rem 0.75rem',
+    background: 'transparent',
+    border: 'none',
     borderRadius: 'var(--radius)',
     fontSize: '0.875rem',
     fontWeight: 500,
+    color: 'var(--dark)',
+    cursor: 'pointer',
+  },
+  menuItemDanger: {
+    color: 'var(--red-mid)',
+    marginTop: '0.25rem',
+    borderTop: '1px solid var(--gray-mid)',
+    paddingTop: '0.5rem',
+    borderRadius: 0,
   },
   main: {
     maxWidth: 'clamp(320px, 95vw, 1400px)',
@@ -1002,26 +1005,28 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 0.125rem',
   },
 
-  // #9 Smart Greeting + #5 Patient Count + #2 Streak
-  patientBadge: {
+  // Saved-schedule status chip (Active / Upcoming / Past)
+  statusChip: {
     display: 'inline-block',
-    marginLeft: '0.75rem',
     padding: '0.15rem 0.5rem',
+    borderRadius: '999px',
+    fontSize: '0.7rem',
+    fontWeight: 600,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
+    marginLeft: '0.5rem',
+  },
+  chipActive: {
     background: 'var(--green-bg)',
     color: 'var(--green-dark)',
-    borderRadius: '999px',
-    fontSize: '0.75rem',
-    fontWeight: 600,
   },
-  streakBadge: {
-    display: 'inline-block',
-    marginLeft: '0.5rem',
-    padding: '0.15rem 0.5rem',
+  chipUpcoming: {
     background: 'var(--orange-light)',
     color: 'var(--orange-mid)',
-    borderRadius: '999px',
-    fontSize: '0.75rem',
-    fontWeight: 600,
+  },
+  chipPast: {
+    background: 'var(--gray-light)',
+    color: 'var(--gray-text)',
   },
 
   // #1 Today's Card
@@ -1109,34 +1114,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.7rem',
     fontWeight: 600,
     lineHeight: 1.4,
-  },
-
-  // #3 Mini calendar heatmap
-  heatmapWrap: {
-    marginBottom: '1.25rem',
-  },
-  heatmapTitle: {
-    fontSize: '0.8rem',
-    fontWeight: 600,
-    color: 'var(--gray-text)',
-    marginBottom: '0.375rem',
-  },
-  heatmapGrid: {
-    display: 'flex',
-    gap: '3px',
-    flexWrap: 'wrap' as const,
-  },
-  heatmapLegend: {
-    display: 'flex',
-    gap: '0.75rem',
-    marginTop: '0.375rem',
-    fontSize: '0.65rem',
-    color: 'var(--gray-text)',
-  },
-  heatmapLegendDot: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.25rem',
   },
 
   // #8 Drag handle

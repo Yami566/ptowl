@@ -16,6 +16,7 @@ export function ProfilePage() {
   const [clinicAddress, setClinicAddress] = useState('');
   const [clinicPhone, setClinicPhone] = useState('');
   const [clinicEmail, setClinicEmail] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   // MFA state
@@ -34,6 +35,7 @@ export function ProfilePage() {
       setClinicAddress(user.clinic_address || '');
       setClinicPhone(user.clinic_phone || '');
       setClinicEmail(user.clinic_email || '');
+      setLogoUrl(user.logo_url || '');
 
       // Check MFA status
       const status = getMFAStatus();
@@ -53,6 +55,7 @@ export function ProfilePage() {
         clinic_address: clinicAddress,
         clinic_phone: clinicPhone,
         clinic_email: clinicEmail,
+        logo_url: logoUrl || null,
       }),
     });
 
@@ -75,7 +78,6 @@ export function ProfilePage() {
         <OwlLogo size="md" linkTo="/" />
         <div style={{ display: 'flex', gap: '0.5rem' }} className="ptowl-header-actions">
           <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <button style={styles.logoutBtn} onClick={logout}>Logout</button>
         </div>
       </header>
 
@@ -117,8 +119,8 @@ export function ProfilePage() {
             <span style={styles.infoValue}>{user.email}</span>
           </div>
           <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>Tier</span>
-            <span style={styles.infoValue}>{user.tier === 'paid' ? 'Paid' : 'Free'}</span>
+            <span style={styles.infoLabel}>Plan</span>
+            <span style={styles.infoValue}>Beta access</span>
           </div>
 
           <hr style={styles.divider} />
@@ -138,6 +140,24 @@ export function ProfilePage() {
           <label htmlFor="clinic-email" style={styles.label}>
             Clinic Email
             <input id="clinic-email" type="email" value={clinicEmail} onChange={(e) => setClinicEmail(e.target.value)} style={styles.input} maxLength={254} />
+          </label>
+          <label htmlFor="logo-url" style={styles.label}>
+            Logo URL <span style={styles.labelHint}>(optional — appears on printed schedule headers)</span>
+            <input
+              id="logo-url"
+              type="url"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              style={styles.input}
+              maxLength={500}
+              placeholder="https://your-logo-host.com/logo.png"
+              inputMode="url"
+            />
+            {logoUrl && (
+              <span style={styles.logoPreviewWrap}>
+                <img src={logoUrl} alt="Logo preview" style={styles.logoPreviewImg} />
+              </span>
+            )}
           </label>
 
           <button type="submit" style={styles.saveBtn} disabled={saving}>
@@ -304,6 +324,24 @@ export function ProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Account section — sign out + data deletion */}
+        <div style={styles.accountSection}>
+          <h3 style={styles.accountSectionTitle}>Account</h3>
+          <p style={styles.accountDesc}>
+            Need to delete your account and all associated data? Email{' '}
+            <a
+              href="mailto:help@ptowl.com?subject=Delete%20my%20PTowl%20account&body=Please%20delete%20my%20account%20and%20all%20associated%20data."
+              style={styles.accountLink}
+            >
+              help@ptowl.com
+            </a>
+            . We&apos;ll process the request within 30 days.
+          </p>
+          <button type="button" style={styles.signOutBtn} onClick={logout}>
+            Sign out
+          </button>
+        </div>
       </main>
     </div>
     </PageLayout>
@@ -329,6 +367,14 @@ const styles: Record<string, React.CSSProperties> = {
   input: { padding: '0.75rem', border: '1px solid var(--gray-mid)', borderRadius: 'var(--radius)', fontSize: '1rem' },
   textarea: { padding: '0.75rem', border: '1px solid var(--gray-mid)', borderRadius: 'var(--radius)', fontSize: '1rem', resize: 'vertical' as const },
   saveBtn: { padding: '0.75rem', background: 'var(--green-mid)', color: 'white', borderRadius: 'var(--radius)', fontSize: '1rem', fontWeight: 600, marginTop: '0.5rem' },
+  labelHint: { fontWeight: 400, color: 'var(--gray-text)', fontSize: '0.75rem', marginLeft: '0.25rem' },
+  logoPreviewWrap: { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-start', padding: '0.5rem', background: 'var(--off-white)', border: '1px solid var(--gray-mid)', borderRadius: 'var(--radius)', marginTop: '0.25rem' },
+  logoPreviewImg: { maxHeight: '48px', maxWidth: '160px', objectFit: 'contain' as const },
+  accountSection: { marginTop: '2rem', padding: '1.5rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-mid)' },
+  accountSectionTitle: { fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' },
+  accountDesc: { color: 'var(--gray-text)', fontSize: '0.875rem', lineHeight: 1.5, marginBottom: '1rem' },
+  accountLink: { color: 'var(--green-dark)', fontWeight: 600 },
+  signOutBtn: { padding: '0.625rem 1.25rem', background: 'var(--red-light)', color: 'var(--red-mid)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 600, border: '1px solid var(--red-mid)', cursor: 'pointer' },
   mfaSection: { marginTop: '2rem', padding: '1.5rem', background: 'var(--white)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--gray-mid)' },
   mfaSectionTitle: { fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' },
   mfaDesc: { color: 'var(--gray-text)', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.5 },

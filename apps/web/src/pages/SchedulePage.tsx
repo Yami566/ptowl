@@ -203,24 +203,52 @@ export function SchedulePage() {
             >
               Print
             </button>
-            <button
-              style={styles.viewToggle}
-              onClick={() => {
-                owlReaction.onShare();
-                handleNativeShare();
-              }}
-            >
-              Share
-            </button>
-            <button style={styles.viewToggle} onClick={openAddToCalendar}>
-              Add to Calendar
-            </button>
+            <details style={styles.menuRoot} className="ptowl-menu">
+              <summary style={styles.viewToggle as React.CSSProperties} aria-label="Open share menu">
+                Share &#9662;
+              </summary>
+              <div style={styles.menuPanel} role="menu">
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => {
+                    owlReaction.onShare();
+                    handleNativeShare();
+                  }}
+                >
+                  Send link
+                </button>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={openAddToCalendar}
+                >
+                  Add to calendar
+                </button>
+              </div>
+            </details>
             <button style={styles.backBtn} onClick={() => navigate('/dashboard')}>
               Back
             </button>
-            <button style={styles.logoutBtn} onClick={logout}>
-              Logout
-            </button>
+            <details style={styles.menuRoot} className="ptowl-menu">
+              <summary style={styles.menuSummary} aria-label="Open profile menu">
+                Profile &#9662;
+              </summary>
+              <div style={styles.menuPanel} role="menu">
+                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/profile')}>
+                  Profile &amp; Clinic Info
+                </button>
+                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/customize/templates')}>
+                  Edit Templates
+                </button>
+                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/customize/print')}>
+                  Print Settings
+                </button>
+                <button style={{ ...styles.menuItem, ...styles.menuItemDanger }} role="menuitem" onClick={logout}>
+                  Sign out
+                </button>
+              </div>
+            </details>
           </div>
         </header>
 
@@ -251,7 +279,16 @@ export function SchedulePage() {
 
         {/* Screen info bar */}
         <div style={styles.infoBar} className="no-print schedule-info-bar">
-          <h2 style={styles.patientName}>{schedule.patient_alias || schedule.patient_initials}</h2>
+          <div style={styles.patientNameWrap}>
+            <h2 style={styles.patientName}>
+              {schedule.patient_alias || schedule.patient_initials}
+            </h2>
+            {schedule.patient_alias && schedule.patient_initials && (
+              <span style={styles.patientInitials} aria-label="Patient initials">
+                ({schedule.patient_initials})
+              </span>
+            )}
+          </div>
           <span style={styles.dateRange}>
             {formatDate(schedule.start_date)} &ndash; {formatDate(schedule.end_date)}
           </span>
@@ -260,10 +297,6 @@ export function SchedulePage() {
 
         {/* Summary stats bar */}
         <div style={styles.statsBar} className="no-print schedule-stats-bar">
-          <div style={styles.statCard}>
-            <span style={styles.statNum}>{stats.total}</span>
-            <span style={styles.statLabel}>Total</span>
-          </div>
           <div style={styles.statCard}>
             <span style={{ ...styles.statNum, color: 'var(--gray-text)' }}>{stats.completed}</span>
             <span style={styles.statLabel}>Completed</span>
@@ -580,8 +613,15 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '1rem',
     flexWrap: 'wrap' as const,
   },
-  patientName: { fontSize: '1.25rem', fontWeight: 700, color: 'var(--dark)' },
+  patientNameWrap: { display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' as const },
+  patientName: { fontSize: '1.5rem', fontWeight: 800, color: 'var(--dark)', letterSpacing: '-0.01em' },
+  patientInitials: { fontSize: '0.85rem', color: 'var(--gray-text)', fontFamily: 'var(--font-mono)', fontWeight: 500 },
   dateRange: { fontSize: '0.875rem', color: 'var(--gray-text)' },
+  menuRoot: { position: 'relative' as const },
+  menuSummary: { listStyle: 'none' as const, cursor: 'pointer', padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', userSelect: 'none' as const },
+  menuPanel: { position: 'absolute' as const, top: 'calc(100% + 0.25rem)', right: 0, minWidth: '12rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: '0.25rem', display: 'flex', flexDirection: 'column' as const, gap: '0.125rem', zIndex: 50 },
+  menuItem: { textAlign: 'left' as const, padding: '0.5rem 0.75rem', background: 'transparent', border: 'none', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', cursor: 'pointer' },
+  menuItemDanger: { color: 'var(--red-mid)', marginTop: '0.25rem', borderTop: '1px solid var(--gray-mid)', paddingTop: '0.5rem', borderRadius: 0 },
   apptCount: { fontSize: '0.8rem', color: 'var(--orange-mid)', fontWeight: 600 },
   statsBar: {
     maxWidth: 'clamp(320px, 92vw, 1200px)',

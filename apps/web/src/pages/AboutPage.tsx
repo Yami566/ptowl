@@ -50,7 +50,7 @@ export function AboutPage() {
 
       {/* How It Works */}
       <section style={styles.howSection}>
-        <h2 style={styles.sectionTitle}>4 keypresses. That's it. <span style={{ opacity: 0.55, fontWeight: 400, fontStyle: 'italic' }}>Okay, maybe five.</span></h2>
+        <h2 style={styles.sectionTitle}>5 keypresses. <span style={{ opacity: 0.55, fontWeight: 400, fontStyle: 'italic' }}>Sometimes 4 if you&rsquo;re fast.</span></h2>
         <div style={styles.steps}>
           <div style={styles.step}>
             <span style={styles.key}>1</span>
@@ -101,9 +101,9 @@ export function AboutPage() {
           <div style={styles.featureIcon}>&#128274;</div>
           <h3 style={styles.featureTitle}>Private by Design</h3>
           <p style={styles.featureDesc}>
-            Patient names never enter our system. Our proprietary de-identification
-            methodology turns initials into sports legends on screen. If the data
-            doesn't exist, it can't be breached.
+            Real names never enter our system. Just initials, mapped to sports legends
+            on screen and on every printed sheet. If the data doesn&apos;t exist, it can&apos;t
+            be breached.
           </p>
         </div>
         <div style={styles.featureCard}>
@@ -150,7 +150,21 @@ export function AboutPage() {
           <a href="/privacy" style={styles.footerLink}>Privacy</a>
           <a href="/terms" style={styles.footerLink}>Terms</a>
           <a href="/security" style={styles.footerLink}>Security</a>
+          <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">Status</a>
+          <a href="mailto:help@ptowl.com" style={styles.footerLink}>Help</a>
         </div>
+        <p style={styles.footerPoweredBy}>
+          Powered by{' '}
+          <a
+            href="https://www.anthropic.com/api"
+            style={styles.footerPoweredByLink}
+            rel="noopener"
+            target="_blank"
+          >
+            Claude
+          </a>
+          {' '}&middot; Free during beta
+        </p>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
         </p>
@@ -199,5 +213,7 @@ const styles: Record<string, React.CSSProperties> = {
   qrLabel: { fontSize: '0.7rem', color: 'var(--gray-text)', fontWeight: 500 },
   footerLinks: { display: 'flex', justifyContent: 'center', gap: '1.5rem', margin: '1rem 0' },
   footerLink: { fontSize: '0.85rem', color: 'var(--gray-text)', textDecoration: 'none', padding: '0.5rem 0.75rem', display: 'inline-block' },
+  footerPoweredBy: { fontSize: '0.75rem', color: 'var(--gray-text)', marginBottom: '0.25rem' },
+  footerPoweredByLink: { color: 'var(--green-dark)', fontWeight: 600, textDecoration: 'none' },
   footerCopy: { fontSize: '0.75rem', color: 'var(--gray-text)', opacity: 0.6 },
 };

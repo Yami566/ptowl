@@ -21,12 +21,12 @@ export function PrivacyPolicyPage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Privacy Policy</h1>
-          <p style={styles.updated}>Last updated: April 25, 2026</p>
+          <p style={styles.updated}>Last updated: April 29, 2026</p>
 
           <p style={styles.intro}>
-            We keep it simple, Jack. Patient Owl was designed from day one so that sensitive patient
-            information never touches our servers. This policy explains exactly what we collect,
-            what we don't, and why our approach to privacy is different.
+            We keep it simple, Jack. Patient Owl was designed from day one so that real patient
+            names never touch our servers. This policy explains exactly what we collect, what we
+            don&apos;t, and why our approach to privacy is different.
           </p>
 
           <section style={styles.section}>
@@ -35,12 +35,14 @@ export function PrivacyPolicyPage() {
               <p style={styles.highlightText}>
                 Most healthcare tools collect sensitive data and then try to protect it. We took the
                 opposite approach:{' '}
-                <strong>
-                  we designed Patient Owl so that protected health information (PHI) is never stored
-                  in the first place.
-                </strong>{' '}
-                You cannot breach what does not exist. This is the foundation of everything we
-                build.
+                <strong>real patient names never enter Patient Owl in the first place.</strong>{' '}
+                Providers enter two-letter initials, which we immediately map to a sports figure
+                alias for display, printing, and audit logs. You cannot breach what does not exist.
+              </p>
+              <p style={styles.highlightText}>
+                <strong>Patient Owl is not a HIPAA-compliant system.</strong> The sports-alias
+                model is our privacy failsafe, not a substitute for HIPAA. Don&apos;t use Patient
+                Owl as the system of record for protected health information.
               </p>
             </div>
           </section>
@@ -52,28 +54,49 @@ export function PrivacyPolicyPage() {
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                <strong>Account information:</strong> Your phone number for authentication via SMS
-                verification (Firebase Auth). Optionally, your name and email if you choose to
-                provide them.
+                <strong>Provider authentication:</strong> Sign-in via Google, Apple, email magic
+                link, or SMS (handled by Firebase Authentication). We receive a Firebase user ID
+                plus whichever identifier you signed in with (email and/or phone number).
               </li>
               <li style={styles.listItem}>
-                <strong>Clinic details:</strong> Clinic name, address, phone, and email that you
-                choose to add to your profile for printed schedule headers.
+                <strong>Clinic details:</strong> Clinic name, address, phone, email, and an
+                optional logo URL you add to your profile for printed schedule headers.
               </li>
               <li style={styles.listItem}>
-                <strong>Schedule data:</strong> Appointment dates, times, and scheduling
-                preferences. Patient identity is stored only as two-letter initials, which are
-                immediately mapped to our proprietary de-identification system.
+                <strong>Patient initials (mapped to sports aliases):</strong> Two-letter initials
+                are stored alongside their generated alias from our 676-name sports-figure dataset.
+                Real first or last names are never collected, transmitted, or stored.
               </li>
               <li style={styles.listItem}>
-                <strong>Patient reminder email (optional):</strong> If your provider chooses to
-                enable appointment reminders, the patient email address provided by the provider is
-                stored encrypted at rest using AES-256-GCM and used solely to deliver 24-hour and
-                1-hour appointment reminders. The plaintext email is never logged, never displayed
-                in-app, and never shared with any third party other than the outbound email
-                subprocessor (MailChannels) at the moment of send. See section 8 for full details.
+                <strong>Schedule data:</strong> Appointment dates, times, sessions-per-week, and
+                duration. Linked to the alias only.
+              </li>
+              <li style={styles.listItem}>
+                <strong>Patient reminder email (optional, encrypted):</strong> If your provider
+                enables appointment reminders, the patient email address you provide is stored
+                encrypted at rest using AES-256-GCM and used solely to deliver 24-hour and 1-hour
+                reminders. The plaintext email is never logged, never displayed in-app, and never
+                shared with any third party other than the outbound email subprocessor
+                (MailChannels) at the moment of send. See section 8 for full details.
               </li>
             </ul>
+          </section>
+
+          <section style={styles.section}>
+            <h2 style={styles.h2}>1a. Account Deletion</h2>
+            <p style={styles.text}>
+              You can request deletion of your account and all associated data at any time by
+              emailing{' '}
+              <a
+                href="mailto:help@ptowl.com?subject=Delete%20my%20PTowl%20account"
+                style={styles.inlineLink}
+              >
+                help@ptowl.com
+              </a>
+              . We will process the request within 30 days and confirm by reply when complete. A
+              self-serve deletion control is on our roadmap; until it ships, the email path is the
+              canonical way to exercise this right.
+            </p>
           </section>
 
           <section style={styles.section}>
