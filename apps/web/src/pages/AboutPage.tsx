@@ -153,18 +153,30 @@ export function AboutPage() {
           <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">Status</a>
           <a href="mailto:help@ptowl.com" style={styles.footerLink}>Help</a>
         </div>
-        <p style={styles.footerPoweredBy}>
-          Powered by{' '}
-          <a
-            href="https://www.anthropic.com/api"
-            style={styles.footerPoweredByLink}
-            rel="noopener"
-            target="_blank"
+        {/* Powered-by-Claude badge. Generic sparkle SVG; swap for the
+            official Anthropic brand asset when available. */}
+        <a
+          href="https://www.anthropic.com/api"
+          style={styles.poweredByBadge}
+          rel="noopener"
+          target="_blank"
+          aria-label="Powered by Claude — opens anthropic.com"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            style={styles.poweredByIcon}
           >
-            Claude
-          </a>
-          {' '}&middot; Free during beta
-        </p>
+            <path
+              d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>Powered by Claude</span>
+        </a>
+        <p style={styles.footerPoweredBy}>Free during beta</p>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
         </p>
@@ -213,7 +225,22 @@ const styles: Record<string, React.CSSProperties> = {
   qrLabel: { fontSize: '0.7rem', color: 'var(--gray-text)', fontWeight: 500 },
   footerLinks: { display: 'flex', justifyContent: 'center', gap: '1.5rem', margin: '1rem 0' },
   footerLink: { fontSize: '0.85rem', color: 'var(--gray-text)', textDecoration: 'none', padding: '0.5rem 0.75rem', display: 'inline-block' },
-  footerPoweredBy: { fontSize: '0.75rem', color: 'var(--gray-text)', marginBottom: '0.25rem' },
-  footerPoweredByLink: { color: 'var(--green-dark)', fontWeight: 600, textDecoration: 'none' },
+  footerPoweredBy: { fontSize: '0.7rem', color: 'var(--gray-text)', marginBottom: '0.25rem', opacity: 0.7 },
+  poweredByBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+    padding: '0.375rem 0.75rem',
+    margin: '0 auto 0.375rem',
+    background: 'var(--white)',
+    border: '1px solid var(--green-light)',
+    borderRadius: '999px',
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    color: 'var(--green-dark)',
+    textDecoration: 'none',
+    boxShadow: '0 1px 3px rgba(27, 94, 32, 0.06)',
+  },
+  poweredByIcon: { color: 'var(--green-mid)', flexShrink: 0 },
   footerCopy: { fontSize: '0.75rem', color: 'var(--gray-text)', opacity: 0.6 },
 };

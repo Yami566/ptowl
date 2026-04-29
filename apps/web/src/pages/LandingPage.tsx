@@ -112,6 +112,18 @@ export function LandingPage() {
         <div style={styles.betaBadge} aria-label="Free beta, powered by Claude">
           <span style={styles.betaPill}>Free beta</span>
           <span style={styles.betaSep}>·</span>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            style={styles.betaIcon}
+          >
+            <path
+              d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
+              fill="currentColor"
+            />
+          </svg>
           <span style={styles.betaPoweredBy}>Powered by Claude</span>
         </div>
 
@@ -147,18 +159,36 @@ export function LandingPage() {
           <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">Status</a>
           <a href="mailto:help@ptowl.com" style={styles.footerLink}>Help</a>
         </div>
-        <p style={styles.footerPoweredBy}>
-          Powered by{' '}
-          <a
-            href="https://www.anthropic.com/api"
-            style={styles.footerPoweredByLink}
-            rel="noopener"
-            target="_blank"
+        {/*
+          Powered-by-Claude badge. The inline sparkle SVG below is a
+          generic placeholder, not Anthropic's trademarked mark. When
+          you have permission to use the official Anthropic brand
+          asset, swap the <svg> for an <img src="/powered-by-claude.svg" />
+          (drop the file in apps/web/public/) per
+          https://www.anthropic.com/brand
+        */}
+        <a
+          href="https://www.anthropic.com/api"
+          style={styles.poweredByBadge}
+          rel="noopener"
+          target="_blank"
+          aria-label="Powered by Claude — opens anthropic.com"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            style={styles.poweredByIcon}
           >
-            Claude
-          </a>
-          {' '}&middot; Free during beta
-        </p>
+            <path
+              d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span>Powered by Claude</span>
+        </a>
+        <p style={styles.footerPoweredBy}>Free during beta</p>
         <p style={styles.footerCopy}>
           &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
         </p>
@@ -252,14 +282,29 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-block',
   },
   footerPoweredBy: {
-    fontSize: '0.75rem',
+    fontSize: '0.7rem',
     color: 'var(--gray-text)',
     marginBottom: '0.25rem',
+    opacity: 0.7,
   },
-  footerPoweredByLink: {
-    color: 'var(--green-dark)',
+  poweredByBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.375rem',
+    padding: '0.375rem 0.75rem',
+    margin: '0 auto 0.375rem',
+    background: 'var(--white)',
+    border: '1px solid var(--green-light)',
+    borderRadius: '999px',
+    fontSize: '0.75rem',
     fontWeight: 600,
+    color: 'var(--green-dark)',
     textDecoration: 'none',
+    boxShadow: '0 1px 3px rgba(27, 94, 32, 0.06)',
+  },
+  poweredByIcon: {
+    color: 'var(--green-mid)',
+    flexShrink: 0,
   },
   footerCopy: {
     fontSize: '0.75rem',
@@ -289,5 +334,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   betaPoweredBy: {
     color: 'var(--green-dark)',
+  },
+  betaIcon: {
+    color: 'var(--green-mid)',
+    flexShrink: 0,
   },
 };
