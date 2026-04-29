@@ -152,12 +152,24 @@ export function LandingPage() {
         className="landing-fade-in landing-fade-in-delay-2 landing-footer"
       >
         <div style={styles.footerLinks}>
-          <a href="/about" style={styles.footerLink}>About</a>
-          <a href="/privacy" style={styles.footerLink}>Privacy</a>
-          <a href="/terms" style={styles.footerLink}>Terms</a>
-          <a href="/security" style={styles.footerLink}>Security</a>
-          <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">Status</a>
-          <a href="mailto:help@ptowl.com" style={styles.footerLink}>Help</a>
+          <a href="/about" style={styles.footerLink}>
+            About
+          </a>
+          <a href="/privacy" style={styles.footerLink}>
+            Privacy
+          </a>
+          <a href="/terms" style={styles.footerLink}>
+            Terms
+          </a>
+          <a href="/security" style={styles.footerLink}>
+            Security
+          </a>
+          <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">
+            Status
+          </a>
+          <a href="mailto:help@ptowl.com" style={styles.footerLink}>
+            Help
+          </a>
         </div>
         {/*
           Powered-by-Claude badge. The inline sparkle SVG below is a
@@ -190,7 +202,7 @@ export function LandingPage() {
         </a>
         <p style={styles.footerPoweredBy}>Free during beta</p>
         <p style={styles.footerCopy}>
-          &copy; 2026 Patient Owl &middot; A product of Moose Bay &amp; Company LLC
+          &copy; 2026 PTowl &middot; A product of Moose Bay &amp; Company LLC
         </p>
       </footer>
     </main>

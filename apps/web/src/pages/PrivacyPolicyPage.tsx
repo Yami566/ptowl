@@ -24,8 +24,8 @@ export function PrivacyPolicyPage() {
           <p style={styles.updated}>Last updated: April 29, 2026</p>
 
           <p style={styles.intro}>
-            We keep it simple, Jack. Patient Owl was designed from day one so that real patient
-            names never touch our servers. This policy explains exactly what we collect, what we
+            We keep it simple, Jack. PTowl was designed from day one so that real patient names
+            never touch our servers. This policy explains exactly what we collect, what we
             don&apos;t, and why our approach to privacy is different.
           </p>
 
@@ -35,14 +35,14 @@ export function PrivacyPolicyPage() {
               <p style={styles.highlightText}>
                 Most healthcare tools collect sensitive data and then try to protect it. We took the
                 opposite approach:{' '}
-                <strong>real patient names never enter Patient Owl in the first place.</strong>{' '}
-                Providers enter two-letter initials, which we immediately map to a sports figure
-                alias for display, printing, and audit logs. You cannot breach what does not exist.
+                <strong>real patient names never enter PTowl in the first place.</strong> Providers
+                enter two-letter initials, which we immediately map to a sports figure alias for
+                display, printing, and audit logs. You cannot breach what does not exist.
               </p>
               <p style={styles.highlightText}>
-                <strong>Patient Owl is not a HIPAA-compliant system.</strong> The sports-alias
-                model is our privacy failsafe, not a substitute for HIPAA. Don&apos;t use Patient
-                Owl as the system of record for protected health information.
+                <strong>PTowl is not a HIPAA-compliant system.</strong> The sports-alias model is
+                our privacy failsafe, not a substitute for HIPAA. Don&apos;t use PTowl as the system
+                of record for protected health information.
               </p>
             </div>
           </section>
@@ -59,8 +59,8 @@ export function PrivacyPolicyPage() {
                 plus whichever identifier you signed in with (email and/or phone number).
               </li>
               <li style={styles.listItem}>
-                <strong>Clinic details:</strong> Clinic name, address, phone, email, and an
-                optional logo URL you add to your profile for printed schedule headers.
+                <strong>Clinic details:</strong> Clinic name, address, phone, email, and an optional
+                logo URL you add to your profile for printed schedule headers.
               </li>
               <li style={styles.listItem}>
                 <strong>Patient initials (mapped to sports aliases):</strong> Two-letter initials
@@ -104,7 +104,7 @@ export function PrivacyPolicyPage() {
             <div style={styles.highlight}>
               <h3 style={styles.h3}>Proprietary De-Identification Methodology</h3>
               <p style={styles.highlightText}>
-                Patient Owl uses a proprietary de-identification methodology that replaces patient
+                PTowl uses a proprietary de-identification methodology that replaces patient
                 identities with sports figure aliases at the point of entry. When a provider types
                 two initials, the system immediately maps them to an alias (e.g., "MJ" becomes
                 "Michael Jordan"). The real patient name is never entered, transmitted, or stored
@@ -130,11 +130,11 @@ export function PrivacyPolicyPage() {
             <div style={styles.hipaaBox}>
               <h3 style={styles.h3}>Privacy by Design — Not Privacy by Compliance</h3>
               <p style={styles.text}>
-                Patient Owl's architecture was built around a simple principle: the most secure data
-                is data you never collect. Because our proprietary de-identification methodology
+                PTowl's architecture was built around a simple principle: the most secure data is
+                data you never collect. Because our proprietary de-identification methodology
                 ensures that real patient names and protected health information are never stored in
                 our system, the traditional HIPAA data protection requirements that apply to systems
-                holding PHI are largely not applicable to Patient Owl's data layer.
+                holding PHI are largely not applicable to PTowl's data layer.
               </p>
               <p style={styles.text}>
                 This is not a workaround — it is a deliberate design decision. We believe healthcare
@@ -144,7 +144,7 @@ export function PrivacyPolicyPage() {
               <p style={{ ...styles.text, marginBottom: 0 }}>
                 That said, healthcare providers are responsible for their own compliance with
                 applicable regulations. If you have specific compliance questions about your use of
-                Patient Owl, we are happy to discuss your needs at{' '}
+                PTowl, we are happy to discuss your needs at{' '}
                 <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
                   help@ptowl.com
                 </a>
@@ -156,8 +156,8 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>4. Authentication</h2>
             <p style={styles.text}>
-              Patient Owl uses passwordless authentication — you sign in with your phone number and
-              a one-time SMS code. We do not store passwords. Authentication is managed through
+              PTowl uses passwordless authentication — you sign in with your phone number and a
+              one-time SMS code. We do not store passwords. Authentication is managed through
               Firebase Auth with industry-standard security protocols. This eliminates an entire
               class of security risks including credential stuffing, password leaks, and
               weak-password attacks.
@@ -167,10 +167,10 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>5. Cookies & Tracking</h2>
             <p style={styles.text}>
-              We keep it simple: Patient Owl does not use tracking cookies. We do not use
-              third-party analytics that track individual users. Session cookies are used solely to
-              keep you logged in, and they are httpOnly and secure — meaning they cannot be accessed
-              by JavaScript or sent over unencrypted connections.
+              We keep it simple: PTowl does not use tracking cookies. We do not use third-party
+              analytics that track individual users. Session cookies are used solely to keep you
+              logged in, and they are httpOnly and secure — meaning they cannot be accessed by
+              JavaScript or sent over unencrypted connections.
             </p>
           </section>
 
@@ -237,7 +237,7 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>8. Patient Appointment Reminders</h2>
             <p style={styles.text}>
-              Patient Owl provides an optional, opt-in appointment reminder feature. When a
+              PTowl provides an optional, opt-in appointment reminder feature. When a
               physical-therapy provider enables reminders for a schedule, we send transactional
               emails 24 hours and 1 hour before each scheduled appointment.
             </p>
@@ -322,8 +322,8 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>10. Medical Information Disclaimer</h2>
             <p style={styles.text}>
-              Patient Owl is a <strong>scheduling and organizational tool</strong>. It is not a
-              medical device, electronic health record (EHR), clinical decision support system, or
+              PTowl is a <strong>scheduling and organizational tool</strong>. It is not a medical
+              device, electronic health record (EHR), clinical decision support system, or
               HIPAA-covered entity. We do not provide medical advice, diagnoses, or treatment
               recommendations.
             </p>
@@ -336,14 +336,14 @@ export function PrivacyPolicyPage() {
               de-identification standard (45 CFR §164.514(b)(2)).
             </p>
             <p style={styles.text}>
-              Healthcare providers using Patient Owl remain solely responsible for their own
-              regulatory compliance, including but not limited to HIPAA, state privacy laws, and
-              professional licensing requirements. Patient Owl makes no guarantees, representations,
-              or warranties regarding regulatory compliance.
+              Healthcare providers using PTowl remain solely responsible for their own regulatory
+              compliance, including but not limited to HIPAA, state privacy laws, and professional
+              licensing requirements. PTowl makes no guarantees, representations, or warranties
+              regarding regulatory compliance.
             </p>
             <p style={styles.text}>
               If you believe that Protected Health Information has been inadvertently entered into
-              any Patient Owl text field, please contact us immediately at{' '}
+              any PTowl text field, please contact us immediately at{' '}
               <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>{' '}
@@ -355,8 +355,8 @@ export function PrivacyPolicyPage() {
             <h2 style={styles.h2}>11. Changes to This Policy</h2>
             <p style={styles.text}>
               We may update this privacy policy from time to time. When we do, we will update the
-              "Last updated" date at the top of this page. Continued use of Patient Owl after
-              changes constitutes acceptance of the updated policy.
+              "Last updated" date at the top of this page. Continued use of PTowl after changes
+              constitutes acceptance of the updated policy.
             </p>
           </section>
 
@@ -369,7 +369,7 @@ export function PrivacyPolicyPage() {
                 help@ptowl.com
               </a>
               <br />
-              Patient Owl is a product of Moose Bay &amp; Company LLC &middot; Virginia, USA
+              PTowl is a product of Moose Bay &amp; Company LLC &middot; Virginia, USA
             </p>
           </section>
         </div>

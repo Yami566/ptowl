@@ -205,12 +205,12 @@ async function sendReminderEmail(
   if (!env.EMAIL_API_KEY) return true; // no key = silently skip in dev
 
   const when = msg.type === '24h' ? 'tomorrow' : 'in 1 hour';
-  const subject = `Reminder — your PT appointment ${when} (${formatDate(msg.appointmentDate)})`;
+  const subject = `Reminder — your appointment ${when} (${formatDate(msg.appointmentDate)})`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 2rem;">
       <h2 style="color: #1B5E20; margin-bottom: 1rem;">Appointment Reminder</h2>
       <p style="color: #333; line-height: 1.6;">
-        Hi ${escapeHtml(msg.patientLabel)} — this is a reminder of your physical therapy appointment ${when}.
+        Hi ${escapeHtml(msg.patientLabel)} — this is a reminder of your appointment ${when}.
       </p>
       <div style="margin: 1rem 0; padding: 1rem; background: #F5F5F5; border-radius: 8px;">
         <strong>${escapeHtml(formatDate(msg.appointmentDate))} at ${escapeHtml(formatTime(msg.appointmentTime))}</strong><br/>
@@ -220,8 +220,8 @@ async function sendReminderEmail(
         Need to reschedule? Contact your clinic directly.
       </p>
       <p style="color: #999; font-size: 0.75rem; margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem;">
-        You're receiving this because your clinic added you to a recurring PT schedule.
-        <a href="${escapeHtml(unsubscribeUrl)}" style="color: #999;">Unsubscribe from all PTOWL reminders</a>.
+        You&#39;re receiving this because your clinic added you to a recurring PTowl schedule.
+        <a href="${escapeHtml(unsubscribeUrl)}" style="color: #999;">Unsubscribe from all PTowl reminders</a>.
       </p>
     </div>
   `;

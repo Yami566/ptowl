@@ -1,11 +1,12 @@
-# PtOwl
+# PTowl — Patience Trainer
 
-Recurring physical-therapy scheduling on Cloudflare. Patients book a recurring
-slot, get reminders, and export an `.ics` calendar feed; PT staff manage
-approvals from an admin dashboard protected by Cloudflare Access.
+Recurring patient scheduling on Cloudflare for medical, dental, and therapy
+providers. **PT in PTowl stands for "Patience Trainer."** Clinic staff create
+schedules in 5 keypresses, patients get reminders and an `.ics` calendar feed,
+and the sports-alias system keeps real names off our servers as a privacy
+failsafe (we are explicitly NOT a HIPAA-secure system).
 
 [![CI](https://github.com/yami566/ptowl/actions/workflows/ci.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/yami566/ptowl/actions/workflows/codeql.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/codeql.yml)
 [![Deploy](https://github.com/yami566/ptowl/actions/workflows/deploy.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
@@ -32,7 +33,7 @@ approvals from an admin dashboard protected by Cloudflare Access.
 ├── packages/
 │   └── shared/     # Zod schemas, RRule presets, shared types
 ├── docs/           # PRD, TDD, sprint history, runbooks
-└── .github/        # CI, CodeQL, Dependabot, release-please
+└── .github/        # CI, Deploy, Dependabot
 ```
 
 ## Quickstart

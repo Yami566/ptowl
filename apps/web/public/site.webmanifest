@@ -1,8 +1,8 @@
 {
   "id": "/?source=pwa",
-  "name": "Patient Owl",
-  "short_name": "PtOwl",
-  "description": "Fast PT schedule generator — create and print patient schedules in under 5 keypresses.",
+  "name": "PTowl — Patience Trainer",
+  "short_name": "PTowl",
+  "description": "PTowl — your Patience Trainer. Stop scheduling, start treating. Create and print patient schedules in under 5 keypresses.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

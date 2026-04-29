@@ -1,5 +1,5 @@
 /**
- * Patient Owl service worker — minimal, install-only.
+ * PTowl service worker — minimal, install-only.
  *
  * Browser installability rules require the page to register a service
  * worker with a fetch handler. This file fulfills that requirement

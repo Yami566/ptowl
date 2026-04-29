@@ -4,16 +4,19 @@
 
 ---
 
-## 1. What PTOWL Is
+## 1. What PTowl Is
 
-**The fastest schedule assistant on earth.**
+**PTowl — your Patience Trainer.** The fastest schedule assistant on earth.
+
+PT stands for **Patience Trainer**: the product trains away the friction that
+makes scheduling impatient. The owl is the mascot.
 
 5 keypresses. Schedule done. Move on with your day.
 
-PTOWL is a focused scheduling tool for medical and dental providers — physical
-therapists, doctors, chiropractors, dentists, orthodontists, and clinic staff. It is
-NOT an EMR. NOT a billing system. NOT bloatware. It does one thing and does it
-faster than anything else on the market. Currently free during beta.
+PTowl is a focused scheduling tool for medical and dental providers — physical
+therapists, doctors, chiropractors, dentists, orthodontists, and clinic staff.
+It is NOT an EMR. NOT a billing system. NOT bloatware. It does one thing and
+does it faster than anything else on the market. Currently free during beta.
 
 ---
 
@@ -35,10 +38,10 @@ faster than anything else on the market. Currently free during beta.
 
 No free tier. No trials. No contracts. Buy a license key, unlock the full product.
 
-| Plan     | Price    | Billing        | Effective LS Fee |
-|----------|----------|----------------|------------------|
-| Monthly  | $3/mo    | Recurring      | ~21.7% ($0.65)   |
-| Annual   | $30/year | Recurring      | ~8.3% ($2.50)    |
+| Plan    | Price    | Billing   | Effective LS Fee |
+| ------- | -------- | --------- | ---------------- |
+| Monthly | $3/mo    | Recurring | ~21.7% ($0.65)   |
+| Annual  | $30/year | Recurring | ~8.3% ($2.50)    |
 
 **Annual billing is the primary push** (save $6/year + lower fees for us).
 
@@ -67,15 +70,15 @@ No free tier. No trials. No contracts. Buy a license key, unlock the full produc
 
 ### Why Not Others
 
-| Platform     | Why Not                                          |
-|--------------|--------------------------------------------------|
-| Gumroad      | 20% effective fee at $3/mo, basic license system |
-| Paddle       | No built-in license keys (need separate system)  |
-| Keygen.sh    | $49+/mo just for licensing, overkill             |
-| Stripe DIY   | Cheapest fees but must handle taxes ourselves    |
-| Whop         | Creator-focused, less suited for healthcare SaaS |
-| Cryptolens   | $99+/mo, designed for desktop software           |
-| AppSumo      | Lifetime deals only, no recurring revenue        |
+| Platform   | Why Not                                          |
+| ---------- | ------------------------------------------------ |
+| Gumroad    | 20% effective fee at $3/mo, basic license system |
+| Paddle     | No built-in license keys (need separate system)  |
+| Keygen.sh  | $49+/mo just for licensing, overkill             |
+| Stripe DIY | Cheapest fees but must handle taxes ourselves    |
+| Whop       | Creator-focused, less suited for healthcare SaaS |
+| Cryptolens | $99+/mo, designed for desktop software           |
+| AppSumo    | Lifetime deals only, no recurring revenue        |
 
 ---
 
@@ -83,33 +86,33 @@ No free tier. No trials. No contracts. Buy a license key, unlock the full produc
 
 ### Per-User Monthly (at $3/mo)
 
-| Line Item                        | Cost       |
-|----------------------------------|------------|
-| Revenue                          | $3.00      |
-| LemonSqueezy fee (5% + $0.50)   | -$0.65     |
-| SMS reminders (~30% opt-in)      | -$0.36     |
-| Email reminders (Resend free)    | $0.00      |
-| Cloudflare Workers/D1            | $0.00*     |
-| **Net margin**                   | **~$1.99** |
+| Line Item                     | Cost       |
+| ----------------------------- | ---------- |
+| Revenue                       | $3.00      |
+| LemonSqueezy fee (5% + $0.50) | -$0.65     |
+| SMS reminders (~30% opt-in)   | -$0.36     |
+| Email reminders (Resend free) | $0.00      |
+| Cloudflare Workers/D1         | $0.00\*    |
+| **Net margin**                | **~$1.99** |
 
 ### Per-User Annual (at $30/year)
 
-| Line Item                        | Cost        |
-|----------------------------------|-------------|
-| Revenue                          | $30.00      |
-| LemonSqueezy fee (5% + $0.50)   | -$2.00      |
-| SMS reminders (12 mo x $0.36)   | -$4.32      |
-| Email reminders (Resend)         | ~$0.00      |
-| Cloudflare infrastructure        | $0.00*      |
-| **Net margin**                   | **~$23.68** |
+| Line Item                     | Cost        |
+| ----------------------------- | ----------- |
+| Revenue                       | $30.00      |
+| LemonSqueezy fee (5% + $0.50) | -$2.00      |
+| SMS reminders (12 mo x $0.36) | -$4.32      |
+| Email reminders (Resend)      | ~$0.00      |
+| Cloudflare infrastructure     | $0.00\*     |
+| **Net margin**                | **~$23.68** |
 
-*Cloudflare free tier: 100K Worker requests/day, 5GB D1 storage, 5M rows.
+\*Cloudflare free tier: 100K Worker requests/day, 5GB D1 storage, 5M rows.
 Scales to ~1,000+ users before hitting paid tiers.
 
 ### Revenue Projections
 
 | Users  | Monthly Rev | Annual Net (after fees) |
-|--------|-------------|-------------------------|
+| ------ | ----------- | ----------------------- |
 | 100    | $300        | ~$2,368                 |
 | 500    | $1,500      | ~$11,840                |
 | 1,000  | $3,000      | ~$23,680                |
@@ -122,33 +125,37 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### The Gap PTOWL Fills
 
-| Price Range   | What Exists                              |
-|---------------|------------------------------------------|
-| $0            | Excel templates on Etsy ($3-15 one-time) |
-| $3-30/mo      | **NOBODY (this is PTOWL)**               |
-| $39-54/mo     | Jane App, SimplePractice, TheraPlatform  |
-| $79-200/mo    | SPRY, WebPT, Prompt EMR                  |
-| $200-500/mo   | Enterprise EMRs (Raintree, Net Health)   |
+| Price Range | What Exists                              |
+| ----------- | ---------------------------------------- |
+| $0          | Excel templates on Etsy ($3-15 one-time) |
+| $3-30/mo    | **NOBODY (this is PTOWL)**               |
+| $39-54/mo   | Jane App, SimplePractice, TheraPlatform  |
+| $79-200/mo  | SPRY, WebPT, Prompt EMR                  |
+| $200-500/mo | Enterprise EMRs (Raintree, Net Health)   |
 
 ### Top Competitors and Their Weaknesses
 
 **WebPT** ($99-400/mo/provider) - Market leader
+
 - Major outages quarterly, declining speed
 - A la carte pricing (real cost 3-5x advertised)
 - Appointment reminders cost $200+/mo extra
 - 47% of clinics switch EMR within 3 years
 
 **SimplePractice** ($29-99/mo) - Acquired by Vista Equity (PE) in 2024
+
 - Users fear price hikes post-acquisition
 - "Extremely unreliable, constant connect issues" (4-6x/week)
 - Telehealth quality dropped after price increases
 
 **Jane App** ($54/mo) - Highest rated (4.8/5)
+
 - No native mobile app
 - Weak US insurance billing integration
 - Still 18x more expensive than PTOWL
 
 **SPRY** ($79-300/mo) - Rising disruptor
+
 - AI-powered, modern UI
 - Still 26x more expensive than PTOWL
 - Full EMR (complex for scheduling-only needs)
@@ -214,32 +221,32 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### Payments + Licensing
 
-| Component          | Service        | Why                                    |
-|--------------------|----------------|----------------------------------------|
-| Payments           | LemonSqueezy   | MoR, tax handling, license keys, subs  |
-| License validation | LS API + D1    | Validate on login, cache in D1         |
+| Component          | Service           | Why                                   |
+| ------------------ | ----------------- | ------------------------------------- |
+| Payments           | LemonSqueezy      | MoR, tax handling, license keys, subs |
+| License validation | LS API + D1       | Validate on login, cache in D1        |
 | Webhook handler    | Cloudflare Worker | Receive LS events, provision accounts |
 
 ### Reminders
 
-| Component       | Service    | Cost               | Why                          |
-|-----------------|------------|--------------------|------------------------------|
-| Email sending   | Resend     | Free (3K/mo)       | Official CF Workers support  |
-| SMS sending     | Telnyx     | $0.008/SMS         | Cheapest US SMS provider     |
-| Calendar files  | ics (npm)  | $0 (generated)     | Auto-add to patient calendar |
-| Scheduling      | CF Cron    | $0 (Workers cron)  | Trigger reminders 24h before |
+| Component      | Service   | Cost              | Why                          |
+| -------------- | --------- | ----------------- | ---------------------------- |
+| Email sending  | Resend    | Free (3K/mo)      | Official CF Workers support  |
+| SMS sending    | Telnyx    | $0.008/SMS        | Cheapest US SMS provider     |
+| Calendar files | ics (npm) | $0 (generated)    | Auto-add to patient calendar |
+| Scheduling     | CF Cron   | $0 (Workers cron) | Trigger reminders 24h before |
 
 ### Infrastructure (unchanged)
 
-| Component  | Service              | Cost     |
-|------------|----------------------|----------|
-| Frontend   | Cloudflare Pages     | Free     |
-| API        | Cloudflare Workers   | Free*    |
-| Database   | Cloudflare D1        | Free*    |
-| DNS/CDN    | Cloudflare           | Free     |
-| Bot defense| Cloudflare Turnstile | Free     |
+| Component   | Service              | Cost   |
+| ----------- | -------------------- | ------ |
+| Frontend    | Cloudflare Pages     | Free   |
+| API         | Cloudflare Workers   | Free\* |
+| Database    | Cloudflare D1        | Free\* |
+| DNS/CDN     | Cloudflare           | Free   |
+| Bot defense | Cloudflare Turnstile | Free   |
 
-*Free tier supports ~1,000+ active users before paid tiers kick in.
+\*Free tier supports ~1,000+ active users before paid tiers kick in.
 
 ---
 
@@ -253,7 +260,7 @@ Scales to ~1,000+ users before hitting paid tiers.
 - Template names are memorable and funny:
   - "Walk It Off, Champ"
   - "You're Not Tom Brady, Buddy"
-  - "HOLY S***, Are You ALrIgHt?!"
+  - "HOLY S\*\*\*, Are You ALrIgHt?!"
 - Sports alias system adds character while solving a real PII problem
 - Color system: Green (safe/OK) + Orange (attention/action)
 
@@ -322,17 +329,17 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ## 11. Risk Mitigation
 
-| Risk                          | Mitigation                                    |
-|-------------------------------|-----------------------------------------------|
-| $3/mo is too cheap to sustain | Push annual ($30/yr). Margins work at scale.   |
-| SMS costs eat margins         | Email + ICS default. SMS opt-in only.         |
-| LemonSqueezy fees too high    | Annual billing (8.3% vs 21.7%). Migrate to    |
-|                               | Stripe DIY if >5K users.                      |
-| Competitors undercut          | Speed (5-keypress) is structural, not price.  |
-| Low conversion                | No free tier = only paying users = focused.    |
-| HIPAA compliance questions    | Sports aliases = no PHI stored. Clear ToS.     |
-| Churn                         | Monthly value prop is reminders + speed.       |
-|                               | Stickiness from patient data + schedules.      |
+| Risk                          | Mitigation                                   |
+| ----------------------------- | -------------------------------------------- |
+| $3/mo is too cheap to sustain | Push annual ($30/yr). Margins work at scale. |
+| SMS costs eat margins         | Email + ICS default. SMS opt-in only.        |
+| LemonSqueezy fees too high    | Annual billing (8.3% vs 21.7%). Migrate to   |
+|                               | Stripe DIY if >5K users.                     |
+| Competitors undercut          | Speed (5-keypress) is structural, not price. |
+| Low conversion                | No free tier = only paying users = focused.  |
+| HIPAA compliance questions    | Sports aliases = no PHI stored. Clear ToS.   |
+| Churn                         | Monthly value prop is reminders + speed.     |
+|                               | Stickiness from patient data + schedules.    |
 
 ---
 
@@ -340,13 +347,13 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### Year 1 Targets
 
-| Metric              | Target       |
-|---------------------|-------------|
-| Paying users        | 500          |
-| Annual revenue      | $15,000      |
-| Churn rate          | <5% monthly  |
-| No-show reduction   | 30%+ for users using reminders |
-| NPS score           | 50+          |
+| Metric            | Target                         |
+| ----------------- | ------------------------------ |
+| Paying users      | 500                            |
+| Annual revenue    | $15,000                        |
+| Churn rate        | <5% monthly                    |
+| No-show reduction | 30%+ for users using reminders |
+| NPS score         | 50+                            |
 
 ### North Star Metric
 

@@ -1,8 +1,15 @@
 name: Deploy PtOwl
 
+# Fires only after the CI workflow succeeds on `main`. This gates the
+# production deploy on lint + typecheck + test + build all passing — so a
+# red CI can no longer coexist with a green deploy. Manual runs still work
+# via workflow_dispatch when you need to redeploy without a fresh push.
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +21,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Skip if CI didn't succeed; manual dispatch always runs.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

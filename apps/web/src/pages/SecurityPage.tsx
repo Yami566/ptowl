@@ -24,29 +24,28 @@ export function SecurityPage() {
           <p style={styles.updated}>Last updated: April 29, 2026</p>
 
           <p style={styles.intro}>
-            Security is not an afterthought at Patient Owl — it is baked into every layer of the
-            stack. Here is a transparent look at how we protect your data, and more importantly,
-            how we designed the system so there is less to protect in the first place. Sign-in is
-            handled by Firebase Authentication (Google, Apple, email magic link, or SMS); the API
-            verifies Firebase ID tokens against Google&apos;s JWKS on every request.
+            Security is not an afterthought at PTowl — it is baked into every layer of the stack.
+            Here is a transparent look at how we protect your data, and more importantly, how we
+            designed the system so there is less to protect in the first place. Sign-in is handled
+            by Firebase Authentication (Google, Apple, email magic link, or SMS); the API verifies
+            Firebase ID tokens against Google&apos;s JWKS on every request.
           </p>
 
           <section style={styles.section}>
             <h2 style={styles.h2}>Privacy by Design</h2>
             <div style={styles.highlight}>
               <p style={styles.highlightText}>
-                The most secure data is data that was never collected. Patient Owl is architected
-                around this principle. We collect: provider phone/email, clinic info, patient
-                initials (mapped to sports aliases), and an optional patient email (encrypted,
-                used only for reminder delivery). We don&apos;t collect: real patient names,
-                diagnoses, treatment plans, insurance details, or any clinical records. The
-                traditional attack surface that healthcare software must defend against simply
-                does not exist in Patient Owl.
+                The most secure data is data that was never collected. PTowl is architected around
+                this principle. We collect: provider phone/email, clinic info, patient initials
+                (mapped to sports aliases), and an optional patient email (encrypted, used only for
+                reminder delivery). We don&apos;t collect: real patient names, diagnoses, treatment
+                plans, insurance details, or any clinical records. The traditional attack surface
+                that healthcare software must defend against simply does not exist in PTowl.
               </p>
               <p style={styles.highlightText}>
-                <strong>Patient Owl is not a HIPAA-compliant system.</strong> The sports-alias
-                approach is a privacy failsafe, not a substitute for HIPAA. Don&apos;t use Patient
-                Owl as the system of record for protected health information.
+                <strong>PTowl is not a HIPAA-compliant system.</strong> The sports-alias approach is
+                a privacy failsafe, not a substitute for HIPAA. Don&apos;t use PTowl as the system
+                of record for protected health information.
               </p>
             </div>
           </section>
@@ -56,12 +55,12 @@ export function SecurityPage() {
             <div style={styles.methodBox}>
               <h3 style={styles.h3Badge}>Proprietary Patient De-Identification</h3>
               <p style={styles.methodText}>
-                Patient Owl replaces patient identities with sports figure aliases at the point of
-                entry. Providers enter only two-letter initials, which are immediately and
-                irreversibly mapped to an alias from our curated dataset of 676 combinations. The
-                real patient name is never entered into the system, never transmitted over the
-                network, and never stored in our database. On screen, in exports, and in audit logs
-                — only the alias is visible.
+                PTowl replaces patient identities with sports figure aliases at the point of entry.
+                Providers enter only two-letter initials, which are immediately and irreversibly
+                mapped to an alias from our curated dataset of 676 combinations. The real patient
+                name is never entered into the system, never transmitted over the network, and never
+                stored in our database. On screen, in exports, and in audit logs — only the alias is
+                visible.
               </p>
               <p style={styles.methodText}>
                 This is not masking or encryption — it is structural de-identification. The
@@ -73,11 +72,11 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>HIPAA Positioning</h2>
             <p style={styles.text}>
-              Patient Owl was designed so that the protected health information (PHI) traditionally
+              PTowl was designed so that the protected health information (PHI) traditionally
               handled by healthcare scheduling tools is architecturally excluded from our data
               layer. Because real patient names are never stored and no clinical data is collected,
               the HIPAA data protection requirements that apply to systems holding PHI are largely
-              not applicable to Patient Owl's stored data.
+              not applicable to PTowl's stored data.
             </p>
             <p style={styles.text}>
               We believe this is a better approach than collecting sensitive data and then building
@@ -85,8 +84,7 @@ export function SecurityPage() {
             </p>
             <p style={styles.textNote}>
               Healthcare providers remain responsible for their own regulatory compliance. If you
-              have questions about how Patient Owl fits into your compliance framework, contact us
-              at{' '}
+              have questions about how PTowl fits into your compliance framework, contact us at{' '}
               <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
@@ -100,9 +98,9 @@ export function SecurityPage() {
               <div style={styles.gridItem}>
                 <h3 style={styles.h3}>In Transit</h3>
                 <p style={styles.gridText}>
-                  All data transmitted between your browser and Patient Owl is encrypted using TLS
-                  1.3, the latest and most secure transport layer protocol. Every connection is
-                  HTTPS — no exceptions.
+                  All data transmitted between your browser and PTowl is encrypted using TLS 1.3,
+                  the latest and most secure transport layer protocol. Every connection is HTTPS —
+                  no exceptions.
                 </p>
               </div>
               <div style={styles.gridItem}>
@@ -119,7 +117,7 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>Authentication</h2>
             <p style={styles.text}>
-              Patient Owl uses a passwordless authentication model to eliminate an entire class of
+              PTowl uses a passwordless authentication model to eliminate an entire class of
               security vulnerabilities:
             </p>
             <ul style={styles.list}>
@@ -133,15 +131,15 @@ export function SecurityPage() {
               </li>
             </ul>
             <p style={styles.text}>
-              By not storing passwords, Patient Owl is immune to credential stuffing, password
-              database leaks, and weak-password attacks.
+              By not storing passwords, PTowl is immune to credential stuffing, password database
+              leaks, and weak-password attacks.
             </p>
           </section>
 
           <section style={styles.section}>
             <h2 style={styles.h2}>Security Headers</h2>
             <p style={styles.text}>
-              Every response from Patient Owl includes a comprehensive set of security headers:
+              Every response from PTowl includes a comprehensive set of security headers:
             </p>
             <div style={styles.headerTable}>
               <div style={styles.headerRow}>
@@ -186,18 +184,16 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>CSRF Protection</h2>
             <p style={styles.text}>
-              Patient Owl uses signed CSRF tokens with HMAC-SHA256 verification to prevent
-              cross-site request forgery attacks. Every state-changing request is validated against
-              a cryptographically signed token with constant-time comparison to prevent timing
+              PTowl uses signed CSRF tokens with HMAC-SHA256 verification to prevent cross-site
+              request forgery attacks. Every state-changing request is validated against a
+              cryptographically signed token with constant-time comparison to prevent timing
               attacks.
             </p>
           </section>
 
           <section style={styles.section}>
             <h2 style={styles.h2}>Infrastructure</h2>
-            <p style={styles.text}>
-              Patient Owl runs entirely on Cloudflare's global edge network:
-            </p>
+            <p style={styles.text}>PTowl runs entirely on Cloudflare's global edge network:</p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
                 <strong>300+ cities worldwide</strong> — data served from the nearest edge location
@@ -225,8 +221,8 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>Responsible Disclosure</h2>
             <p style={styles.text}>
-              We believe in working with the security community to keep Patient Owl safe. If you
-              discover a security vulnerability, we want to hear about it.
+              We believe in working with the security community to keep PTowl safe. If you discover
+              a security vulnerability, we want to hear about it.
             </p>
             <div style={styles.disclosureBox}>
               <h3 style={styles.h3}>How to Report</h3>
@@ -249,10 +245,10 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>Compliance Posture</h2>
             <p style={styles.text}>
-              Patient Owl's architecture is designed to avoid storing Protected Health Information
-              (PHI). Our proprietary de-identification methodology replaces patient names with
-              two-letter initials mapped to sports figure aliases, ensuring that even if our
-              database were compromised, no patient-identifying information would be exposed.
+              PTowl's architecture is designed to avoid storing Protected Health Information (PHI).
+              Our proprietary de-identification methodology replaces patient names with two-letter
+              initials mapped to sports figure aliases, ensuring that even if our database were
+              compromised, no patient-identifying information would be exposed.
             </p>
             <div style={styles.infoBox}>
               <p style={styles.text}>
@@ -278,10 +274,9 @@ export function SecurityPage() {
                 <li>De-identification: Proprietary sports alias methodology</li>
               </ul>
               <p style={styles.text}>
-                <strong>Important:</strong> Patient Owl is not a HIPAA-covered entity and does not
-                offer Business Associate Agreements (BAAs). Healthcare providers are responsible for
-                evaluating whether Patient Owl is appropriate for their specific compliance
-                requirements.
+                <strong>Important:</strong> PTowl is not a HIPAA-covered entity and does not offer
+                Business Associate Agreements (BAAs). Healthcare providers are responsible for
+                evaluating whether PTowl is appropriate for their specific compliance requirements.
               </p>
             </div>
           </section>
@@ -294,7 +289,7 @@ export function SecurityPage() {
                 help@ptowl.com
               </a>
               <br />
-              Patient Owl is a product of Moose Bay &amp; Company LLC &middot; Virginia, USA
+              PTowl is a product of Moose Bay &amp; Company LLC &middot; Virginia, USA
             </p>
           </section>
         </div>
