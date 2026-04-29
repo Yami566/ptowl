@@ -6,13 +6,14 @@
 
 ## 1. What PTOWL Is
 
-**The fastest PT schedule generator on earth.**
+**The fastest schedule assistant on earth.**
 
-3 keypresses. Schedule done. Move on with your day.
+5 keypresses. Schedule done. Move on with your day.
 
-PTOWL is a focused scheduling tool for Physical Therapists, doctors, and clinic staff.
-It is NOT an EMR. NOT a billing system. NOT bloatware. It does one thing and does it
-faster than anything else on the market.
+PTOWL is a focused scheduling tool for medical and dental providers — physical
+therapists, doctors, chiropractors, dentists, orthodontists, and clinic staff. It is
+NOT an EMR. NOT a billing system. NOT bloatware. It does one thing and does it
+faster than anything else on the market. Currently free during beta.
 
 ---
 
@@ -154,7 +155,7 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### PTOWL Differentiators
 
-1. **3-keypress workflow** - No competitor has anything close
+1. **5-keypress workflow** - No competitor has anything close
 2. **$3/mo** - 16-100x cheaper than every competitor
 3. **Sports alias PII protection** - 676 sports figure aliases, unique to PTOWL
 4. **SMS + email reminders INCLUDED** - Competitors charge $100-300/mo extra
@@ -171,7 +172,7 @@ Scales to ~1,000+ users before hitting paid tiers.
 ### Phase 1: Core (COMPLETE)
 
 - [x] 6 sports-themed schedule templates with hotkeys 1-6
-- [x] 3-keypress workflow (select template -> set date -> generate)
+- [x] 5-keypress workflow (select template -> set date -> generate)
 - [x] Sports alias system (676 initials mapped to sports figures)
 - [x] Calendar view with popup overlays
 - [x] Print/export schedules
@@ -327,7 +328,7 @@ Scales to ~1,000+ users before hitting paid tiers.
 | SMS costs eat margins         | Email + ICS default. SMS opt-in only.         |
 | LemonSqueezy fees too high    | Annual billing (8.3% vs 21.7%). Migrate to    |
 |                               | Stripe DIY if >5K users.                      |
-| Competitors undercut          | Speed (3-keypress) is structural, not price.  |
+| Competitors undercut          | Speed (5-keypress) is structural, not price.  |
 | Low conversion                | No free tier = only paying users = focused.    |
 | HIPAA compliance questions    | Sports aliases = no PHI stored. Clear ToS.     |
 | Churn                         | Monthly value prop is reminders + speed.       |
@@ -349,5 +350,5 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### North Star Metric
 
-**Time from "I need a schedule" to "Schedule done"** — currently ~3 keypresses
+**Time from "I need a schedule" to "Schedule done"** — currently ~5 keypresses
 (seconds). Competitors: 5-15 minutes. Maintain 100x speed advantage.

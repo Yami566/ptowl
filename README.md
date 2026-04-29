@@ -16,13 +16,11 @@ approvals from an admin dashboard protected by Cloudflare Access.
 | Frontend         | React 19 + Vite, Cloudflare Pages, Capacitor (iOS/Android shells) |
 | API              | Hono on Cloudflare Workers                                        |
 | Database         | Cloudflare D1 (SQLite) with 30-day point-in-time recovery         |
-| Auth — patients  | Firebase Phone Auth                                               |
-| Auth — admins    | Cloudflare Access (Zero Trust)                                    |
+| Auth             | FirebaseUI multi-provider (Google, Apple, email magic link, SMS)  |
 | Email — outbound | Resend                                                            |
 | Email — inbound  | Cloudflare Email Routing                                          |
 | Calendar         | `rrule` + `ical-generator`                                        |
 | Storage (logos)  | Cloudflare R2                                                     |
-| Live chat        | Tawk.to                                                           |
 
 ## Repo layout
 
