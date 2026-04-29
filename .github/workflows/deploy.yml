@@ -1,9 +1,13 @@
-name: Deploy PtOwl
+name: Deploy PtOwl (API + D1 only)
 
-# Fires on push to main directly. The build + verify steps below act as the
-# gate: if typecheck, tests, or build fail, the wrangler deploy steps
-# never run — production stays on the previous version. workflow_dispatch
-# is also enabled for manual re-runs from the Actions tab.
+# Frontend deploy is handled by Cloudflare Pages' native git integration —
+# every push to main auto-builds and deploys apps/web via CF, no GH Actions
+# step needed. See docs/CF-PAGES-GIT-SETUP.md.
+#
+# This workflow now only handles the API Worker + D1 migrations because
+# Cloudflare Pages git integration doesn't run wrangler d1 migrations or
+# wrangler deploy for separate Workers projects. Build + typecheck + test
+# still run as a self-gate so wrangler steps never fire on broken code.
 on:
   push:
     branches: [main]
@@ -74,10 +78,6 @@ jobs:
           workingDirectory: apps/api
           command: deploy
 
-      - name: Deploy Frontend to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: apps/web
-          command: pages deploy dist --project-name ptowl
+      # Frontend deploy intentionally NOT here — Cloudflare Pages git
+      # integration handles apps/web on every push to main automatically.
+      # See docs/CF-PAGES-GIT-SETUP.md.
