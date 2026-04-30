@@ -183,7 +183,7 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
           marginTop: '-0.1em',
         }}
       >
-        Patience Trainer
+        Patience Trainer Tool — Designed to help save time
       </span>
     </span>
   );

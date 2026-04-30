@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { OwlCityScene } from '../components/decorative/OwlCityScene.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { FirebaseAuthUI } from '../components/auth/FirebaseAuthUI.js';
@@ -171,36 +172,34 @@ export function LandingPage() {
             Help
           </a>
         </div>
-        {/*
-          Powered-by-Claude badge. The inline sparkle SVG below is a
-          generic placeholder, not Anthropic's trademarked mark. When
-          you have permission to use the official Anthropic brand
-          asset, swap the <svg> for an <img src="/powered-by-claude.svg" />
-          (drop the file in apps/web/public/) per
-          https://www.anthropic.com/brand
-        */}
-        <a
-          href="https://www.anthropic.com/api"
-          style={styles.poweredByBadge}
-          rel="noopener"
-          target="_blank"
-          aria-label="Powered by Claude — opens anthropic.com"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            style={styles.poweredByIcon}
+        {/* Powered-by-Claude line — inline, no pill chrome. Orange
+            generic-sparkle SVG sits to the right of the text. Swap the
+            inline <svg> for an <img src="/powered-by-claude.svg" /> if
+            you obtain Anthropic's official brand asset. */}
+        <p style={styles.footerPoweredBy}>
+          Free during beta &middot;{' '}
+          <a
+            href="https://www.anthropic.com/api"
+            style={styles.footerPoweredByLink}
+            rel="noopener"
+            target="_blank"
+            aria-label="Powered by Claude — opens anthropic.com"
           >
-            <path
-              d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>Powered by Claude</span>
-        </a>
-        <p style={styles.footerPoweredBy}>Free during beta</p>
+            Powered by Claude
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              style={styles.footerPoweredByMark}
+            >
+              <path
+                d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
+                fill="#D97757"
+              />
+            </svg>
+          </a>
+        </p>
         <p style={styles.footerCopy}>
           &copy; 2026 PTowl &middot; A product of Moose Bay &amp; Company LLC
         </p>
@@ -294,29 +293,20 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-block',
   },
   footerPoweredBy: {
-    fontSize: '0.7rem',
+    fontSize: '0.8rem',
     color: 'var(--gray-text)',
     marginBottom: '0.25rem',
-    opacity: 0.7,
   },
-  poweredByBadge: {
+  footerPoweredByLink: {
+    color: 'var(--gray-text)',
+    textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '0.375rem',
-    padding: '0.375rem 0.75rem',
-    margin: '0 auto 0.375rem',
-    background: 'var(--white)',
-    border: '1px solid var(--green-light)',
-    borderRadius: '999px',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-    color: 'var(--green-dark)',
-    textDecoration: 'none',
-    boxShadow: '0 1px 3px rgba(27, 94, 32, 0.06)',
+    gap: '0.3rem',
   },
-  poweredByIcon: {
-    color: 'var(--green-mid)',
+  footerPoweredByMark: {
     flexShrink: 0,
+    verticalAlign: 'middle',
   },
   footerCopy: {
     fontSize: '0.75rem',

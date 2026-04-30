@@ -1,5 +1,6 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+import { OwlCityScene } from '../components/decorative/OwlCityScene.js';
 import { PageLayout } from '../components/layout/PageLayout.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 
@@ -16,11 +17,9 @@ export function AboutPage() {
 
         {/* Hero */}
         <section style={styles.hero}>
-          <img
-            src="/logo-120.svg"
-            alt="PTowl"
-            style={{ width: 'clamp(64px, 15vw, 100px)', height: 'auto', marginBottom: '0.75rem' }}
-          />
+          <div style={styles.heroScene}>
+            <OwlCityScene size="lg" />
+          </div>
           <h1 style={styles.headline}>Built to make healthcare more simple and fun.</h1>
           <p style={styles.subheadline}>
             PTowl exists for the people who show up every day to help others move better. We keep
@@ -185,30 +184,32 @@ export function AboutPage() {
               Help
             </a>
           </div>
-          {/* Powered-by-Claude badge. Generic sparkle SVG; swap for the
-            official Anthropic brand asset when available. */}
-          <a
-            href="https://www.anthropic.com/api"
-            style={styles.poweredByBadge}
-            rel="noopener"
-            target="_blank"
-            aria-label="Powered by Claude — opens anthropic.com"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              style={styles.poweredByIcon}
+          {/* Powered-by-Claude — inline, no chrome. Orange generic
+              sparkle SVG to the right of the text. */}
+          <p style={styles.footerPoweredBy}>
+            Free during beta &middot;{' '}
+            <a
+              href="https://www.anthropic.com/api"
+              style={styles.footerPoweredByLink}
+              rel="noopener"
+              target="_blank"
+              aria-label="Powered by Claude — opens anthropic.com"
             >
-              <path
-                d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>Powered by Claude</span>
-          </a>
-          <p style={styles.footerPoweredBy}>Free during beta</p>
+              Powered by Claude
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                style={styles.footerPoweredByMark}
+              >
+                <path
+                  d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
+                  fill="#D97757"
+                />
+              </svg>
+            </a>
+          </p>
           <p style={styles.footerCopy}>
             &copy; 2026 PTowl &middot; A product of Moose Bay &amp; Company LLC
           </p>
@@ -232,6 +233,14 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '3rem 1.5rem 2rem',
     maxWidth: '700px',
     margin: '0 auto',
+  },
+  heroScene: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '1rem',
+    borderRadius: 'var(--radius-lg)',
+    overflow: 'hidden',
+    boxShadow: '0 6px 24px rgba(15, 32, 39, 0.15)',
   },
   headline: {
     fontSize: 'clamp(1.5rem, 3vw, 2rem)',
@@ -387,10 +396,20 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'inline-block',
   },
   footerPoweredBy: {
-    fontSize: '0.7rem',
+    fontSize: '0.8rem',
     color: 'var(--gray-text)',
     marginBottom: '0.25rem',
-    opacity: 0.7,
+  },
+  footerPoweredByLink: {
+    color: 'var(--gray-text)',
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+  },
+  footerPoweredByMark: {
+    flexShrink: 0,
+    verticalAlign: 'middle',
   },
   poweredByBadge: {
     display: 'inline-flex',
