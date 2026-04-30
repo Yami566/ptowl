@@ -34,27 +34,19 @@ export function FirebaseAuthUI() {
     ui.start(containerRef.current, {
       signInFlow: 'popup',
       signInOptions: [
-        // Email + password tile — traditional flow. FirebaseUI renders
-        // email/password inputs, "Forgot password?" link (sends reset
-        // email via Firebase), and toggles between sign-in vs sign-up
-        // automatically based on whether the email already exists.
+        // Email link (passwordless / magic link) — the simplest auth
+        // possible. User enters their email, Firebase sends them a
+        // one-click sign-in link, they click it from their inbox and
+        // land signed in. No password, no phone, no SMS, no reCAPTCHA.
+        //
         // Requires Firebase Console → Authentication → Sign-in method
-        // → "Email/Password" enabled.
+        // → "Email/Password" enabled WITH the "Email link (passwordless
+        // sign-in)" sub-toggle ON.
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
+          signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
+          forceSameDevice: false,
           requireDisplayName: false,
-        },
-        // Phone + SMS-code tile — alternative for users who prefer to
-        // sign in via phone number. FirebaseUI renders the phone input
-        // with country picker (US default), sends the OTP via Firebase,
-        // and verifies the code. Invisible reCAPTCHA satisfies the
-        // anti-abuse requirement without a visible widget.
-        // Requires Firebase Console → Authentication → Sign-in method
-        // → "Phone" enabled.
-        {
-          provider: firebaseCompat.auth.PhoneAuthProvider.PROVIDER_ID,
-          recaptchaParameters: { size: 'invisible' },
-          defaultCountry: 'US',
         },
       ],
       tosUrl: '/terms',
