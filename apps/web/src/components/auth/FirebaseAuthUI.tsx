@@ -34,18 +34,27 @@ export function FirebaseAuthUI() {
     ui.start(containerRef.current, {
       signInFlow: 'popup',
       signInOptions: [
-        // Email + password only — simple, traditional sign-in flow.
-        // FirebaseUI renders email/password inputs, "Forgot password?"
-        // link (sends reset email via Firebase), and toggles between
-        // sign-in vs sign-up automatically based on whether the email
-        // already exists. No additional code needed.
-        //
+        // Email + password tile — traditional flow. FirebaseUI renders
+        // email/password inputs, "Forgot password?" link (sends reset
+        // email via Firebase), and toggles between sign-in vs sign-up
+        // automatically based on whether the email already exists.
         // Requires Firebase Console → Authentication → Sign-in method
-        // → "Email/Password" enabled (with the Email link sub-option
-        // disabled if you only want password).
+        // → "Email/Password" enabled.
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
           requireDisplayName: false,
+        },
+        // Phone + SMS-code tile — alternative for users who prefer to
+        // sign in via phone number. FirebaseUI renders the phone input
+        // with country picker (US default), sends the OTP via Firebase,
+        // and verifies the code. Invisible reCAPTCHA satisfies the
+        // anti-abuse requirement without a visible widget.
+        // Requires Firebase Console → Authentication → Sign-in method
+        // → "Phone" enabled.
+        {
+          provider: firebaseCompat.auth.PhoneAuthProvider.PROVIDER_ID,
+          recaptchaParameters: { size: 'invisible' },
+          defaultCountry: 'US',
         },
       ],
       tosUrl: '/terms',
