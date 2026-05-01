@@ -98,8 +98,11 @@ export function LandingPage() {
     <main style={styles.page}>
       {/* Hero */}
       <section style={styles.hero} className="landing-fade-in landing-hero">
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.5rem' }}>
-          <OwlLogo size="lg" linkTo="/" />
+        {/* Combined logo + header: city scene with PTOWL wordmark
+            embedded inside the SVG (same green + orange brand colors
+            as the small <OwlLogo>). Replaces the prior text-only logo. */}
+        <div style={styles.heroScene}>
+          <OwlCityScene size="lg" showWordmark />
         </div>
         <h1 style={styles.headline}>Stop scheduling. Start treating.</h1>
         <p style={styles.subheadline}>
@@ -222,6 +225,14 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box' as const,
+  },
+  heroScene: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '1.25rem',
+    borderRadius: 'var(--radius-lg)',
+    overflow: 'hidden',
+    boxShadow: '0 8px 30px rgba(15, 32, 39, 0.18)',
   },
   headline: {
     fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',

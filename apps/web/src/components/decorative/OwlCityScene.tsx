@@ -26,15 +26,22 @@
 interface OwlCitySceneProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  /**
+   * When true, the PTOWL wordmark + "Patience Trainer Tool — Designed
+   * to help save time" subtitle render inside the SVG sky area, turning
+   * the scene into a self-contained hero/header. Letters use the same
+   * orange/green brand colors as <OwlLogo>: P + O orange, T + W + L green.
+   */
+  showWordmark?: boolean;
 }
 
 const SIZE_PX: Record<NonNullable<OwlCitySceneProps['size']>, number> = {
   sm: 120,
   md: 220,
-  lg: 320,
+  lg: 360,
 };
 
-export function OwlCityScene({ size = 'md', className }: OwlCitySceneProps) {
+export function OwlCityScene({ size = 'md', className, showWordmark = false }: OwlCitySceneProps) {
   const w = SIZE_PX[size];
 
   return (
@@ -342,6 +349,59 @@ export function OwlCityScene({ size = 'md', className }: OwlCitySceneProps) {
 
       {/* ── soft city haze at horizon ───────────────────────────────── */}
       <rect x="0" y="92" width="320" height="14" fill="#0F2027" opacity="0.35" />
+
+      {/* ── PTOWL wordmark + subtitle (rendered on top, in the sky) ─── */}
+      {showWordmark && (
+        <g pointerEvents="none">
+          {/* soft halo behind the wordmark for legibility against stars */}
+          <ellipse cx="160" cy="48" rx="120" ry="22" fill="#0F2027" opacity="0.45" />
+
+          <g
+            textAnchor="middle"
+            fontFamily="ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace"
+            fontWeight={800}
+          >
+            {/* PTOWL — colors match <OwlLogo>: P + O orange, T + W + L green.
+                Each letter positioned by absolute x so spacing reads as a
+                single wordmark, not five floating glyphs. */}
+            <text x="103" y="58" fontSize="34" fill="#FF7043">
+              P
+            </text>
+            <text x="131" y="58" fontSize="34" fill="#A5D6A7">
+              T
+            </text>
+            <text x="161" y="60" fontSize="40" fill="#FF7043">
+              O{/* subtle pulse so the O feels alive, like the owl */}
+              <animate
+                attributeName="opacity"
+                values="0.85;1;0.85"
+                dur="3.2s"
+                repeatCount="indefinite"
+              />
+            </text>
+            <text x="191" y="58" fontSize="34" fill="#A5D6A7">
+              W
+            </text>
+            <text x="220" y="58" fontSize="34" fill="#A5D6A7">
+              L
+            </text>
+          </g>
+
+          {/* subtitle — light gray for contrast against the dark sky */}
+          <text
+            x="160"
+            y="78"
+            textAnchor="middle"
+            fontFamily="ui-sans-serif, system-ui, 'Outfit', sans-serif"
+            fontSize="7.5"
+            fontWeight={500}
+            fill="#CFD8DC"
+            letterSpacing="0.06em"
+          >
+            PATIENCE TRAINER TOOL · DESIGNED TO HELP SAVE TIME
+          </text>
+        </g>
+      )}
     </svg>
   );
 }

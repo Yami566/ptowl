@@ -18,7 +18,7 @@ export function AboutPage() {
         {/* Hero */}
         <section style={styles.hero}>
           <div style={styles.heroScene}>
-            <OwlCityScene size="lg" />
+            <OwlCityScene size="lg" showWordmark />
           </div>
           <h1 style={styles.headline}>Built to make healthcare more simple and fun.</h1>
           <p style={styles.subheadline}>
