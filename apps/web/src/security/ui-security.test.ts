@@ -74,11 +74,10 @@ describe('Data Leakage Prevention', () => {
     // Allow known safe localStorage usage (device-local, non-sensitive preferences)
     const SAFE_LOCALSTORAGE_FILES = [
       'usePrintSettings.ts', // print layout preferences
-      'firebase.ts', // Firebase auth persistence (browserLocalPersistence)
       'useTheme.ts', // dark/light mode toggle
       'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
       // Phone number is the address (login identifier), not the credential.
-      // Firebase OTP is the actual auth — knowing the number alone gains no access.
+      // Knowing the number alone gains no access; the OTP is the actual auth.
       // Persisting it is a one-tap-return UX win, not a sensitive-data leak.
       'LandingPage.tsx', // last-used phone number for one-tap return
     ];
@@ -194,9 +193,11 @@ describe('Secure Routing', () => {
 // ── No Secrets in Source Code ──
 
 describe('No Secrets in Source Code', () => {
-  it('no API keys in frontend source (excluding Firebase public config)', () => {
-    // Firebase API keys are public by design (restricted by domain, not secrecy)
-    const SAFE_KEY_FILES = ['firebase.ts'];
+  it('no API keys in frontend source (excluding browser-public auth config)', () => {
+    // Auth provider publishable keys are public by design (restricted by
+    // domain on Clerk's side, not by secrecy). main.tsx bakes the Clerk
+    // publishable key as a fallback per Clerk's documented pattern.
+    const SAFE_KEY_FILES = ['main.tsx'];
     const files = readAllFiles(WEB_SRC, ['.tsx', '.ts']);
     for (const file of files) {
       if (SAFE_KEY_FILES.some((f) => file.path.includes(f))) continue;

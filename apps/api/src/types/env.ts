@@ -21,10 +21,6 @@ export interface Env {
   EMAIL_API_KEY: string;
   EMAIL_ENCRYPTION_KEY: string; // base64-encoded 32 bytes for AES-GCM
   TURNSTILE_SECRET_KEY: string;
-  // Legacy Firebase project id — retained during the Clerk migration so
-  // existing code that still references it doesn't crash. Not used by
-  // the auth middleware after Phase 3.
-  FIREBASE_PROJECT_ID: string;
   // Clerk frontend API URL, e.g. `https://ethical-dingo-48.clerk.accounts.dev`
   // for development instances or `https://clerk.ptowl.com` for production.
   // Used by the Worker to verify Clerk session JWTs against the

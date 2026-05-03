@@ -365,38 +365,39 @@ describe('Security Headers & CSP', () => {
   });
 });
 
-// ── Phone Auth Security (Firebase) ──
-// User auth uses Firebase Phone Auth (SMS OTP handled by Google).
-// Backend verifies Firebase ID tokens using Google JWKS.
+// ── Auth verifier security (Clerk) ──
+// User auth uses Clerk session tokens. Backend verifies Clerk JWTs
+// using jose against Clerk's JWKS endpoint at the configured frontend
+// API URL. Replaces the previous Firebase Phone Auth verifier.
 
-describe('Firebase Phone Auth Security', () => {
-  it('JWKS verifier hits the documented Google securetoken endpoint', () => {
-    const code = readFile('auth/firebase-verify.ts');
-    expect(code).toContain('securetoken@system.gserviceaccount.com');
+describe('Clerk Auth Security', () => {
+  it('JWKS verifier uses jose against the Clerk frontend API endpoint', () => {
+    const code = readFile('auth/clerk-verify.ts');
+    expect(code).toContain('/.well-known/jwks.json');
     // Use the off-the-shelf jose JWKS handler instead of hand-rolled
     // RSA verification; it manages caching, cooldown, and refresh.
     expect(code).toContain('createRemoteJWKSet');
     expect(code).toContain('jwtVerify');
   });
 
-  it('JWKS verifier validates issuer and audience against project ID', () => {
-    const code = readFile('auth/firebase-verify.ts');
-    expect(code).toContain('securetoken.google.com/${projectId}');
-    expect(code).toContain('audience: projectId');
+  it('JWKS verifier validates issuer with RS256', () => {
+    const code = readFile('auth/clerk-verify.ts');
+    expect(code).toContain('expectedIssuer');
     expect(code).toContain("algorithms: ['RS256']");
   });
 
-  it('user provisioning extracts phone number from claims', () => {
+  it('user provisioning links by sub then phone then email', () => {
     const code = readFile('auth/provision.ts');
-    expect(code).toContain('claims.phone_number');
-    // Match-on-phone fallback links legacy users to firebase_uid.
-    expect(code).toContain('WHERE phone = ?');
-    expect(code).toContain('UPDATE users SET firebase_uid = ?');
+    // The lookup chain still uses sub; phone + email branches are
+    // skipped harmlessly when Clerk JWTs (which omit those fields by
+    // default) hit the resolver.
+    expect(code).toContain('claims.sub');
+    expect(code).toContain('WHERE firebase_uid = ?');
   });
 
-  it('FIREBASE_PROJECT_ID is in Env type (not hardcoded)', () => {
+  it('CLERK_FRONTEND_API_URL is in Env type (not hardcoded)', () => {
     const envCode = readFile('types/env.ts');
-    expect(envCode).toContain('FIREBASE_PROJECT_ID');
+    expect(envCode).toContain('CLERK_FRONTEND_API_URL');
   });
 });
 

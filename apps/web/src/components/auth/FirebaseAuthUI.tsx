@@ -3,24 +3,17 @@ import { SignIn } from '@clerk/clerk-react';
 /**
  * Auth widget rendered on the landing page.
  *
- * Despite the legacy filename, this component now renders Clerk's
- * drop-in `<SignIn />` widget. The filename will be renamed to
- * AuthWidget.tsx in a follow-up commit so Phase 2 (backend cutover)
- * can land cleanly without a confusing rename in the same diff.
+ * Despite the legacy filename, this component renders Clerk's drop-in
+ * `<SignIn />` widget. Filename retained through Phase 4 so the diff
+ * stays purely subtractive; will be renamed to AuthWidget.tsx in a
+ * follow-up commit.
  *
  * Behavior:
- *   - When VITE_CLERK_PUBLISHABLE_KEY is set in Cloudflare Workers
- *     Builds env, ClerkProvider activates in main.tsx and this
+ *   - When VITE_CLERK_PUBLISHABLE_KEY is set (or the baked fallback
+ *     in main.tsx is in use), ClerkProvider activates and this
  *     component renders Clerk's hosted sign-in widget.
- *   - When the env var is missing (e.g. mid-deploy), it falls back
- *     to a friendly placeholder so the page never crashes.
- *
- * Phase 2 follow-up will:
- *   - Replace firebase-verify.ts in the API Worker with Clerk JWT
- *     verification so end-to-end sign-in works.
- *   - Remove the Firebase SDK + FirebaseUI dependency from
- *     apps/web/package.json.
- *   - Rename this file to AuthWidget.tsx.
+ *   - When the env var is missing AND no fallback is baked, falls
+ *     back to a friendly placeholder so the page never crashes.
  */
 export function FirebaseAuthUI() {
   const clerkConfigured = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
