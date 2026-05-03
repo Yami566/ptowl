@@ -34,18 +34,24 @@ export function FirebaseAuthUI() {
     ui.start(containerRef.current, {
       signInFlow: 'popup',
       signInOptions: [
-        // Email link (passwordless / magic link) — the simplest auth
-        // possible. User enters their email, Firebase sends them a
-        // one-click sign-in link, they click it from their inbox and
-        // land signed in. No password, no phone, no SMS, no reCAPTCHA.
-        //
-        // Requires Firebase Console → Authentication → Sign-in method
-        // → "Email/Password" enabled WITH the "Email link (passwordless
-        // sign-in)" sub-toggle ON.
+        // Google OAuth — primary tile. One-click sign-in, no cross-device
+        // handoff problem (popup signs in on the device that opened it).
+        // Requires Firebase Console → Authentication → Sign-in method →
+        // Google = enabled (with project support email set).
+        {
+          provider: firebaseCompat.auth.GoogleAuthProvider.PROVIDER_ID,
+          scopes: ['profile', 'email'],
+          customParameters: { prompt: 'select_account' },
+        },
+        // Email link (passwordless / magic link) — fallback for users
+        // without Google. forceSameDevice: true avoids the silent
+        // wrong-device sign-in trap (clicking the link on a phone when
+        // the email was requested from a laptop now errors clearly
+        // instead of stranding the laptop session).
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
           signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
-          forceSameDevice: false,
+          forceSameDevice: true,
           requireDisplayName: false,
         },
       ],
