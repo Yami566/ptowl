@@ -1,19 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ClerkProvider } from '@clerk/clerk-react';
 import { App } from './App.js';
 import './styles/globals.css';
 import './styles/responsive.css';
 import './styles/dark-theme.css';
-
-// Clerk publishable key — read at build time by Vite from
-// VITE_CLERK_PUBLISHABLE_KEY (set in Cloudflare Workers Builds
-// "Variables and Secrets" -> "Production"). When the var is unset
-// we render the app WITHOUT ClerkProvider, so the existing Firebase
-// flow continues to work and only the /clerk-test route shows an
-// error. This makes the Clerk migration safe to land before the
-// env var is configured.
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 // SECURITY: Disable React DevTools in production
 if (import.meta.env.PROD) {
@@ -37,16 +27,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   });
 }
 
-const root = (
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {CLERK_PUBLISHABLE_KEY ? (
-      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
-        <App />
-      </ClerkProvider>
-    ) : (
-      <App />
-    )}
-  </React.StrictMode>
+    <App />
+  </React.StrictMode>,
 );
-
-ReactDOM.createRoot(document.getElementById('root')!).render(root);

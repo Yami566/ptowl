@@ -2,7 +2,6 @@ import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react';
 import { AuthProvider, ClinicRoute } from './contexts/AuthContext.js';
 import { LoadingOverlay } from './components/LoadingOverlay.js';
 import { ErrorBoundary } from './components/ErrorBoundary.js';
@@ -102,41 +101,6 @@ export function App() {
               <Routes>
                 {/* Public routes — accessible without authentication */}
                 <Route path="/" element={<LandingPage />} />
-                {/* Phase 1 Clerk migration test page. Renders Clerk
-                    sign-in/up buttons. Lives at /clerk-test until we
-                    cut over the live LandingPage in Phase 2. The
-                    ErrorBoundary catches the "no provider" throw if
-                    VITE_CLERK_PUBLISHABLE_KEY isn't set yet. */}
-                <Route
-                  path="/clerk-test"
-                  element={
-                    <div
-                      style={{
-                        padding: '3rem 1.5rem',
-                        maxWidth: '480px',
-                        margin: '0 auto',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <h1>Clerk integration test</h1>
-                      <p style={{ color: '#666', marginBottom: '2rem' }}>
-                        If the buttons below render, Clerk is wired up correctly.
-                      </p>
-                      <SignedOut>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                          <SignInButton mode="modal" />
-                          <SignUpButton mode="modal" />
-                        </div>
-                      </SignedOut>
-                      <SignedIn>
-                        <p style={{ color: 'green', fontWeight: 600, marginBottom: '1rem' }}>
-                          Signed in via Clerk
-                        </p>
-                        <UserButton afterSignOutUrl="/clerk-test" />
-                      </SignedIn>
-                    </div>
-                  }
-                />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
