@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useAuth as useClerkAuth, useClerk } from '@clerk/clerk-react';
 import { apiRequest } from '../api/client.js';
 import { LoadingOverlay } from '../components/LoadingOverlay.js';
-import { auth as firebaseAuth } from '../firebase.js';
 
 interface AuthUser {
   id: string;
@@ -37,9 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Clerk hooks. `isLoaded` flips true once Clerk's session has been
+  // checked; `isSignedIn` reflects whether the user has a valid session.
+  // signOut is exposed via useClerk because useAuth doesn't include it.
+  const { isLoaded: clerkLoaded, isSignedIn } = useClerkAuth();
+  const clerk = useClerk();
+
   // Fetch the current user from /auth/me. apiRequest attaches the
-  // Bearer token automatically; the Worker provisions a D1 row on
-  // first call (apps/api/src/auth/provision.ts).
+  // Bearer token automatically (Clerk session JWT); the Worker
+  // provisions a D1 row on first call (apps/api/src/auth/provision.ts).
   const refreshUser = useCallback(async () => {
     const result = await apiRequest<AuthUser>('/auth/me');
     if (result.ok && result.data) {
@@ -49,21 +54,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Single source of truth: Firebase's onAuthStateChanged. Fires once
-  // synchronously on mount with the persisted user (if any), then on
-  // every sign-in / sign-out. Firebase auto-refreshes the ID token
-  // internally.
+  // React to Clerk auth state changes. When Clerk reports a signed-in
+  // user, we provision/load the matching D1 row. When Clerk reports
+  // signed-out, we clear local state.
   useEffect(() => {
-    const unsub = onAuthStateChanged(firebaseAuth, async (fbUser) => {
-      if (fbUser) {
+    if (!clerkLoaded) return;
+    let cancelled = false;
+    (async () => {
+      if (isSignedIn) {
         await refreshUser();
       } else {
-        setUser(null);
+        if (!cancelled) setUser(null);
       }
-      setLoading(false);
-    });
-    return unsub;
-  }, [refreshUser]);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clerkLoaded, isSignedIn, refreshUser]);
 
   // Redirect logic runs AFTER loading completes.
   useEffect(() => {
@@ -76,26 +84,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, location.pathname, navigate]);
 
-  // Called by the auth UI after successful Firebase verification.
-  // onAuthStateChanged also fires; refreshUser there is the canonical
-  // path. This explicit call exists so the dashboard renders without
-  // waiting for the Firebase listener microtask.
+  // Called by the auth UI after successful Clerk verification (used in
+  // the rare case where we need to force a /auth/me roundtrip without
+  // waiting for the Clerk listener microtask).
   const login = useCallback(async () => {
     await refreshUser();
   }, [refreshUser]);
 
   const logout = useCallback(async () => {
-    await signOut(firebaseAuth).catch(() => {});
+    await clerk.signOut().catch(() => {});
     setUser(null);
     navigate('/', { replace: true });
-  }, [navigate]);
+  }, [clerk, navigate]);
 
   // Public paths render immediately — they don't depend on the user.
   // Per-route guards (ProtectedRoute, ClinicRoute) still gate protected
-  // components on `loading`, so there's no flash of protected content.
-  // Blocking globally caused white-screen-on-link-tap in sandboxed
-  // in-app browsers (iMessage / SFSafariViewController) where
-  // Firebase's localStorage persistence can hang for seconds.
+  // components on `loading`.
   const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
   if (loading && !isPublicPath) {
     return (

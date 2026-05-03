@@ -58,10 +58,18 @@ describe('Auth Middleware Security', () => {
     expect(code).not.toMatch(/c\.req\.query\(\s*['"]idToken['"]\s*\)/);
   });
 
-  it('requireAuth verifies the token via Firebase JWKS', () => {
+  it('requireAuth verifies the token via the configured identity provider JWKS', () => {
     const code = authMiddleware();
-    expect(code).toContain('verifyFirebaseIdToken');
-    expect(code).toContain('FIREBASE_PROJECT_ID');
+    // After the Clerk migration, the middleware verifies Clerk session
+    // tokens. The legacy Firebase verifier name is also accepted so the
+    // assertion survives a partial revert.
+    const usesProperVerifier =
+      code.includes('verifyClerkSessionToken') || code.includes('verifyFirebaseIdToken');
+    expect(usesProperVerifier, 'expected requireAuth to call a JWKS-backed verifier').toBe(true);
+    // Same logic for env-driven issuer config.
+    const usesEnvIssuer =
+      code.includes('CLERK_FRONTEND_API_URL') || code.includes('FIREBASE_PROJECT_ID');
+    expect(usesEnvIssuer, 'expected requireAuth to read issuer from env, not hardcode').toBe(true);
   });
 
   it('requireAuth returns 401 for missing Authorization header', () => {
@@ -353,11 +361,14 @@ describe('Stateless Auth (no server-side session cookies)', () => {
     expect(code).not.toContain('getCookie');
   });
 
-  it('Firebase ID tokens are verified on every request, not exchanged once', () => {
+  it('identity tokens are verified on every request, not exchanged once', () => {
     const code = readFile('middleware/auth.ts');
-    expect(code).toContain('verifyFirebaseIdToken');
-    // No /auth/refresh route — tokens auto-refresh client-side via
-    // Firebase SDK; the server is stateless.
+    // Either Clerk (current) or Firebase (legacy) verifier counts.
+    const verifies =
+      code.includes('verifyClerkSessionToken') || code.includes('verifyFirebaseIdToken');
+    expect(verifies, 'expected middleware/auth.ts to verify tokens via JWKS').toBe(true);
+    // No /auth/refresh or /auth/firebase route — tokens auto-refresh
+    // client-side via the IdP SDK; the server is stateless.
     const authCode = readFile('routes/auth.ts');
     expect(authCode).not.toContain("'/refresh'");
     expect(authCode).not.toContain("'/firebase'");

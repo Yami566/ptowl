@@ -1,6 +1,24 @@
-import { getFirebaseIdToken } from '../firebase.js';
-
 const API_BASE = '/api/v1';
+
+/**
+ * Get a Clerk session token via the global Clerk instance. We use
+ * `window.Clerk` (set by ClerkProvider in main.tsx) instead of the
+ * useAuth() hook so this helper can be called from non-React code.
+ *
+ * Returns null if Clerk hasn't loaded yet or the user isn't signed in.
+ */
+async function getClerkSessionToken(): Promise<string | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const w = window as unknown as {
+    Clerk?: { session?: { getToken: () => Promise<string | null> } };
+  };
+  if (!w.Clerk?.session) return null;
+  try {
+    return await w.Clerk.session.getToken();
+  } catch {
+    return null;
+  }
+}
 
 // Hard request timeout. Without one, an API outage would freeze the
 // SPA on auth flows for tens of seconds. 8s is generous for a healthy
@@ -32,13 +50,11 @@ function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Pr
 }
 
 /**
- * apiRequest — every API call carries the current Firebase ID token
- * as `Authorization: Bearer ...`. The Firebase SDK auto-refreshes
- * tokens behind the scenes (default 1h lifetime), so the client just
- * asks for a fresh one each time. The Worker verifies against
- * Google's JWKS in apps/api/src/auth/firebase-verify.ts.
- *
- * Replaces the previous httpOnly-cookie + /auth/refresh dance.
+ * apiRequest — every API call carries the current Clerk session token
+ * as `Authorization: Bearer ...`. Clerk's SDK auto-refreshes tokens
+ * behind the scenes, so the client just asks for a fresh one each
+ * time. The Worker verifies against Clerk's JWKS in
+ * apps/api/src/auth/clerk-verify.ts.
  */
 export async function apiRequest<T = unknown>(
   path: string,
@@ -52,10 +68,10 @@ export async function apiRequest<T = unknown>(
     ...(options.headers as Record<string, string>),
   };
 
-  // Attach the Firebase ID token if the user is signed in. Public
+  // Attach the Clerk session token if the user is signed in. Public
   // endpoints (calendar feed, share-token routes) tolerate the absence;
   // protected endpoints reject with 401.
-  const idToken = await getFirebaseIdToken().catch(() => null);
+  const idToken = await getClerkSessionToken();
   if (idToken) {
     headers['Authorization'] = `Bearer ${idToken}`;
   }

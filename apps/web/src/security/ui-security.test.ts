@@ -110,9 +110,14 @@ describe('Data Leakage Prevention', () => {
 // ── API Security ──
 
 describe('API Communication Security', () => {
-  it('API client attaches Firebase ID token as Authorization: Bearer', () => {
+  it('API client attaches Clerk session token as Authorization: Bearer', () => {
     const clientFile = fs.readFileSync(path.join(WEB_SRC, 'api/client.ts'), 'utf-8');
-    expect(clientFile).toContain('getFirebaseIdToken');
+    // After the Clerk migration the client reads from window.Clerk.session
+    // instead of Firebase's auth.currentUser. Either token-fetch helper name
+    // is acceptable so the test survives a future rename.
+    const usesClerk =
+      clientFile.includes('getClerkSessionToken') || clientFile.includes('Clerk.session');
+    expect(usesClerk, 'expected api/client.ts to fetch tokens from Clerk').toBe(true);
     expect(clientFile).toContain('Bearer ${idToken}');
     // No more httpOnly cookies or credentials: 'include' — Stage A
     // moved off server-side session state.
@@ -152,7 +157,6 @@ describe('Authentication Security', () => {
     expect(landingFile).not.toContain('sendPhoneCode');
     expect(landingFile).not.toContain('/auth/firebase');
   });
-
 });
 
 // ── PII Protection ──

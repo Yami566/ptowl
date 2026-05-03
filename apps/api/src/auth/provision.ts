@@ -1,6 +1,19 @@
+import type { JWTPayload } from 'jose';
 import type { Env } from '../types/env.js';
-import type { FirebaseClaims } from './firebase-verify.js';
 import { DEFAULT_TEMPLATES, getTeamAliasName } from '@ptowl/shared';
+
+/**
+ * Identity-provider-agnostic claims shape consumed by
+ * resolveOrProvisionUser. Both Firebase ID tokens and Clerk session
+ * JWTs satisfy this — `sub` is the unique user id, and `email` /
+ * `phone_number` may or may not be present depending on the issuer
+ * + JWT template.
+ */
+export interface AuthClaims extends JWTPayload {
+  sub: string;
+  phone_number?: string;
+  email?: string;
+}
 
 export interface AuthUser {
   id: string;
@@ -40,7 +53,7 @@ interface UserRow {
  */
 export async function resolveOrProvisionUser(
   env: Env,
-  claims: FirebaseClaims,
+  claims: AuthClaims,
   ip: string,
 ): Promise<AuthUser | null> {
   // 1. Steady-state lookup
@@ -91,7 +104,12 @@ export async function resolveOrProvisionUser(
     claims.email && !claims.email.endsWith('@phone.ptowl.local') ? claims.email : null;
   const placeholderEmail =
     realEmail ||
-    (phone ? `${phone.replace('+', '')}@phone.ptowl.local` : `${claims.sub}@firebase.ptowl.local`);
+    (phone
+      ? `${phone.replace('+', '')}@phone.ptowl.local`
+      : // Sub-prefixed placeholder works for both Firebase (UIDs) and
+        // Clerk (`user_2abc...`). The `.firebase.ptowl.local` suffix is
+        // legacy; will be renamed in a future migration.
+        `${claims.sub}@firebase.ptowl.local`);
   const placeholderHash = crypto.randomUUID() + crypto.randomUUID();
   const teamAlias = phone ? getTeamAliasName(phone) : 'New Clinic';
 

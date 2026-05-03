@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import type { Env } from '../types/env.js';
-import { verifyFirebaseIdToken } from '../auth/firebase-verify.js';
+import { verifyClerkSessionToken } from '../auth/clerk-verify.js';
 import { resolveOrProvisionUser, type AuthUser } from '../auth/provision.js';
 
 type Variables = {
@@ -8,16 +8,18 @@ type Variables = {
 };
 
 /**
- * requireAuth — verifies a Firebase ID token from the
+ * requireAuth — verifies a Clerk session JWT from the
  * `Authorization: Bearer ...` header on every request.
  *
  * On success, `c.get('user')` returns the D1 user row. On first
- * authenticated request (legacy user or genuine signup), the row is
- * auto-provisioned — see resolveOrProvisionUser.
+ * authenticated request, the row is auto-provisioned by
+ * resolveOrProvisionUser using `claims.sub` (Clerk user ID like
+ * `user_xxxxxxx`) stored in the `firebase_uid` column (legacy name,
+ * kept until a follow-up migration renames it to `external_id`).
  *
- * Replaces the previous JWT-cookie + /auth/refresh + /auth/firebase
- * dance (HOTFIX 2 stage A). Firebase's client SDK auto-refreshes the
- * ID token, so there's nothing to manage server-side.
+ * Replaces the prior Firebase ID token verifier; Firebase users
+ * provisioned before this commit will be re-onboarded as new Clerk
+ * users on first sign-in. At <10 active clinics this is acceptable.
  */
 export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variables }>(
   async (c, next) => {
@@ -29,8 +31,8 @@ export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variable
       );
     }
 
-    const idToken = authHeader.slice('Bearer '.length).trim();
-    const claims = await verifyFirebaseIdToken(idToken, c.env.FIREBASE_PROJECT_ID);
+    const sessionToken = authHeader.slice('Bearer '.length).trim();
+    const claims = await verifyClerkSessionToken(sessionToken, c.env.CLERK_FRONTEND_API_URL);
     if (!claims) {
       return c.json(
         { ok: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' } },

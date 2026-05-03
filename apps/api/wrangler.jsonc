@@ -76,7 +76,16 @@
     // Canonical origin. Add more here if we ever own a second branded
     // domain (FRONTEND_URLS comma-separated overrides this single value).
     "FRONTEND_URL": "https://ptowl.com",
-    "FIREBASE_PROJECT_ID": "ptowl-bdfbe"
+    // Legacy Firebase project id — kept during the Clerk migration so
+    // any code still referencing it doesn't crash. Auth middleware no
+    // longer uses it after Phase 3 of the Clerk cutover.
+    "FIREBASE_PROJECT_ID": "ptowl-bdfbe",
+    // Clerk frontend API URL. Encoded in the publishable key but
+    // passed explicitly so the Worker doesn't have to decode it. The
+    // Worker fetches `/.well-known/jwks.json` from this URL to verify
+    // session JWTs. Production Clerk instances replace this with the
+    // custom domain (e.g. https://clerk.ptowl.com).
+    "CLERK_FRONTEND_API_URL": "https://ethical-dingo-48.clerk.accounts.dev"
   },
   "routes": [
     { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
@@ -128,7 +137,8 @@
       "vars": {
         "ENVIRONMENT": "staging",
         "FRONTEND_URL": "https://staging.ptowl.pages.dev",
-        "FIREBASE_PROJECT_ID": "ptowl-bdfbe"
+        "FIREBASE_PROJECT_ID": "ptowl-bdfbe",
+        "CLERK_FRONTEND_API_URL": "https://ethical-dingo-48.clerk.accounts.dev"
       },
       // Override routes to empty — staging uses *.workers.dev URL only
       "routes": [],
