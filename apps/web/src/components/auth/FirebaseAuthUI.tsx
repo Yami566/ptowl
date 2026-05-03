@@ -48,11 +48,22 @@ export function FirebaseAuthUI() {
         // wrong-device sign-in trap (clicking the link on a phone when
         // the email was requested from a laptop now errors clearly
         // instead of stranding the laptop session).
+        //
+        // emailLinkSignIn returns the ActionCodeSettings the magic link
+        // is built from. url must be in Firebase Authorized Domains
+        // (Settings -> Authorized domains). handleCodeInApp must be
+        // true per Firebase email-link spec. Landing directly on
+        // /dashboard skips the brief homepage flash + AuthContext
+        // redirect on success.
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
           signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
           forceSameDevice: true,
           requireDisplayName: false,
+          emailLinkSignIn: () => ({
+            url: 'https://ptowl.com/dashboard',
+            handleCodeInApp: true,
+          }),
         },
       ],
       tosUrl: '/terms',
