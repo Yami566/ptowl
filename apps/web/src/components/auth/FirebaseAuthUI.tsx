@@ -43,10 +43,21 @@ export function FirebaseAuthUI() {
           scopes: ['profile', 'email'],
           customParameters: { prompt: 'select_account' },
         },
+        // Microsoft OAuth — covers the medical/dental clinic audience that
+        // runs on Microsoft 365 / Outlook. tenant: 'common' permits both
+        // work/school AAD accounts and personal Outlook/Hotmail accounts.
+        // Requires Firebase Console → Authentication → Sign-in method →
+        // Microsoft = enabled (no developer fee; uses Azure app reg under
+        // the hood but Firebase provisions it for you).
+        {
+          provider: 'microsoft.com',
+          scopes: ['mail.read'],
+          customParameters: { prompt: 'consent', tenant: 'common' },
+        },
         // Email link (passwordless / magic link) — fallback for users
-        // without Google. forceSameDevice: true avoids the silent
-        // wrong-device sign-in trap (clicking the link on a phone when
-        // the email was requested from a laptop now errors clearly
+        // without Google or Microsoft. forceSameDevice: true avoids the
+        // silent wrong-device sign-in trap (clicking the link on a phone
+        // when the email was requested from a laptop now errors clearly
         // instead of stranding the laptop session).
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
