@@ -57,19 +57,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // React to Clerk auth state changes. When Clerk reports a signed-in
   // user, we provision/load the matching D1 row. When Clerk reports
   // signed-out, we clear local state.
+  //
+  // If Clerk doesn't finish initializing within MAX_CLERK_INIT_MS
+  // (e.g., the origin isn't in Clerk's allowed-domains list, network
+  // issue, ad blocker), we still flip loading to false so the landing
+  // page renders the sign-in widget instead of hanging on
+  // "Welcome back — restoring your session..." forever. The widget
+  // itself will surface the underlying Clerk error in that case.
   useEffect(() => {
-    if (!clerkLoaded) return;
     let cancelled = false;
+    const MAX_CLERK_INIT_MS = 3000;
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, MAX_CLERK_INIT_MS);
+
+    if (!clerkLoaded) {
+      return () => {
+        cancelled = true;
+        clearTimeout(timeoutId);
+      };
+    }
+
     (async () => {
       if (isSignedIn) {
         await refreshUser();
-      } else {
-        if (!cancelled) setUser(null);
+      } else if (!cancelled) {
+        setUser(null);
       }
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        clearTimeout(timeoutId);
+        setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
   }, [clerkLoaded, isSignedIn, refreshUser]);
 
