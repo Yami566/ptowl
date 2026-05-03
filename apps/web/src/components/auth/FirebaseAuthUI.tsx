@@ -49,21 +49,22 @@ export function FirebaseAuthUI() {
         // the email was requested from a laptop now errors clearly
         // instead of stranding the laptop session).
         //
-        // emailLinkSignIn returns the ActionCodeSettings the magic link
-        // is built from. url must be in Firebase Authorized Domains
-        // (Settings -> Authorized domains). handleCodeInApp must be
-        // true per Firebase email-link spec. Landing directly on
-        // /dashboard skips the brief homepage flash + AuthContext
-        // redirect on success.
+        // We deliberately do NOT override emailLinkSignIn here.
+        // FirebaseUI's redemption logic (signInWithEmailLink) only
+        // runs on the page where FirebaseAuthUI is mounted, which is
+        // the landing page ("/"). If we point the magic link at
+        // /dashboard, AuthContext sees no signed-in user, redirects
+        // back to "/" without query params, and the auth code is lost.
+        // Letting FirebaseUI default the url to the current page
+        // ensures the magic link returns to "/" where redemption can
+        // run; AuthContext then forwards the user to /dashboard once
+        // the user state is set. The brief homepage flash is the
+        // intended trade-off.
         {
           provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
           signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
           forceSameDevice: true,
           requireDisplayName: false,
-          emailLinkSignIn: () => ({
-            url: 'https://ptowl.com/dashboard',
-            handleCodeInApp: true,
-          }),
         },
       ],
       tosUrl: '/terms',
