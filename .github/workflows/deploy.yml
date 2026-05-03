@@ -45,13 +45,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        # --no-frozen-lockfile temporarily during Clerk migration; the
-        # lockfile is one commit behind because adding @clerk/clerk-react
-        # to apps/web/package.json without a local pnpm install left the
-        # lockfile unchanged. CI resolves fresh each run. Tighten back to
-        # --frozen-lockfile after the lockfile is updated (a follow-up
-        # commit can run `pnpm install` and commit the new pnpm-lock.yaml).
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       # Self-gating: each of these steps fails the workflow if the
       # corresponding check fails, so wrangler never deploys broken code.
