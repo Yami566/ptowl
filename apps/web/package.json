@@ -22,13 +22,13 @@
     "@ptowl/shared": "workspace:*",
     "canvas-confetti": "^1.9.4",
     "cmdk": "^1.1.1",
-    "firebase": "^12.10.0",
+    "firebase": "^12.12.1",
     "firebaseui": "^6.1.0",
     "qrcode.react": "^4.2.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.1.0",
+    "react-router-dom": "^7.14.2",
     "sonner": "^2.0.7"
   },
   "devDependencies": {
