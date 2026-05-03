@@ -44,6 +44,7 @@ export function DashboardPage() {
   const [editorData, setEditorData] = useState<EditorData | null>(null);
   const [generatingPreview, setGeneratingPreview] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [schedulesLoaded, setSchedulesLoaded] = useState(false);
   const modalInputRef = useRef<HTMLInputElement>(null);
 
   // Schedule preview overlay
@@ -72,7 +73,13 @@ export function DashboardPage() {
     const h = now.getHours();
     const dow = now.getDay(); // Sun=0..Sat=6
     const name = user?.display_name;
-    const sub = (s: string): string => (name ? s.replace(/\{Name\}/g, name) : s.replace(/, \{Name\}/g, '').replace(/ \{Name\}/g, '').replace(/\{Name\}/g, ''));
+    const sub = (s: string): string =>
+      name
+        ? s.replace(/\{Name\}/g, name)
+        : s
+            .replace(/, \{Name\}/g, '')
+            .replace(/ \{Name\}/g, '')
+            .replace(/\{Name\}/g, '');
 
     // Morning < 12, afternoon < 17, evening < 20, late >= 20.
     // Each bucket has 7 variants indexed by day-of-week (Sun=0..Sat=6).
@@ -174,12 +181,25 @@ export function DashboardPage() {
         }
         setSchedules(data);
       }
+      if (!cancelled) setSchedulesLoaded(true);
     });
 
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  // First-visit splash: if the user has no saved schedules and hasn't
+  // dismissed the welcome wizard before, auto-open the keyboard wizard
+  // overlay so the dashboard greets them with a clear "create your first
+  // schedule" call-to-action instead of an empty page. Returning users
+  // who dismiss it once never see it again (localStorage flag).
+  useEffect(() => {
+    if (!user || !schedulesLoaded || schedules.length > 0) return;
+    if (localStorage.getItem('ptowl-welcome-wizard-dismissed') === '1') return;
+    const t = setTimeout(() => setShowWizard(true), 400);
+    return () => clearTimeout(t);
+  }, [user, schedulesLoaded, schedules.length]);
 
   // Focus the modal input when it opens
   useEffect(() => {
@@ -710,9 +730,15 @@ export function DashboardPage() {
           <LoadingOverlay message={creating ? 'Saving schedule...' : 'Generating preview...'} />
         )}
 
-        {/* Keyboard-only Schedule Wizard */}
+        {/* Keyboard-only Schedule Wizard (also serves as the first-visit splash) */}
         {showWizard && (
-          <ScheduleWizard onComplete={handleWizardComplete} onCancel={() => setShowWizard(false)} />
+          <ScheduleWizard
+            onComplete={handleWizardComplete}
+            onCancel={() => {
+              setShowWizard(false);
+              localStorage.setItem('ptowl-welcome-wizard-dismissed', '1');
+            }}
+          />
         )}
 
         {/* Schedule Preview Overlay */}
