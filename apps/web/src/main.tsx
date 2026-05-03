@@ -1,9 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { App } from './App.js';
 import './styles/globals.css';
 import './styles/responsive.css';
 import './styles/dark-theme.css';
+
+// Clerk publishable key — read at build time by Vite from
+// VITE_CLERK_PUBLISHABLE_KEY (set in Cloudflare Workers Builds
+// "Variables and Secrets" -> "Production"). The auth widget on
+// the landing page renders a graceful "auth being upgraded"
+// placeholder when this env var is missing, so the homepage
+// keeps rendering even mid-deploy.
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 // SECURITY: Disable React DevTools in production
 if (import.meta.env.PROD) {
@@ -29,6 +38,12 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    {CLERK_PUBLISHABLE_KEY ? (
+      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+        <App />
+      </ClerkProvider>
+    ) : (
+      <App />
+    )}
   </React.StrictMode>,
 );

@@ -1,96 +1,55 @@
-import { useEffect, useRef } from 'react';
-import * as firebaseui from 'firebaseui';
-import firebaseCompat from 'firebase/compat/app';
-import 'firebaseui/dist/firebaseui.css';
-import { useAuth } from '../../contexts/AuthContext.js';
+import { SignIn } from '@clerk/clerk-react';
 
 /**
- * FirebaseAuthUI — drop-in pre-built sign-in widget from Google.
+ * Auth widget rendered on the landing page.
  *
- * Configuration is declarative: `signInOptions` lists the providers the
- * project has enabled in the Firebase console (Authentication →
- * Sign-in method). The widget renders the right UI for each one,
- * handles SMS OTP / email-link delivery / OAuth popups internally,
- * and surfaces account-linking prompts when an email collides across
- * providers.
+ * Despite the legacy filename, this component now renders Clerk's
+ * drop-in `<SignIn />` widget. The filename will be renamed to
+ * AuthWidget.tsx in a follow-up commit so Phase 2 (backend cutover)
+ * can land cleanly without a confusing rename in the same diff.
  *
- * Documented at https://github.com/firebase/firebaseui-web. The
- * `firebase/compat` import in apps/web/src/firebase.ts is what lets
- * this v6 package work alongside our modular Firebase v12 SDK.
+ * Behavior:
+ *   - When VITE_CLERK_PUBLISHABLE_KEY is set in Cloudflare Workers
+ *     Builds env, ClerkProvider activates in main.tsx and this
+ *     component renders Clerk's hosted sign-in widget.
+ *   - When the env var is missing (e.g. mid-deploy), it falls back
+ *     to a friendly placeholder so the page never crashes.
+ *
+ * Phase 2 follow-up will:
+ *   - Replace firebase-verify.ts in the API Worker with Clerk JWT
+ *     verification so end-to-end sign-in works.
+ *   - Remove the Firebase SDK + FirebaseUI dependency from
+ *     apps/web/package.json.
+ *   - Rename this file to AuthWidget.tsx.
  */
 export function FirebaseAuthUI() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { login } = useAuth();
+  const clerkConfigured = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  if (!clerkConfigured) {
+    return (
+      <div
+        style={{
+          padding: '2rem 1rem',
+          textAlign: 'center',
+          color: 'var(--gray-text)',
+          lineHeight: 1.6,
+        }}
+      >
+        <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Sign-in is being upgraded.</p>
+        <p style={{ fontSize: '0.85rem' }}>
+          PTowl is moving to a faster sign-in. Please check back in a few minutes.
+        </p>
+      </div>
+    );
+  }
 
-    // Reuse the existing AuthUI singleton if FirebaseUI has been mounted
-    // before in this session (e.g., user navigated back to /). new
-    // AuthUI() throws if one already exists for the same auth instance.
-    const ui =
-      firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(firebaseCompat.auth());
-
-    ui.start(containerRef.current, {
-      signInFlow: 'popup',
-      signInOptions: [
-        // Google OAuth — primary tile. One-click sign-in, no cross-device
-        // handoff problem (popup signs in on the device that opened it).
-        // Requires Firebase Console → Authentication → Sign-in method →
-        // Google = enabled (with project support email set).
-        {
-          provider: firebaseCompat.auth.GoogleAuthProvider.PROVIDER_ID,
-          scopes: ['profile', 'email'],
-          customParameters: { prompt: 'select_account' },
-        },
-        // Email link (passwordless / magic link) — fallback for users
-        // without Google. forceSameDevice: true avoids the silent
-        // wrong-device sign-in trap (clicking the link on a phone when
-        // the email was requested from a laptop now errors clearly
-        // instead of stranding the laptop session).
-        //
-        // We deliberately do NOT override emailLinkSignIn here.
-        // FirebaseUI's redemption logic (signInWithEmailLink) only
-        // runs on the page where FirebaseAuthUI is mounted, which is
-        // the landing page ("/"). If we point the magic link at
-        // /dashboard, AuthContext sees no signed-in user, redirects
-        // back to "/" without query params, and the auth code is lost.
-        // Letting FirebaseUI default the url to the current page
-        // ensures the magic link returns to "/" where redemption can
-        // run; AuthContext then forwards the user to /dashboard once
-        // the user state is set. The brief homepage flash is the
-        // intended trade-off.
-        {
-          provider: firebaseCompat.auth.EmailAuthProvider.PROVIDER_ID,
-          signInMethod: firebaseCompat.auth.EmailAuthProvider.EMAIL_LINK_SIGN_IN_METHOD,
-          forceSameDevice: true,
-          requireDisplayName: false,
-        },
-      ],
-      tosUrl: '/terms',
-      privacyPolicyUrl: '/privacy',
-      callbacks: {
-        signInSuccessWithAuthResult: () => {
-          // Pull the fresh user shape from /auth/me on the next tick
-          // (so AuthContext's onAuthStateChanged listener has fired),
-          // then return false to prevent the default navigate.
-          void login();
-          return false;
-        },
-      },
-    });
-
-    return () => {
-      // Don't .delete() the singleton — that throws if the user navigates
-      // back. ui.reset() clears the rendered widget so it can be
-      // re-mounted on next visit.
-      try {
-        ui.reset();
-      } catch {
-        /* container may already be unmounted */
-      }
-    };
-  }, [login]);
-
-  return <div ref={containerRef} id="firebaseui-auth-container" />;
+  // Clerk's hosted sign-in widget. routing="hash" keeps internal
+  // navigation in the URL fragment so it doesn't collide with our
+  // React Router routes. afterSignInUrl + afterSignUpUrl forward to
+  // /dashboard so users land where they expect.
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <SignIn routing="hash" afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard" />
+    </div>
+  );
 }
