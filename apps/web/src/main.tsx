@@ -6,13 +6,21 @@ import './styles/globals.css';
 import './styles/responsive.css';
 import './styles/dark-theme.css';
 
-// Clerk publishable key — read at build time by Vite from
-// VITE_CLERK_PUBLISHABLE_KEY (set in Cloudflare Workers Builds
-// "Variables and Secrets" -> "Production"). The auth widget on
-// the landing page renders a graceful "auth being upgraded"
-// placeholder when this env var is missing, so the homepage
-// keeps rendering even mid-deploy.
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+// Clerk publishable key. Designed for browser exposure (it's the
+// "publishable" key, not the secret) — pk_* prefixed keys are
+// explicitly safe to commit per Clerk's security model:
+// https://clerk.com/docs/deployments/overview#publishable-keys
+//
+// We prefer VITE_CLERK_PUBLISHABLE_KEY from build env when set
+// (Cloudflare Workers Builds → Variables → Production), and fall
+// back to the baked-in test instance key so the auth widget keeps
+// working even if the env var is missing or mid-deploy.
+//
+// Decoded from base64 the key tells the SDK what Clerk frontend
+// API host to talk to: ethical-dingo-48.clerk.accounts.dev.
+const CLERK_PUBLISHABLE_KEY: string =
+  (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined) ||
+  'pk_test_ZXRoaWNhbC1kaW5nby00OC5jbGVyay5hY2NvdW50cy5kZXYk';
 
 // SECURITY: Disable React DevTools in production
 if (import.meta.env.PROD) {
