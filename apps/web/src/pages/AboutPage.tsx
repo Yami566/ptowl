@@ -136,6 +136,39 @@ export function AboutPage() {
           </div>
         </section>
 
+        {/* Why open source */}
+        <section style={styles.openSourceSection}>
+          <h2 style={styles.sectionTitle}>Open source, on purpose.</h2>
+          <p style={styles.openSourceCopy}>
+            PTowl is released under the <strong>GNU Affero General Public License v3.0</strong>.
+            That means three things, in order of how much we care:
+          </p>
+          <ul style={styles.openSourceList}>
+            <li style={styles.openSourceItem}>
+              <strong>Anyone can read the code, fork it, and run it themselves.</strong> A small
+              clinic with a Cloudflare account can self-host PTowl on the free tier and never pay us
+              a dollar. We think that&rsquo;s correct.
+            </li>
+            <li style={styles.openSourceItem}>
+              <strong>
+                Anyone modifying PTowl and running it as a service must share their changes back.
+              </strong>{' '}
+              The &ldquo;Affero&rdquo; clause is what stops a competitor from wholesale-rebranding
+              our work as a closed-source product. It keeps the community contributing instead of
+              taking.
+            </li>
+            <li style={styles.openSourceItem}>
+              <strong>We chose this niche on purpose.</strong> Healthcare scheduling is full of
+              bloated EHR systems and Word documents. Open source is how a tool becomes the default
+              in a niche where no one&rsquo;s paying attention.
+            </li>
+          </ul>
+          <p style={styles.openSourceCopy}>
+            If AGPL-3.0 is incompatible with your situation, we&rsquo;re open to discussing a
+            commercial license. Reach out via email below.
+          </p>
+        </section>
+
         {/* Contact */}
         <section style={styles.contactSection}>
           <h2 style={styles.contactTitle}>Get in Touch</h2>
@@ -285,6 +318,36 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '3rem 1.5rem',
     maxWidth: '960px',
     margin: '0 auto',
+  },
+  openSourceSection: {
+    padding: '3rem 1.5rem',
+    maxWidth: '760px',
+    margin: '0 auto',
+    textAlign: 'left' as const,
+  },
+  openSourceCopy: {
+    fontSize: '1rem',
+    color: 'var(--dark)',
+    lineHeight: 1.7,
+    marginBottom: '1rem',
+  },
+  openSourceList: {
+    listStyle: 'none' as const,
+    padding: 0,
+    margin: '1.5rem 0',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+  },
+  openSourceItem: {
+    background: 'var(--white)',
+    padding: '1.25rem 1.5rem',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--green-bg)',
+    borderLeft: '4px solid var(--green-mid)',
+    fontSize: '0.95rem',
+    color: 'var(--dark)',
+    lineHeight: 1.65,
   },
   sectionTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '2rem' },
   steps: {
