@@ -433,6 +433,17 @@ describe('Cross-Cutting Frontend Security Scan', () => {
     for (const file of files) {
       // Skip the api client file itself (handles both / and \ path separators)
       if (file.path.includes('api/client') || file.path.includes('api\\client')) continue;
+      // PatientSchedulePage.tsx hits a public, unauthenticated endpoint
+      // (/api/v1/cal/:token) that intentionally must NOT carry a Clerk
+      // session token. apiRequest always attaches one if the user is
+      // signed in, so direct fetch is correct here. Token in the URL
+      // is the credential.
+      if (
+        file.path.includes('PatientSchedulePage.tsx') ||
+        file.path.includes('PatientSchedulePage')
+      ) {
+        continue;
+      }
       // No direct fetch() calls to API endpoints
       const directFetch = file.content.match(/\bfetch\s*\(\s*['"`][^'"`]*api/gi);
       expect(directFetch, `Direct fetch() bypassing apiRequest in ${file.path}`).toBeNull();
