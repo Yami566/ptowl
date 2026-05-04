@@ -33,8 +33,16 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Regenerate lockfile
-        run: pnpm install --no-frozen-lockfile
+      - name: Force clean lockfile regen
+        # `pnpm install --no-frozen-lockfile` adds missing deps but does
+        # not reliably remove orphaned entries when deps are deleted from
+        # package.json. Deleting the lockfile first forces a fresh
+        # resolve from package.json, guaranteeing the lockfile matches
+        # exactly. Workspace + transitive resolution is deterministic so
+        # version drift is minimal.
+        run: |
+          rm -f pnpm-lock.yaml
+          pnpm install --no-frozen-lockfile
 
       - name: Commit lockfile if changed
         run: |
