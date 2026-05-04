@@ -127,6 +127,42 @@ export function SchedulePage() {
     }
   }, [calendarHttpsUrl]);
 
+  // Patient-view URL: the mobile-first /p/:token page that lets a
+  // patient see their schedule and tap "Add to calendar" without
+  // signing in. Shares the same share_token mint flow as the .ics
+  // export — creates one on first call, reuses thereafter.
+  const sharePatientView = useCallback(async () => {
+    if (!id || !schedule) return;
+    let token = calendarToken;
+    if (!token) {
+      const r = await apiRequest<{ share_token: string }>(`/schedules/${id}/share`, {
+        method: 'POST',
+      });
+      if (!r.ok || !r.data?.share_token) {
+        toast.error('Could not generate patient link');
+        return;
+      }
+      token = r.data.share_token;
+      setCalendarToken(token);
+    }
+    const url = `https://ptowl.com/p/${token}`;
+    const title = `Schedule for ${schedule.patient_alias || schedule.patient_initials}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return;
+      } catch {
+        // User cancelled native share — fall through to clipboard copy
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Patient link copied — paste into a text or email');
+    } catch {
+      toast.success(`Copy this link: ${url}`);
+    }
+  }, [id, schedule, calendarToken]);
+
   useEffect(() => {
     if (!id) return;
     apiRequest<{ schedule: Schedule; appointments: Appointment[] }>(`/schedules/${id}`).then(
@@ -204,7 +240,10 @@ export function SchedulePage() {
               Print
             </button>
             <details style={styles.menuRoot} className="ptowl-menu">
-              <summary style={styles.viewToggle as React.CSSProperties} aria-label="Open share menu">
+              <summary
+                style={styles.viewToggle as React.CSSProperties}
+                aria-label="Open share menu"
+              >
                 Share &#9662;
               </summary>
               <div style={styles.menuPanel} role="menu">
@@ -213,16 +252,22 @@ export function SchedulePage() {
                   role="menuitem"
                   onClick={() => {
                     owlReaction.onShare();
-                    handleNativeShare();
+                    sharePatientView();
                   }}
                 >
-                  Send link
+                  Send to patient
                 </button>
                 <button
                   style={styles.menuItem}
                   role="menuitem"
-                  onClick={openAddToCalendar}
+                  onClick={() => {
+                    owlReaction.onShare();
+                    handleNativeShare();
+                  }}
                 >
+                  Copy this page link
+                </button>
+                <button style={styles.menuItem} role="menuitem" onClick={openAddToCalendar}>
                   Add to calendar
                 </button>
               </div>
@@ -235,16 +280,32 @@ export function SchedulePage() {
                 Profile &#9662;
               </summary>
               <div style={styles.menuPanel} role="menu">
-                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/profile')}>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/profile')}
+                >
                   Profile &amp; Clinic Info
                 </button>
-                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/customize/templates')}>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/customize/templates')}
+                >
                   Edit Templates
                 </button>
-                <button style={styles.menuItem} role="menuitem" onClick={() => navigate('/customize/print')}>
+                <button
+                  style={styles.menuItem}
+                  role="menuitem"
+                  onClick={() => navigate('/customize/print')}
+                >
                   Print Settings
                 </button>
-                <button style={{ ...styles.menuItem, ...styles.menuItemDanger }} role="menuitem" onClick={logout}>
+                <button
+                  style={{ ...styles.menuItem, ...styles.menuItemDanger }}
+                  role="menuitem"
+                  onClick={logout}
+                >
                   Sign out
                 </button>
               </div>
@@ -613,15 +674,70 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '1rem',
     flexWrap: 'wrap' as const,
   },
-  patientNameWrap: { display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' as const },
-  patientName: { fontSize: '1.5rem', fontWeight: 800, color: 'var(--dark)', letterSpacing: '-0.01em' },
-  patientInitials: { fontSize: '0.85rem', color: 'var(--gray-text)', fontFamily: 'var(--font-mono)', fontWeight: 500 },
+  patientNameWrap: {
+    display: 'flex',
+    alignItems: 'baseline',
+    gap: '0.5rem',
+    flexWrap: 'wrap' as const,
+  },
+  patientName: {
+    fontSize: '1.5rem',
+    fontWeight: 800,
+    color: 'var(--dark)',
+    letterSpacing: '-0.01em',
+  },
+  patientInitials: {
+    fontSize: '0.85rem',
+    color: 'var(--gray-text)',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 500,
+  },
   dateRange: { fontSize: '0.875rem', color: 'var(--gray-text)' },
   menuRoot: { position: 'relative' as const },
-  menuSummary: { listStyle: 'none' as const, cursor: 'pointer', padding: '0.625rem 1rem', background: 'var(--gray-light)', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', userSelect: 'none' as const },
-  menuPanel: { position: 'absolute' as const, top: 'calc(100% + 0.25rem)', right: 0, minWidth: '12rem', background: 'var(--white)', borderRadius: 'var(--radius)', border: '1px solid var(--gray-mid)', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', padding: '0.25rem', display: 'flex', flexDirection: 'column' as const, gap: '0.125rem', zIndex: 50 },
-  menuItem: { textAlign: 'left' as const, padding: '0.5rem 0.75rem', background: 'transparent', border: 'none', borderRadius: 'var(--radius)', fontSize: '0.875rem', fontWeight: 500, color: 'var(--dark)', cursor: 'pointer' },
-  menuItemDanger: { color: 'var(--red-mid)', marginTop: '0.25rem', borderTop: '1px solid var(--gray-mid)', paddingTop: '0.5rem', borderRadius: 0 },
+  menuSummary: {
+    listStyle: 'none' as const,
+    cursor: 'pointer',
+    padding: '0.625rem 1rem',
+    background: 'var(--gray-light)',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: 'var(--dark)',
+    userSelect: 'none' as const,
+  },
+  menuPanel: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 0.25rem)',
+    right: 0,
+    minWidth: '12rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--gray-mid)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+    padding: '0.25rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.125rem',
+    zIndex: 50,
+  },
+  menuItem: {
+    textAlign: 'left' as const,
+    padding: '0.5rem 0.75rem',
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 'var(--radius)',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: 'var(--dark)',
+    cursor: 'pointer',
+  },
+  menuItemDanger: {
+    color: 'var(--red-mid)',
+    marginTop: '0.25rem',
+    borderTop: '1px solid var(--gray-mid)',
+    paddingTop: '0.5rem',
+    borderRadius: 0,
+  },
   apptCount: { fontSize: '0.8rem', color: 'var(--orange-mid)', fontWeight: 600 },
   statsBar: {
     maxWidth: 'clamp(320px, 92vw, 1200px)',
