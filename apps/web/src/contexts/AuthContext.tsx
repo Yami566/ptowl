@@ -30,6 +30,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const PUBLIC_PATHS = ['/', '/about', '/privacy', '/terms', '/security'];
 
+// Patient-facing routes share a /p/ prefix. They never require a Clerk
+// session (the URL token is the credential). AuthContext skips the
+// auth-redirect logic for any path under this prefix.
+const PUBLIC_PATH_PREFIXES = ['/p/'];
+
+function isPublicPath(pathname: string): boolean {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
+  return PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Redirect logic runs AFTER loading completes.
   useEffect(() => {
     if (loading) return;
-    const isPublic = PUBLIC_PATHS.includes(location.pathname);
+    const isPublic = isPublicPath(location.pathname);
     if (!user && !isPublic) {
       navigate('/', { replace: true });
     } else if (user && location.pathname === '/') {
@@ -122,8 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Public paths render immediately — they don't depend on the user.
   // Per-route guards (ProtectedRoute, ClinicRoute) still gate protected
   // components on `loading`.
-  const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
-  if (loading && !isPublicPath) {
+  const isPublic = isPublicPath(location.pathname);
+  if (loading && !isPublic) {
     return (
       <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
         <LoadingOverlay message="Verifying session..." />
