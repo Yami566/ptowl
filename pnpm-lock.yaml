@@ -31,7 +31,7 @@ importers:
     dependencies:
       '@hono/zod-validator':
         specifier: ^0.7.6
-        version: 0.7.6(hono@4.12.16)(zod@4.4.2)
+        version: 0.7.6(hono@4.12.16)(zod@4.4.3)
       '@ptowl/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -39,8 +39,8 @@ importers:
         specifier: ^4.6.0
         version: 4.12.16
       ical-generator:
-        specifier: ^8.1.1
-        version: 8.1.1(@types/node@25.6.0)(rrule@2.8.1)
+        specifier: ^10.2.0
+        version: 10.2.0(@types/node@25.6.0)(rrule@2.8.1)
       jose:
         specifier: ^6.2.1
         version: 6.2.3
@@ -143,8 +143,8 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       zod:
-        specifier: ^4.3.6
-        version: 4.4.2
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       typescript:
         specifier: ^5.7.0
@@ -1874,9 +1874,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  ical-generator@8.1.1:
-    resolution: {integrity: sha512-vorfUDZk4NaVLB7f1pm9AeRGy0jTYn7QUHZCFCMx3EGOz9+yykdAjA1i4ez+ZLAEK55lmutCXvVovEdTj9s1XA==}
-    engines: {node: 18 || 20 || >=22.0.0}
+  ical-generator@10.2.0:
+    resolution: {integrity: sha512-XR5FsiDWCsz5MwBwMA/sQqR3A9H240xkXIeXOabV7uNAiieP+TA9rleVvlwPLRXMz+CXME8cGuDd7cdnE5At6w==}
+    engines: {node: 20 || 22 || >=24}
     peerDependencies:
       '@touch4it/ical-timezones': '>=1.6.0'
       '@types/luxon': '>= 1.26.0'
@@ -2528,9 +2528,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  uuid-random@1.3.2:
-    resolution: {integrity: sha512-UOzej0Le/UgkbWEO8flm+0y+G+ljUon1QWTEZOq1rnMAsxo2+SckbiZdKzAHHlVh6gJqI1TjC/xwgR50MuCrBQ==}
-
   vite-node@2.1.9:
     resolution: {integrity: sha512-AM9aQ/IPrW/6ENLQg3AGY4K1N2TGZdR5e4gu/MmmR2xR3Ll1+dib+nook92g4TV3PXVyeyxdWwtaCAiUL0hMxA==}
     engines: {node: ^18.0.0 || >=20.0.0}
@@ -2730,8 +2727,8 @@ packages:
   youch@4.1.0-beta.10:
     resolution: {integrity: sha512-rLfVLB4FgQneDr0dv1oddCVZmKjcJ6yX6mS4pU82Mq/Dt9a3cLZQ62pDBL4AUO+uVrCvtWz3ZFUL2HFAFJ/BXQ==}
 
-  zod@4.4.2:
-    resolution: {integrity: sha512-IynmDyxsEsb9RKzO3J9+4SxXnl2FTFSzNBaKKaMV6tsSk0rw9gYw9gs+JFCq/qk2LCZ78KDwyj+Z289TijSkUw==}
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
@@ -3310,10 +3307,10 @@ snapshots:
       '@fullcalendar/core': 6.1.20
       '@fullcalendar/daygrid': 6.1.20(@fullcalendar/core@6.1.20)
 
-  '@hono/zod-validator@0.7.6(hono@4.12.16)(zod@4.4.2)':
+  '@hono/zod-validator@0.7.6(hono@4.12.16)(zod@4.4.3)':
     dependencies:
       hono: 4.12.16
-      zod: 4.4.2
+      zod: 4.4.3
 
   '@img/colour@1.1.0': {}
 
@@ -4193,9 +4190,7 @@ snapshots:
 
   husky@9.1.7: {}
 
-  ical-generator@8.1.1(@types/node@25.6.0)(rrule@2.8.1):
-    dependencies:
-      uuid-random: 1.3.2
+  ical-generator@10.2.0(@types/node@25.6.0)(rrule@2.8.1):
     optionalDependencies:
       '@types/node': 25.6.0
       rrule: 2.8.1
@@ -4769,8 +4764,6 @@ snapshots:
     dependencies:
       react: 19.2.5
 
-  uuid-random@1.3.2: {}
-
   vite-node@2.1.9(@types/node@25.6.0):
     dependencies:
       cac: 6.7.14
@@ -4949,4 +4942,4 @@ snapshots:
       cookie: 1.1.1
       youch-core: 0.3.3
 
-  zod@4.4.2: {}
+  zod@4.4.3: {}
