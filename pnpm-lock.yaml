@@ -39,8 +39,8 @@ importers:
         specifier: ^4.6.0
         version: 4.12.16
       ical-generator:
-        specifier: ^8.1.1
-        version: 8.1.1(@types/node@25.6.0)(rrule@2.8.1)
+        specifier: ^10.2.0
+        version: 10.2.0(@types/node@25.6.0)(rrule@2.8.1)
       jose:
         specifier: ^6.2.1
         version: 6.2.3
@@ -1874,9 +1874,9 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  ical-generator@8.1.1:
-    resolution: {integrity: sha512-vorfUDZk4NaVLB7f1pm9AeRGy0jTYn7QUHZCFCMx3EGOz9+yykdAjA1i4ez+ZLAEK55lmutCXvVovEdTj9s1XA==}
-    engines: {node: 18 || 20 || >=22.0.0}
+  ical-generator@10.2.0:
+    resolution: {integrity: sha512-XR5FsiDWCsz5MwBwMA/sQqR3A9H240xkXIeXOabV7uNAiieP+TA9rleVvlwPLRXMz+CXME8cGuDd7cdnE5At6w==}
+    engines: {node: 20 || 22 || >=24}
     peerDependencies:
       '@touch4it/ical-timezones': '>=1.6.0'
       '@types/luxon': '>= 1.26.0'
@@ -2527,9 +2527,6 @@ packages:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  uuid-random@1.3.2:
-    resolution: {integrity: sha512-UOzej0Le/UgkbWEO8flm+0y+G+ljUon1QWTEZOq1rnMAsxo2+SckbiZdKzAHHlVh6gJqI1TjC/xwgR50MuCrBQ==}
 
   vite-node@2.1.9:
     resolution: {integrity: sha512-AM9aQ/IPrW/6ENLQg3AGY4K1N2TGZdR5e4gu/MmmR2xR3Ll1+dib+nook92g4TV3PXVyeyxdWwtaCAiUL0hMxA==}
@@ -4193,9 +4190,7 @@ snapshots:
 
   husky@9.1.7: {}
 
-  ical-generator@8.1.1(@types/node@25.6.0)(rrule@2.8.1):
-    dependencies:
-      uuid-random: 1.3.2
+  ical-generator@10.2.0(@types/node@25.6.0)(rrule@2.8.1):
     optionalDependencies:
       '@types/node': 25.6.0
       rrule: 2.8.1
@@ -4768,8 +4763,6 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.5):
     dependencies:
       react: 19.2.5
-
-  uuid-random@1.3.2: {}
 
   vite-node@2.1.9(@types/node@25.6.0):
     dependencies:
