@@ -94,7 +94,7 @@ export function PatientSchedulePage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/v1/cal/${token}`);
+        const res = await fetch(`/api/v1/cal/json/${token}`);
         const body: PublicScheduleResponse = await res.json();
         if (cancelled) return;
         if (!res.ok || !body.ok || !body.data) {

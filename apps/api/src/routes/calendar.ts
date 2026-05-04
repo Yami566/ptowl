@@ -101,15 +101,17 @@ calendarRoutes.get('/:token.ics', async (c) => {
   }
 });
 
-// GET /:token — Public JSON endpoint for the patient-facing schedule page.
-// Mounted as /api/v1/cal/:token (no .ics suffix). Returns schedule
-// metadata + the full appointment list so a patient can view their
-// schedule on their phone without signing in. Reuses the existing
+// GET /json/:token — Public JSON endpoint for the patient-facing
+// schedule page. Mounted as /api/v1/cal/json/:token. The /json/
+// prefix avoids any routing ambiguity with the sibling
+// `/:token.ics` route on this same router. Returns schedule metadata
+// + the full appointment list so a patient can view their schedule
+// on their phone without signing in. Reuses the existing
 // share_token mechanism that powers the .ics feed; no new auth, no
 // new column. The token itself is unguessable (32 hex chars from
 // crypto.randomUUID), so possession of the URL is sufficient
 // authorization for read access.
-calendarRoutes.get('/:token', async (c) => {
+calendarRoutes.get('/json/:token', async (c) => {
   try {
     const token = c.req.param('token');
 
