@@ -39,6 +39,6 @@ In scope:
 
 Out of scope:
 
-- Third-party services we depend on (Cloudflare, Firebase, Resend, etc.) —
-  please report directly to those vendors.
+- Third-party services we depend on (Cloudflare, Clerk, etc.) — please
+  report directly to those vendors.
 - Issues that require physical access to a user's device or local network.

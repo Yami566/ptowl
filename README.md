@@ -8,20 +8,21 @@ failsafe (we are explicitly NOT a HIPAA-secure system).
 
 [![CI](https://github.com/yami566/ptowl/actions/workflows/ci.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/ci.yml)
 [![Deploy](https://github.com/yami566/ptowl/actions/workflows/deploy.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/deploy.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 
 ## Stack
 
-| Layer            | Tech                                                              |
-| ---------------- | ----------------------------------------------------------------- |
-| Frontend         | React 19 + Vite, Cloudflare Pages, Capacitor (iOS/Android shells) |
-| API              | Hono on Cloudflare Workers                                        |
-| Database         | Cloudflare D1 (SQLite) with 30-day point-in-time recovery         |
-| Auth             | FirebaseUI multi-provider (Google, Apple, email magic link, SMS)  |
-| Email — outbound | Resend                                                            |
-| Email — inbound  | Cloudflare Email Routing                                          |
-| Calendar         | `rrule` + `ical-generator`                                        |
-| Storage (logos)  | Cloudflare R2                                                     |
+| Layer            | Tech                                                               |
+| ---------------- | ------------------------------------------------------------------ |
+| Frontend         | React 19 + Vite + React Router 7, Cloudflare Workers Static Assets |
+| API              | Hono on Cloudflare Workers                                         |
+| Database         | Cloudflare D1 (SQLite) with 30-day point-in-time recovery          |
+| Auth             | Clerk drop-in widget (Email + Google), JWT verified via JWKS       |
+| Email — outbound | TBD (Resend candidate; see docs/AUTOMATION-PLAN.md)                |
+| Email — inbound  | Cloudflare Email Routing                                           |
+| Calendar         | `rrule` + `ical-generator`                                         |
+| Storage (logos)  | Cloudflare R2                                                      |
+| Edge security    | WAF Free Managed Ruleset, Bot Fight Mode, Rate Limiting            |
 
 ## Repo layout
 
@@ -65,4 +66,22 @@ Security Advisories.
 
 ## License
 
-[MIT](./LICENSE)
+[GNU Affero General Public License v3.0](./LICENSE).
+
+PTowl is free software: anyone can use, study, modify, and redistribute it.
+The "Affero" clause means that if you run a modified version as a network
+service (e.g., your own SaaS), you must offer the source of your changes
+to your users. This protects PTowl from drive-by SaaS rip-offs while
+keeping the code open for community contribution and self-hosting.
+
+If AGPL is incompatible with your needs, open a GitHub issue and we can
+talk about a separate commercial license.
+
+## Vision & roadmap
+
+- [docs/PTOWL-NORTH-STAR.md](docs/PTOWL-NORTH-STAR.md) — the long-arc
+  vision: open-source default tool for PT/dental schedule generation.
+- [docs/AUTOMATION-PLAN.md](docs/AUTOMATION-PLAN.md) — what we automate
+  next, in plain English.
+- [docs/PRODUCTION-LAUNCH-RUNBOOK.md](docs/PRODUCTION-LAUNCH-RUNBOOK.md) —
+  Cloudflare/Clerk/GitHub dashboard hardening checklist.
