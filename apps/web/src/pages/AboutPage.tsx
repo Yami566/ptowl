@@ -22,8 +22,10 @@ export function AboutPage() {
           </div>
           <h1 style={styles.headline}>Built to make healthcare more simple and fun.</h1>
           <p style={styles.subheadline}>
-            PTowl exists for the people who show up every day to help others move better. We keep
-            the tools simple so you can focus on what matters.
+            PTowl exists for the people who show up every day to help others move better — physical
+            therapists, OTs, SLPs, chiropractors, mental-health therapists, dental hygienists, and
+            anyone else who books recurring appointment series. We keep the tools simple so you can
+            focus on what matters.
           </p>
         </section>
 

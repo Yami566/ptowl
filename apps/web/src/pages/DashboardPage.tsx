@@ -660,14 +660,15 @@ export function DashboardPage() {
               <div style={styles.emptyIcon} aria-hidden="true">
                 🦉
               </div>
-              <h3 style={styles.emptyTitle}>You haven&apos;t created a schedule yet</h3>
+              <h3 style={styles.emptyTitle}>Let&apos;s make your first schedule.</h3>
               <p style={styles.emptyText}>
-                Press <kbd style={styles.emptyKbd}>1</kbd> to launch the wizard, or one of{' '}
-                <kbd style={styles.emptyKbd}>2</kbd>–<kbd style={styles.emptyKbd}>6</kbd> for a
-                preset template. From phone in to printed schedule in five keypresses.
+                Press <kbd style={styles.emptyKbd}>1</kbd> for the wizard (custom dates +
+                frequency), or pick a preset with <kbd style={styles.emptyKbd}>2</kbd>–
+                <kbd style={styles.emptyKbd}>6</kbd>. Type two-letter initials, hit{' '}
+                <kbd style={styles.emptyKbd}>Enter</kbd>, you&apos;re done. Five keypresses, max.
               </p>
               <p style={styles.emptyHint}>
-                New here? The{' '}
+                First time? The{' '}
                 <a href="/about" style={styles.emptyLink}>
                   about page
                 </a>{' '}

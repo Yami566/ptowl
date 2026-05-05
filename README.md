@@ -1,10 +1,13 @@
 # PTowl — Patience Trainer
 
-Recurring patient scheduling on Cloudflare for medical, dental, and therapy
-providers. **PT in PTowl stands for "Patience Trainer."** Clinic staff create
-schedules in 5 keypresses, patients get reminders and an `.ics` calendar feed,
-and the sports-alias system keeps real names off our servers as a privacy
-failsafe (we are explicitly NOT a HIPAA-secure system).
+Recurring patient scheduling on Cloudflare for therapy clinics — physical
+therapy, occupational therapy, speech-language pathology, chiropractic,
+mental-health/therapy, dental hygiene, and any provider who books
+multi-week recurring appointment series. **PT in PTowl stands for
+"Patience Trainer."** Clinic staff create schedules in 5 keypresses,
+patients get reminders and an `.ics` calendar feed, and the sports-alias
+system keeps real names off our servers as a privacy failsafe (we are
+explicitly NOT a HIPAA-secure system).
 
 [![CI](https://github.com/yami566/ptowl/actions/workflows/ci.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/ci.yml)
 [![Deploy](https://github.com/yami566/ptowl/actions/workflows/deploy.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/deploy.yml)

@@ -107,8 +107,8 @@ export function LandingPage() {
         <h1 style={styles.headline}>Stop scheduling. Start treating.</h1>
         <p style={styles.subheadline}>
           Create and print patient schedules in under <strong>5 keypresses</strong>. Built for
-          medical and dental providers, because your schedule shouldn&apos;t take longer than your
-          coffee order.
+          therapy clinics — PT, OT, SLP, chiropractic, mental-health, and dental hygiene — because
+          your schedule shouldn&apos;t take longer than your coffee order.
         </p>
 
         {/* Beta badge — sits directly above the auth card so it's
@@ -137,6 +137,68 @@ export function LandingPage() {
         <div style={styles.authCard} className="landing-auth-card">
           <AuthWidget />
         </div>
+      </section>
+
+      {/* How it works — animated 5-keypress walkthrough.
+          Hooks into the existing keyframe choreography in globals.css
+          (`landing-how-section .landing-steps > :nth-child(N) .key-animate`).
+          Five keys + four arrows = 9 children, sequenced over ~6.6s.
+          Each step's animation is a single play that freezes in a
+          "fully visible, fresh-key" final state. Visitor sees the
+          5-keypress promise happen on the page before signing up. */}
+      <section
+        style={styles.howSection}
+        className="landing-how-section landing-fade-in landing-fade-in-delay-1"
+        aria-label="How PTowl works in 5 keypresses"
+      >
+        <h2 style={styles.howTitle}>5 keypresses. That&apos;s the whole product.</h2>
+        <div className="landing-steps" style={styles.howSteps}>
+          <div style={styles.howStep}>
+            <span className="key-animate" style={styles.howKey}>
+              2
+            </span>
+            <p style={styles.howStepLabel}>Pick a preset</p>
+          </div>
+          <span className="landing-step-arrow" style={styles.howArrow} aria-hidden="true">
+            →
+          </span>
+          <div style={styles.howStep}>
+            <span className="key-animate" style={styles.howKey}>
+              JS
+            </span>
+            <p style={styles.howStepLabel}>Initials</p>
+          </div>
+          <span className="landing-step-arrow" style={styles.howArrow} aria-hidden="true">
+            →
+          </span>
+          <div style={styles.howStep}>
+            <span className="key-animate" style={styles.howKey}>
+              ↵
+            </span>
+            <p style={styles.howStepLabel}>Enter</p>
+          </div>
+          <span className="landing-step-arrow" style={styles.howArrow} aria-hidden="true">
+            →
+          </span>
+          <div style={styles.howStep}>
+            <span className="key-animate" style={styles.howKey}>
+              📅
+            </span>
+            <p style={styles.howStepLabel}>Schedule done</p>
+          </div>
+          <span className="landing-step-arrow" style={styles.howArrow} aria-hidden="true">
+            →
+          </span>
+          <div style={styles.howStep}>
+            <span className="key-animate" style={styles.howKey}>
+              🖨
+            </span>
+            <p style={styles.howStepLabel}>Print or share</p>
+          </div>
+        </div>
+        <p style={styles.howCaption}>
+          From blank page to printed schedule in seconds, not minutes.
+        </p>
       </section>
 
       {/* Demo Calendar */}
@@ -353,5 +415,72 @@ const styles: Record<string, React.CSSProperties> = {
   betaIcon: {
     color: 'var(--green-mid)',
     flexShrink: 0,
+  },
+
+  // ── How-it-works animated walkthrough ──
+  // Visual styles only. The animation timing lives in globals.css under
+  // .landing-how-section .landing-steps > :nth-child(N). Keys + arrows
+  // get their staggered animation from there; we only style the static
+  // appearance here.
+  howSection: {
+    textAlign: 'center' as const,
+    padding: '3rem 1.5rem 1rem',
+    maxWidth: '960px',
+    margin: '0 auto',
+  },
+  howTitle: {
+    fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+    fontWeight: 800,
+    color: 'var(--dark)',
+    marginBottom: '1.5rem',
+  },
+  howSteps: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    flexWrap: 'wrap' as const,
+    marginBottom: '1rem',
+  },
+  howStep: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0.5rem',
+    minWidth: '4rem',
+  },
+  howKey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: '3.5rem',
+    height: '3.5rem',
+    padding: '0 0.75rem',
+    background: 'var(--white)',
+    border: '2px solid var(--green-mid)',
+    borderRadius: '10px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '1.1rem',
+    color: 'var(--green-dark)',
+    boxShadow: '0 3px 0 var(--green-mid)',
+  },
+  howStepLabel: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    fontWeight: 500,
+    marginTop: '0.25rem',
+  },
+  howArrow: {
+    fontSize: '1.5rem',
+    color: 'var(--green-mid)',
+    fontWeight: 700,
+    marginBottom: '1.5rem',
+  },
+  howCaption: {
+    fontSize: '0.95rem',
+    color: 'var(--gray-text)',
+    fontStyle: 'italic' as const,
+    marginTop: '0.5rem',
   },
 };
