@@ -171,6 +171,25 @@ export function AboutPage() {
           </p>
         </section>
 
+        {/* Founder note — solo-founder transparency, on-brand for AGPL.
+            Photo and final name go here pre-launch; this placeholder
+            keeps the section in the layout so the page composition
+            doesn't shift when you add them. */}
+        <section style={styles.founderSection}>
+          <h2 style={styles.sectionTitle}>Built by one person.</h2>
+          <p style={styles.founderCopy}>
+            PTowl is a solo project. I read every email myself — when you write to help@ptowl.com,
+            it lands directly in my inbox during beta. If you find a bug, hit me with details. If
+            you find a clinic workflow that PTowl doesn&rsquo;t fit, tell me what&rsquo;s missing.
+            The tool gets better because the people using it tell me what&rsquo;s broken.
+          </p>
+          <p style={styles.founderCopy}>
+            The repo is on GitHub under AGPL-3.0 — you can read the code, fork it, run your own
+            copy, or watch how it changes over time. No CMO seeing a deck made me build this. No VC
+            pressure shapes the roadmap. Just me, your feedback, and steadily-better PT scheduling.
+          </p>
+        </section>
+
         {/* Contact */}
         <section style={styles.contactSection}>
           <h2 style={styles.contactTitle}>Get in Touch</h2>
@@ -330,6 +349,19 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'left' as const,
   },
   openSourceCopy: {
+    fontSize: '1rem',
+    color: 'var(--dark)',
+    lineHeight: 1.7,
+    marginBottom: '1rem',
+  },
+  founderSection: {
+    padding: '2.5rem 1.5rem',
+    maxWidth: '760px',
+    margin: '0 auto',
+    textAlign: 'left' as const,
+    borderTop: '1px solid var(--green-bg)',
+  },
+  founderCopy: {
     fontSize: '1rem',
     color: 'var(--dark)',
     lineHeight: 1.7,
