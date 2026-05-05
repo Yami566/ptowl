@@ -12,7 +12,7 @@ This is the long-arc vision document. Companion to:
 The north-star doc is the "where are we going" map. The other docs are
 the "how do we get the next mile" maps.
 
-Last updated: 2026-05-03.
+Last updated: 2026-05-04.
 
 ---
 
@@ -42,25 +42,62 @@ day in a niche where no software has cracked it.
 - **Code freedom:** Bold but reviewable. Prefer existing libraries and
   patterns over hand-rolled custom code.
 
-## What's already shipped (May 2026)
+## What's already shipped (as of 2026-05-04)
 
 - ✅ 5-keypress schedule generation (the brand promise)
 - ✅ Sports-alias privacy failsafe (676 aliases mapped to initials)
 - ✅ Print-ready schedules with iCal export
 - ✅ Animated owl + city brand SVG (custom-drawn, segmented)
-- ✅ Auth migration Firebase → Clerk in progress (Phase 3 done; Phase
-  4 = remove Firebase code; Phase 5 = patient magic-link view)
+- ✅ **Auth migration Firebase → Clerk complete** (Phases 1-4 done;
+  zero Firebase code remains in repo or bundle, ~250 lines deleted,
+  bundle 27% smaller)
+- ✅ **Patient-facing magic-link schedule view** at `/p/:token`
+  (Phase 5; mobile-first, reuses existing share_token, no new auth)
+- ✅ **Share menu integration** — provider's "Send to patient"
+  button mints/copies the patient URL via native share or clipboard
+- ✅ **Open-source artifacts** — AGPL-3.0 LICENSE, CONTRIBUTING.md,
+  CODE_OF_CONDUCT.md, SECURITY.md (Phase 6; repo stays private until
+  Phase 8 launch flip)
+- ✅ **Marketing surface** — About page "Open source, on purpose."
+  section, Show HN draft at docs/SHOW-HN.md (Phase 7)
 - ✅ Cloudflare edge security: WAF, Bot Fight Mode, Rate Limiting on
   /api/\*, Worker Errors notification, Web Analytics — all shipped
   via the cf-bootstrap.yml workflow_dispatch
 - ✅ CI/CD pipeline auto-deploys on every push to main (CI + Deploy
   - CF Workers Builds, all on Node 22 + wrangler v4)
-- ✅ Documented automation plan (AUTOMATION-PLAN.md) and production
-  launch runbook (PRODUCTION-LAUNCH-RUNBOOK.md)
+- ✅ Documented automation plan (AUTOMATION-PLAN.md), production
+  launch runbook (PRODUCTION-LAUNCH-RUNBOOK.md), Clerk production
+  cutover (CLERK-PRODUCTION-SETUP.md), Show HN draft (SHOW-HN.md)
 
 ## What's next (in order)
 
-### Phase 4 — Firebase cleanup (this session)
+### Phases 1-7 — ✅ COMPLETE (May 2026)
+
+Auth migration, Firebase removal, patient magic-link view, AGPL +
+community files, Show HN marketing draft. See "What's already
+shipped" above for the detailed list.
+
+### Phase 8 — Coordinated launch (calendar-day decision, user-driven)
+
+The actual public flip. All in one calendar day so the first wave of
+visitors hits a polished surface:
+
+- Morning: flip GitHub repo from private to public.
+- Same morning: post to Hacker News with the prepared SHOW-HN.md.
+- Same morning: post to relevant subreddits (r/physicaltherapy,
+  r/dentistry, r/selfhosted) — use the same hook.
+- Monitor for the next 12-24 hours. Respond to comments. Track CF
+  Web Analytics for traffic spikes.
+- Two days after launch: assemble feedback. Decide what's next.
+
+Pre-launch checklist + Show HN post body live in
+[docs/SHOW-HN.md](SHOW-HN.md). Ready when the founder is.
+
+---
+
+### Historical phase notes (for context only — phases 4-7 are done)
+
+#### Phase 4 — Firebase cleanup ✅ DONE (commit 2623879)
 
 Remove Firebase code now that Clerk is live. Net deletion of ~250
 lines + 2 npm dependencies. Improves bundle size, reduces confusion

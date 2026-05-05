@@ -10,6 +10,14 @@ failsafe (we are explicitly NOT a HIPAA-secure system).
 [![Deploy](https://github.com/yami566/ptowl/actions/workflows/deploy.yml/badge.svg)](https://github.com/yami566/ptowl/actions/workflows/deploy.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 
+## Run your own PTowl
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Yami566/ptowl)
+
+One-click fork-and-deploy via Cloudflare. Free tier covers ~10,000
+monthly active users on the Cloudflare and Clerk side. Full
+self-host walkthrough in [docs/HOW-TO-DEPLOY.md](./docs/HOW-TO-DEPLOY.md).
+
 ## Stack
 
 | Layer            | Tech                                                               |
