@@ -266,7 +266,7 @@ Scales to ~1,000+ users before hitting paid tiers.
 
 ### Taglines (candidates)
 
-- "3 keys. Schedule done. Go home on time."
+- "5 keypresses. Schedule done. Go home on time."
 - "The $3 scheduling tool that does what $300 tools can't."
 - "Stop scheduling. Start treating."
 - "Your schedule shouldn't take longer than your coffee order."
