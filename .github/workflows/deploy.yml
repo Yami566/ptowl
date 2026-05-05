@@ -1,13 +1,17 @@
-name: Deploy PtOwl (API + D1 only)
+name: Deploy PtOwl (API + D1 + Frontend)
 
-# Frontend deploy is handled by Cloudflare Pages' native git integration —
-# every push to main auto-builds and deploys apps/web via CF, no GH Actions
-# step needed. See docs/CF-PAGES-GIT-SETUP.md.
+# Frontend deploy was originally delegated to Cloudflare Workers Builds (the
+# git-integrated successor to CF Pages projects). On 2026-05-05 that
+# integration started failing with `wrangler` not finding the assets dir
+# despite a valid apps/web/wrangler.jsonc. Rather than rely on dashboard
+# config we don't fully control, we now deploy the frontend from this
+# workflow too, using the same `CLOUDFLARE_API_TOKEN` we already trust for
+# API + D1. CF Workers Builds may continue to run in parallel; whichever
+# pushes last wins and both target the same `ptowl` Worker, so this is
+# safe to leave alongside the existing dashboard integration.
 #
-# This workflow now only handles the API Worker + D1 migrations because
-# Cloudflare Pages git integration doesn't run wrangler d1 migrations or
-# wrangler deploy for separate Workers projects. Build + typecheck + test
-# still run as a self-gate so wrangler steps never fire on broken code.
+# Build + typecheck + test gate every wrangler step so deploys never fire
+# on broken code.
 on:
   push:
     branches: [main]
@@ -78,6 +82,15 @@ jobs:
           workingDirectory: apps/api
           command: deploy
 
-      # Frontend deploy intentionally NOT here — Cloudflare Pages git
-      # integration handles apps/web on every push to main automatically.
-      # See docs/CF-PAGES-GIT-SETUP.md.
+      # Frontend deploy. Reads apps/web/wrangler.jsonc and uploads ./dist
+      # (produced by the earlier `pnpm build` step) as the static-asset
+      # payload of the `ptowl` Worker. Replaces the Cloudflare Workers
+      # Builds dashboard integration which was failing intermittently
+      # without surfacing a fixable error.
+      - name: Deploy Frontend to Cloudflare Workers (static assets)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/web
+          command: deploy
