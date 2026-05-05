@@ -12,7 +12,7 @@ export const authRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 // ─── /auth/me ─────────────────────────────────────────────────
 //
 // Returns the authenticated user joined with their profile. The
-// requireAuth middleware verifies the Firebase ID token from the
+// requireAuth middleware verifies the Clerk session JWT from the
 // Authorization: Bearer header and auto-provisions the D1 row on
 // first call. By the time this handler runs, c.var.user is the
 // canonical user shape.
