@@ -131,9 +131,10 @@ export function LandingPage() {
           <span style={styles.betaPoweredBy}>Powered by Claude</span>
         </div>
 
-        {/* FirebaseUI — Google's drop-in pre-built sign-in widget. The
-            providers it renders (Phone, Google, Email-link, optionally
-            Apple) are controlled in the Firebase console, not here. */}
+        {/* Clerk's drop-in <SignIn /> widget. Providers (Google + email/
+            password today) are configured in the Clerk dashboard, not here.
+            Filename of the wrapper component is legacy — see
+            FirebaseAuthUI.tsx header for the rename plan. */}
         <div style={styles.authCard} className="landing-auth-card">
           <FirebaseAuthUI />
         </div>

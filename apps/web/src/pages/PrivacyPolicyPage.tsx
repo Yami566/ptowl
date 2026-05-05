@@ -21,7 +21,7 @@ export function PrivacyPolicyPage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Privacy Policy</h1>
-          <p style={styles.updated}>Last updated: April 29, 2026</p>
+          <p style={styles.updated}>Last updated: May 5, 2026</p>
 
           <p style={styles.intro}>
             We keep it simple, Jack. PTowl was designed from day one so that real patient names
@@ -54,9 +54,9 @@ export function PrivacyPolicyPage() {
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                <strong>Provider authentication:</strong> Sign-in via Google, Apple, email magic
-                link, or SMS (handled by Firebase Authentication). We receive a Firebase user ID
-                plus whichever identifier you signed in with (email and/or phone number).
+                <strong>Provider authentication:</strong> Sign-in via Google or email and password
+                (handled by Clerk). We receive a Clerk user ID plus whichever identifier you signed
+                in with (your email address and/or your linked Google account).
               </li>
               <li style={styles.listItem}>
                 <strong>Clinic details:</strong> Clinic name, address, phone, email, and an optional
@@ -156,11 +156,11 @@ export function PrivacyPolicyPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>4. Authentication</h2>
             <p style={styles.text}>
-              PTowl uses passwordless authentication — you sign in with your phone number and a
-              one-time SMS code. We do not store passwords. Authentication is managed through
-              Firebase Auth with industry-standard security protocols. This eliminates an entire
-              class of security risks including credential stuffing, password leaks, and
-              weak-password attacks.
+              PTowl uses managed authentication provided by Clerk. You sign in with Google or with
+              your email and password. Password hashing, credential storage, account recovery, and
+              session management are all handled by Clerk under their security posture; PTowl itself
+              never sees or stores your password. On every API request, the Clerk-issued session JWT
+              is verified against Clerk&apos;s public JWKS endpoint.
             </p>
           </section>
 
@@ -209,8 +209,8 @@ export function PrivacyPolicyPage() {
                 and edge analytics. <em>Located in the United States.</em>
               </li>
               <li style={styles.listItem}>
-                <strong>Google LLC (Firebase)</strong> — phone-number authentication for provider
-                sign-in. <em>Located in the United States.</em>
+                <strong>Clerk, Inc.</strong> — provider authentication and session management
+                (Google sign-in and email/password). <em>Located in the United States.</em>
               </li>
               <li style={styles.listItem}>
                 <strong>MailChannels Corp.</strong> — outbound transactional email delivery (account

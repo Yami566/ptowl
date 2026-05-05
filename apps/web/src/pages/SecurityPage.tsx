@@ -21,14 +21,14 @@ export function SecurityPage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Security</h1>
-          <p style={styles.updated}>Last updated: April 29, 2026</p>
+          <p style={styles.updated}>Last updated: May 5, 2026</p>
 
           <p style={styles.intro}>
             Security is not an afterthought at PTowl — it is baked into every layer of the stack.
             Here is a transparent look at how we protect your data, and more importantly, how we
             designed the system so there is less to protect in the first place. Sign-in is handled
-            by Firebase Authentication (Google, Apple, email magic link, or SMS); the API verifies
-            Firebase ID tokens against Google&apos;s JWKS on every request.
+            by Clerk (Google or email/password); the API verifies Clerk-issued session JWTs against
+            Clerk&apos;s public JWKS endpoint on every request.
           </p>
 
           <section style={styles.section}>
@@ -117,22 +117,29 @@ export function SecurityPage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>Authentication</h2>
             <p style={styles.text}>
-              PTowl uses a passwordless authentication model to eliminate an entire class of
-              security vulnerabilities:
+              PTowl uses managed authentication provided by Clerk. We deliberately don&apos;t roll
+              our own auth — credential storage, password hashing, and account recovery are
+              specialist work and we trust a specialist to do it.
             </p>
             <ul style={styles.list}>
               <li style={styles.listItem}>
-                <strong>Phone SMS Verification:</strong> One-time codes sent via Firebase Auth. No
-                passwords to forget, leak, or brute-force.
+                <strong>Sign-in options:</strong> Google OAuth and email + password. Both are
+                handled end-to-end by Clerk; PTowl never sees or stores your password.
               </li>
               <li style={styles.listItem}>
-                <strong>Multi-Factor Authentication:</strong> Available for accounts requiring
-                additional security layers.
+                <strong>Session verification:</strong> Every API request carries a Clerk-issued
+                session JWT, which the Worker verifies against Clerk&apos;s public JWKS on every
+                request. No long-lived secrets cross the wire.
+              </li>
+              <li style={styles.listItem}>
+                <strong>Multi-Factor Authentication:</strong> Available via Clerk for accounts
+                requiring additional security layers.
               </li>
             </ul>
             <p style={styles.text}>
-              By not storing passwords, PTowl is immune to credential stuffing, password database
-              leaks, and weak-password attacks.
+              Because we don&apos;t store password hashes, PTowl itself has nothing useful to leak
+              in a credential-database breach. Clerk maintains its own SOC 2 Type II program for the
+              part of the auth surface that does store credentials.
             </p>
           </section>
 
@@ -260,8 +267,7 @@ export function SecurityPage() {
                   DSS Level 1
                 </li>
                 <li>
-                  <strong>Firebase / Google Cloud</strong> (authentication): SOC 2, SOC 3, ISO
-                  27001, ISO 27017, ISO 27018
+                  <strong>Clerk, Inc.</strong> (authentication): SOC 2 Type II
                 </li>
               </ul>
               <p style={styles.text}>

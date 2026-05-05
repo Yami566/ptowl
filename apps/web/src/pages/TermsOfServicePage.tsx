@@ -21,7 +21,7 @@ export function TermsOfServicePage() {
 
         <div style={styles.card}>
           <h1 style={styles.h1}>Terms of Service</h1>
-          <p style={styles.updated}>Last updated: April 29, 2026</p>
+          <p style={styles.updated}>Last updated: May 5, 2026</p>
 
           <p style={styles.intro}>
             Welcome to PTowl. By using our service, you agree to these terms. They are
@@ -61,10 +61,10 @@ export function TermsOfServicePage() {
           <section style={styles.section}>
             <h2 style={styles.h2}>3. Account Registration</h2>
             <p style={styles.text}>
-              To use PTowl, you must create an account by signing in via Google, Apple, email magic
-              link, or SMS (handled through Firebase Authentication). You are responsible for
-              maintaining the security of your account credentials and for all activity that occurs
-              under your account. If you suspect unauthorized access, notify us immediately at{' '}
+              To use PTowl, you must create an account by signing in with Google or with an email
+              and password (handled through Clerk). You are responsible for maintaining the security
+              of your account credentials and for all activity that occurs under your account. If
+              you suspect unauthorized access, notify us immediately at{' '}
               <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
