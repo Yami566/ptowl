@@ -5,7 +5,7 @@ This is the long-arc vision document. Companion to:
 - [docs/AUTOMATION-PLAN.md](AUTOMATION-PLAN.md) — operational automation
   in plain English, evolves session-by-session.
 - [docs/PRODUCTION-LAUNCH-RUNBOOK.md](PRODUCTION-LAUNCH-RUNBOOK.md) —
-  Cloudflare/Firebase/GitHub dashboard hardening checklist.
+  Cloudflare/Clerk/GitHub dashboard hardening checklist.
 - [docs/CLERK-PRODUCTION-SETUP.md](CLERK-PRODUCTION-SETUP.md) — promote
   Clerk dev → production instance.
 
