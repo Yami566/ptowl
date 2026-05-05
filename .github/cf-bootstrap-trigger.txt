@@ -1,0 +1,7 @@
+Touch this file (any change) and push to main to fire
+.github/workflows/cf-bootstrap.yml. The workflow is idempotent —
+re-running on subsequent edits is safe and just no-ops the items
+that are already configured.
+
+Last run trigger: 2026-05-05 — initial bootstrap of WAF + Bot Fight
++ Rate Limiting + Worker Errors notification + Web Analytics.

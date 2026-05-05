@@ -20,6 +20,14 @@ on:
         description: Email address to receive Worker Errors alerts
         required: true
         default: nurelimusabay@gmail.com
+  # Auto-trigger when the marker file at .github/cf-bootstrap-trigger.txt
+  # is touched. Lets a non-clicking caller (e.g. an automated assistant
+  # without dashboard access) fire the bootstrap by editing/pushing
+  # that file. Idempotent — safe to re-run.
+  push:
+    branches: [main]
+    paths:
+      - .github/cf-bootstrap-trigger.txt
 
 jobs:
   bootstrap:
@@ -29,7 +37,9 @@ jobs:
       CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       ZONE_NAME: ptowl.com
-      NOTIFY_EMAIL: ${{ inputs.notify_email }}
+      # `inputs.notify_email` is only set on workflow_dispatch; on push
+      # triggers we fall back to the founder address baked here.
+      NOTIFY_EMAIL: ${{ inputs.notify_email || 'nurelimusabay@gmail.com' }}
     steps:
       - name: Resolve zone id
         id: zone
