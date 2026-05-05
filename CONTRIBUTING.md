@@ -5,7 +5,7 @@ development workflow and the conventions enforced by CI.
 
 ## Prerequisites
 
-- Node.js >= 20
+- Node.js >= 22 (CI runs Node 22; Wrangler v4 requires >= 20 but we pin to 22)
 - pnpm 9 (`corepack enable && corepack prepare pnpm@9 --activate`)
 - A Cloudflare account (only needed for deploys, not for local dev)
 

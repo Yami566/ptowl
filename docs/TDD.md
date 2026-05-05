@@ -3,7 +3,24 @@
 **Document Version:** 1.0
 **Last Updated:** 2026-03-16
 **Author:** PTOWL Development Team
-**Status:** Approved
+**Status:** Historical reference — superseded by PRD.md v2.0
+
+> **⚠️ Doc-status note (May 5, 2026):** This TDD predates the
+> Firebase→Clerk migration, the admin-console + patient-portal
+> deletions, and the dropped password_reset_tokens / oauth_accounts
+> / admin_totp tables. Several sections (auth flow diagrams, admin
+> endpoints, password-reset migration 0002, /admin rate-limit table)
+> describe state that no longer exists in the codebase.
+>
+> **Canonical sources for current state:**
+>
+> - Feature inventory + routes + API endpoints: [PRD.md](PRD.md)
+> - Wire-level security claims: <https://ptowl.com/security>
+> - Latest red-team pass: [RED-TEAM-FINDINGS.md](RED-TEAM-FINDINGS.md)
+>
+> The high-level architecture (Cloudflare Workers + Hono + D1 + R2),
+> the de-identification methodology, and the schedule-generation
+> algorithm sections remain accurate.
 
 ---
 
