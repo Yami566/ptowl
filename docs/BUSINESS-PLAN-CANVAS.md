@@ -1,4 +1,4 @@
-# Patient Owl — Lean Canvas
+# PTowl — Lean Canvas
 
 **Version 1.0 · April 25, 2026 · One-page strategic snapshot**
 
@@ -76,7 +76,7 @@ keyboard-driven clinician."
 | **Free**                | $0/mo               | Up to 3 active patients, all features                        | n/a (acquisition) |
 | **Solo**                | $9/mo               | Unlimited patients, 1 provider, email reminders, custom logo | ~95%              |
 | **Clinic**              | $29/mo per provider | Multi-provider dashboard, analytics, priority support        | ~95%              |
-| **Future: White-label** | $0.05/patient/mo    | Embed Patient Owl into other PT-SaaS                         | bundled           |
+| **Future: White-label** | $0.05/patient/mo    | Embed PTowl into other PT-SaaS                               | bundled           |
 
 **Year-1 target:** 200 paid users at blended $14/mo = $33,600 ARR.
 **Year-2 target:** 1,000 paid users at blended $16/mo = $192,000 ARR.
