@@ -171,6 +171,68 @@ export function AboutPage() {
           </p>
         </section>
 
+        {/* FAQ — clinician-facing, plain-language. Five high-leverage
+            questions visitors actually ask. Drawn from the SHOW-HN
+            comment defenses but tuned for clinic owners (less tech-
+            speak, more "what does this mean for my Tuesday morning"). */}
+        <section style={styles.faqSection}>
+          <h2 style={styles.sectionTitle}>Common questions</h2>
+          <div style={styles.faqList}>
+            <details style={styles.faqItem}>
+              <summary style={styles.faqQ}>Is PTowl HIPAA-compliant?</summary>
+              <p style={styles.faqA}>
+                No, on purpose. PTowl is built so real patient names <em>never enter the system</em>
+                . You type two-letter initials and we map them to a sports figure alias for display
+                and printing. Because PHI never gets stored, the HIPAA data-protection rules that
+                apply to systems that DO store PHI don&rsquo;t apply to PTowl&rsquo;s data layer.
+                Treat PTowl as a scheduling and printing helper, not as a system of record. Your EHR
+                stays the EHR.
+              </p>
+            </details>
+            <details style={styles.faqItem}>
+              <summary style={styles.faqQ}>What does it cost?</summary>
+              <p style={styles.faqA}>
+                Free during beta. No credit card. No 30-day clock. We&rsquo;ll introduce paid plans
+                only after we have at least 50 active beta clinics — and existing free users get
+                advance notice and continued access. Future pricing target: $9/month for solo
+                providers, $29/month per provider for clinics.
+              </p>
+            </details>
+            <details style={styles.faqItem}>
+              <summary style={styles.faqQ}>How does the patient see their schedule?</summary>
+              <p style={styles.faqA}>
+                After you generate a schedule, click <strong>Share → Send to patient</strong>. PTowl
+                mints a private URL like <code>ptowl.com/p/&lt;long-token&gt;</code> and copies it
+                to your clipboard (or opens your phone&rsquo;s share sheet on mobile). Text it,
+                email it, hand it on a sticky note — whatever channel you&rsquo;d already use. The
+                patient opens the link, sees a clean mobile-first appointment list with their sports
+                alias on top, and taps &ldquo;Add to my calendar&rdquo; to drop the appointments
+                into Apple Calendar, Google Calendar, or Outlook.
+              </p>
+            </details>
+            <details style={styles.faqItem}>
+              <summary style={styles.faqQ}>Can I print? Does it match our clinic branding?</summary>
+              <p style={styles.faqA}>
+                Yes. Print preview uses your browser&rsquo;s print dialog (works on any printer,
+                Letter or A4). The header shows your clinic name + optional logo URL (configurable
+                under Profile). Print settings are configurable under Profile → Print: hide the
+                header, hide the reminder column, switch language to Spanish, etc.
+              </p>
+            </details>
+            <details style={styles.faqItem}>
+              <summary style={styles.faqQ}>What happens to our data if PTowl shuts down?</summary>
+              <p style={styles.faqA}>
+                PTowl is open source under AGPL-3.0. The whole thing — frontend, API, schema — is on
+                GitHub at <code>github.com/Yami566/ptowl</code>. If we shut down, you (or your IT
+                person) can fork the repo and self-host on your own Cloudflare account in about 15
+                minutes. The walkthrough is in the README. Free tier covers ~10,000 monthly users on
+                Cloudflare and Clerk, so the self-host bill is $0/month for most clinics. We
+                can&rsquo;t lock you in even if we wanted to.
+              </p>
+            </details>
+          </div>
+        </section>
+
         {/* Founder note — solo-founder transparency, on-brand for AGPL.
             Photo and final name go here pre-launch; this placeholder
             keeps the section in the layout so the page composition
@@ -366,6 +428,39 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--dark)',
     lineHeight: 1.7,
     marginBottom: '1rem',
+  },
+  faqSection: {
+    padding: '2.5rem 1.5rem',
+    maxWidth: '760px',
+    margin: '0 auto',
+    textAlign: 'left' as const,
+  },
+  faqList: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.75rem',
+    marginTop: '1.5rem',
+  },
+  faqItem: {
+    background: 'var(--white)',
+    padding: '1rem 1.25rem',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--green-bg)',
+  },
+  faqQ: {
+    fontSize: '1rem',
+    fontWeight: 600,
+    color: 'var(--green-dark)',
+    cursor: 'pointer',
+    listStyle: 'none' as const,
+  },
+  faqA: {
+    fontSize: '0.95rem',
+    color: 'var(--dark)',
+    lineHeight: 1.65,
+    marginTop: '0.75rem',
+    paddingTop: '0.75rem',
+    borderTop: '1px solid var(--green-bg)',
   },
   openSourceList: {
     listStyle: 'none' as const,
