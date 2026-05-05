@@ -155,20 +155,26 @@ deploy. Use the gradual flow manually for major API changes.
 
 ---
 
-## 4. Firebase production-readiness (if not already done)
+## 4. Clerk production-readiness
 
-☐ <https://console.firebase.google.com/project/ptowl-bdfbe/authentication/settings>
+(PTowl migrated from Firebase Auth to Clerk in May 2026; the Firebase
+project is staying dormant for one more verification week, then will
+be deleted.)
 
-- Authorized domains contains `ptowl.com` and `www.ptowl.com`
-- Email/Password provider enabled with **Email link** sub-toggle ON
+☐ Clerk dashboard <https://dashboard.clerk.com/last-active> — confirm
+current state:
 
-☐ Firebase project on **Spark** plan supports passwordless email-link
-sign-in for free. No billing change needed unless you re-enable phone
-auth at scale.
+- Email/Password + Google providers enabled
+- Allowed domains list includes `ptowl.com` (and `www.ptowl.com` if used)
 
-☐ <https://console.firebase.google.com/project/ptowl-bdfbe/usage/details>
+☐ When ready to promote dev → production, follow the dedicated
+runbook at [docs/CLERK-PRODUCTION-SETUP.md](CLERK-PRODUCTION-SETUP.md).
+Production removes the `ethical-dingo-48.clerk.accounts.dev` URL
+exposure during sign-in and unlocks `clerk.ptowl.com` custom
+domain.
 
-- Set quota alerts at 80% and 100% (email)
+☐ Clerk free tier covers 10,000 MAU. No billing alerts needed at
+beta scale; Clerk emails about quota approaching automatically.
 
 ---
 
@@ -177,15 +183,18 @@ auth at scale.
 After all the above, run through:
 
 ☐ Visit https://ptowl.com/ — see polished landing + city scene + PTOWL
-wordmark + email sign-in form
-☐ Sign in with email → magic link → `/dashboard`
+wordmark + Clerk sign-in widget (NOT Firebase yellow error bar)
+☐ Sign in with email/password OR Continue with Google → `/dashboard`
 ☐ Create a schedule via preset (5 keypresses)
 ☐ Open the schedule → print preview shows clinic info + alias
+☐ Click **Share → Send to patient** → /p/<token> URL is minted and
+copied to clipboard (or native share sheet on mobile)
+☐ Visit the /p/<token> URL on your phone → mobile-first patient page
+with "Add to my calendar" works
 ☐ Hit `/nonexistent` — owl 404 with `[Home]` + `[Back to Dashboard]`
 ☐ Open devtools → Console → no red errors
-☐ Visit https://status.ptowl.com — green
-☐ Force a 500 by hitting an unauthenticated `/api/v1/me` → CF
-notification arrives within 2 min
+☐ Force a 500 by hitting an unauthenticated `/api/v1/me` → CF Worker
+Errors notification arrives within 5 min
 
 ---
 
@@ -202,15 +211,16 @@ notification arrives within 2 min
 
 ## What to do when something breaks
 
-| Symptom                          | First check                                    |
-| -------------------------------- | ---------------------------------------------- |
-| ptowl.com 5xx                    | Workers logs in CF dashboard (real-time tail)  |
-| Sign-in fails with auth/internal | Firebase Console → Authentication → Providers  |
-| Build fails on push              | Actions tab → click failed run → expand step   |
-| Slow API responses               | Workers Analytics → CPU time / errors          |
-| User reports missing schedule    | D1 Console → query `schedules` for their alias |
-| Need to rollback a bad deploy    | `wrangler rollback` from `apps/api/`           |
-| Need to rollback the frontend    | CF Pages → Deployments → previous → Promote    |
+| Symptom                            | First check                                                 |
+| ---------------------------------- | ----------------------------------------------------------- |
+| ptowl.com 5xx                      | Workers logs in CF dashboard (real-time tail)               |
+| Sign-in fails / Clerk widget hangs | Clerk dashboard → Sessions tab; check allowed domains       |
+| Build fails on push                | Actions tab → click failed run → expand step                |
+| Slow API responses                 | Workers Analytics → CPU time / errors                       |
+| User reports missing schedule      | D1 Console → query `schedules` for their alias              |
+| Patient /p/:token says "not found" | Verify `share_token` exists; `wrangler d1 execute` to check |
+| Need to rollback a bad deploy      | `wrangler rollback` from `apps/api/`                        |
+| Need to rollback the frontend      | CF Workers Builds → Deployments → previous → Promote        |
 
 ---
 
