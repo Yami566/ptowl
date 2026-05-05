@@ -20,17 +20,17 @@ self-host walkthrough in [docs/HOW-TO-DEPLOY.md](./docs/HOW-TO-DEPLOY.md).
 
 ## Stack
 
-| Layer            | Tech                                                               |
-| ---------------- | ------------------------------------------------------------------ |
-| Frontend         | React 19 + Vite + React Router 7, Cloudflare Workers Static Assets |
-| API              | Hono on Cloudflare Workers                                         |
-| Database         | Cloudflare D1 (SQLite) with 30-day point-in-time recovery          |
-| Auth             | Clerk drop-in widget (Email + Google), JWT verified via JWKS       |
-| Email — outbound | TBD (Resend candidate; see docs/AUTOMATION-PLAN.md)                |
-| Email — inbound  | Cloudflare Email Routing                                           |
-| Calendar         | `rrule` + `ical-generator`                                         |
-| Storage (logos)  | Cloudflare R2                                                      |
-| Edge security    | WAF Free Managed Ruleset, Bot Fight Mode, Rate Limiting            |
+| Layer            | Tech                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| Frontend         | React 19 + Vite + React Router 7, Cloudflare Workers Static Assets                                           |
+| API              | Hono on Cloudflare Workers                                                                                   |
+| Database         | Cloudflare D1 (SQLite) with 7-day point-in-time recovery (free tier; 30-day on paid)                         |
+| Auth             | Clerk drop-in widget (Email + Google), JWT verified via JWKS                                                 |
+| Email — outbound | TBD (Resend candidate; see docs/AUTOMATION-PLAN.md)                                                          |
+| Email — inbound  | Cloudflare Email Routing                                                                                     |
+| Calendar         | `rrule` + `ical-generator`                                                                                   |
+| Storage (logos)  | Cloudflare R2                                                                                                |
+| Edge security    | TLS 1.3 + HSTS + strict CSP today; WAF / Bot Fight / Rate Limiting available via `cf-bootstrap.yml` workflow |
 
 ## Repo layout
 
@@ -38,7 +38,7 @@ self-host walkthrough in [docs/HOW-TO-DEPLOY.md](./docs/HOW-TO-DEPLOY.md).
 .
 ├── apps/
 │   ├── api/        # Cloudflare Worker — Hono routes, D1 queries
-│   └── web/        # React + Vite + Capacitor shell
+│   └── web/        # React + Vite, deployed as Cloudflare Workers Static Assets
 ├── packages/
 │   └── shared/     # Zod schemas, RRule presets, shared types
 ├── docs/           # PRD, TDD, sprint history, runbooks
