@@ -210,9 +210,11 @@ export function AboutPage() {
             <a href="/security" style={styles.footerLink}>
               Security
             </a>
-            <a href="https://status.ptowl.com" style={styles.footerLink} rel="noopener">
-              Status
-            </a>
+            {/* Status link removed until status.ptowl.com is live. The
+                Upptime page is documented in PRODUCTION-LAUNCH-RUNBOOK
+                section 1d but hasn't been wired yet; linking to a dead
+                subdomain reads as broken to anyone who clicks. Restore
+                this <a> once the public uptime page is up. */}
             <a href="mailto:help@ptowl.com" style={styles.footerLink}>
               Help
             </a>
