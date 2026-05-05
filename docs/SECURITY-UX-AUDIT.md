@@ -2,7 +2,26 @@
 
 **Date:** March 22, 2026
 **Auditor:** Automated codebase analysis
-**Status:** Pre-launch review
+**Status:** Historical reference — superseded by RED-TEAM-FINDINGS.md (April 25, 2026)
+
+> **⚠️ Doc-status note (May 5, 2026):** This audit was run against a
+> very different stack: Firebase Auth, OneSignal, the now-deleted
+> patient portal + admin console, and a legacy bundle that included
+> the Firebase SDK. Most findings (HIPAA BAA tables, Firebase phone
+> auth SIM-swap, Firebase SDK bundle bloat, OneSignal classification,
+> the unused `sessions` table, the 505-test count) describe state
+> that no longer exists in the current codebase.
+>
+> **Canonical sources for current security posture:**
+>
+> - Live security claims: [/security](https://ptowl.com/security) page
+> - Most recent adversarial pass: [RED-TEAM-FINDINGS.md](RED-TEAM-FINDINGS.md)
+> - Production hardening checklist: [PRODUCTION-LAUNCH-RUNBOOK.md](PRODUCTION-LAUNCH-RUNBOOK.md)
+>
+> Sections of this doc that remain instructive as engineering process
+> notes (color contrast methodology, CSP / HSTS / X-Frame-Options
+> approach, audit-log retention rationale) are still useful; treat
+> the specific findings as a snapshot of what was true on March 22.
 
 ---
 

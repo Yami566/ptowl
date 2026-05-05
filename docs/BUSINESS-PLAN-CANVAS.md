@@ -38,7 +38,7 @@ keyboard-fluent.
 
 ## 3 · Unique value proposition
 
-> "Print a 12-week PT schedule in 3 keypresses. No PHI ever stored.
+> "Print a 12-week PT schedule in 5 keypresses. No PHI ever stored.
 > No EMR contract. Free for the first three patients."
 
 **High-level concept:** "Calendly meets a print job, for the
@@ -46,16 +46,16 @@ keyboard-driven clinician."
 
 ## 4 · Solution
 
-- **3-keypress wizard** (template → initials → confirm) generates the
-  full 12-week schedule.
+- **5-keypress wizard** (template → 2-letter initials → Enter → confirm)
+  generates the full 12-week schedule.
 - **De-identification by design.** Patient identity stored only as
   two-letter initials, mapped client-side to a sports-figure alias.
   Real names never reach the server.
 - **Print + share + calendar feed** (.ics) for every schedule.
 - **Encrypted appointment-reminder emails** at 24h and 1h before each
   appointment — opt-in per schedule, one-click unsubscribe.
-- **Patient portal** via short share codes (PTOWL-XXXX); no patient
-  account required.
+- **Patient magic-link view** via mintable `/p/<token>` URLs; no
+  patient account required. iCal feed at `/p/<token>.ics`.
 
 ## 5 · Channels
 
@@ -109,7 +109,7 @@ keyboard-driven clinician."
 
 - **Privacy-by-design** is hard to copy. EMR vendors can't pivot
   without restructuring their data model + BAA stack.
-- **Speed-as-a-feature** — 3 keypresses is a brand promise that
+- **Speed-as-a-feature** — 5 keypresses is a brand promise that
   forces every UX decision. Competitors that bolt-on "fast mode"
   always feel like a workaround.
 - **Cloudflare cost structure** — at scale, the marginal cost of an
