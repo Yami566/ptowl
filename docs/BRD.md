@@ -3,7 +3,25 @@
 **Document Version:** 1.0
 **Last Updated:** 2026-03-16
 **Author:** PTOWL Development Team
-**Status:** Approved
+**Status:** Historical reference — superseded by BUSINESS-PLAN-CANVAS.md
+
+> **⚠️ Doc-status note (May 5, 2026):** The pricing, revenue model, and
+> financial projections in this BRD predate the May 2026 strategy
+> pivot from "$3/$30 license keys, no free tier" to "free beta until
+> 50 active clinics, then $9 Solo / $29 per-provider Clinic" via
+> LemonSqueezy SaaS subscription. Sections 6 (Revenue Model) and 5
+> (Success Metrics) are out of sync with current strategy.
+>
+> **Canonical sources for current state:**
+>
+> - Pricing + financial model: [BUSINESS-PLAN-CANVAS.md](BUSINESS-PLAN-CANVAS.md)
+> - Product vision: [PTOWL-NORTH-STAR.md](PTOWL-NORTH-STAR.md)
+> - Feature inventory: [PRD.md](PRD.md)
+>
+> Sections 1–4 (executive summary, problem, persona, goals) and 7
+> (competitive landscape) remain accurate and load-bearing for the
+> launch narrative. Keypress count was synced to "5" in this same
+> commit so the speed-promise is consistent across docs.
 
 ---
 
