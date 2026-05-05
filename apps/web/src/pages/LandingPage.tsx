@@ -3,7 +3,7 @@ import { OwlLogo } from '../components/layout/OwlLogo.js';
 import { OwlCityScene } from '../components/decorative/OwlCityScene.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
-import { FirebaseAuthUI } from '../components/auth/FirebaseAuthUI.js';
+import { AuthWidget } from '../components/auth/AuthWidget.js';
 
 // Lazy-load FullCalendar for demo section
 const LazyFullCalendar = lazy(() => import('@fullcalendar/react'));
@@ -132,11 +132,10 @@ export function LandingPage() {
         </div>
 
         {/* Clerk's drop-in <SignIn /> widget. Providers (Google + email/
-            password today) are configured in the Clerk dashboard, not here.
-            Filename of the wrapper component is legacy — see
-            FirebaseAuthUI.tsx header for the rename plan. */}
+            password today) are configured in the Clerk dashboard, not
+            here. See AuthWidget.tsx for the wrapper. */}
         <div style={styles.authCard} className="landing-auth-card">
-          <FirebaseAuthUI />
+          <AuthWidget />
         </div>
       </section>
 

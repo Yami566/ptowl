@@ -146,13 +146,15 @@ describe('Authentication Security', () => {
     expect(authFile).toContain("navigate('/'");
   });
 
-  it('login uses FirebaseUI drop-in widget (multi-provider; no bespoke form)', () => {
+  it('login uses Clerk drop-in widget (no bespoke form, no Firebase)', () => {
     const landingFile = fs.readFileSync(path.join(WEB_SRC, 'pages/LandingPage.tsx'), 'utf-8');
-    // Stage G of HOTFIX 3 replaced the hand-rolled phone form with
-    // Google's FirebaseUI Web component, which drives Phone, Google,
-    // Email-link, and (optionally) Apple sign-in from a single
-    // declarative config. None of the legacy auth surfaces remain.
-    expect(landingFile).toContain('FirebaseAuthUI');
+    // Phase 4 of the Clerk migration replaced FirebaseUI with Clerk's
+    // drop-in <SignIn /> widget. The wrapper component (originally
+    // FirebaseAuthUI.tsx, renamed to AuthWidget.tsx in May 2026)
+    // renders Clerk exclusively. No legacy phone-form, Firebase-token,
+    // or FirebaseUI surface remains on the landing page.
+    expect(landingFile).toContain('AuthWidget');
+    expect(landingFile).not.toContain('FirebaseAuthUI');
     expect(landingFile).not.toContain('sendPhoneCode');
     expect(landingFile).not.toContain('/auth/firebase');
   });
