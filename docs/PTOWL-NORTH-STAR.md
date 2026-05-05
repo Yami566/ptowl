@@ -8,20 +8,41 @@ This is the long-arc vision document. Companion to:
   Cloudflare/Clerk/GitHub dashboard hardening checklist.
 - [docs/CLERK-PRODUCTION-SETUP.md](CLERK-PRODUCTION-SETUP.md) — promote
   Clerk dev → production instance.
+- [docs/PRODUCTION-GAP-ANALYSIS.md](PRODUCTION-GAP-ANALYSIS.md) —
+  honest measure of where we are vs. flourishing-site bars.
 
 The north-star doc is the "where are we going" map. The other docs are
 the "how do we get the next mile" maps.
 
-Last updated: 2026-05-04.
+Last updated: 2026-05-05.
 
 ---
 
+## The master prompt (one paragraph that drives every decision)
+
+> **PTowl is the Craigslist of clinic scheduling.** We compete on speed
+> (5 keypresses), privacy (sports aliases, no PHI stored), and price
+> (free during beta, $9-$29 paid later). The product is **deliberately
+> not pretty** — it is fast, honest, and self-serve. Our market is
+> overworked clinic staff at therapy practices (PT, OT, SLP, chiropractic,
+> mental-health/therapy, dental hygiene), not enterprises. We win when
+> one clinician shows another in the break room, not when a CMO sees a
+> deck. Every product decision answers one question: **does this help
+> that clinician finish their schedule 10 seconds faster?** If not, we
+> don't ship it.
+
+Why "Craigslist" and not "Notion" or "Linear": Craigslist is worth
+billions because it serves its market deeply, simply, reliably — at a
+visual fidelity that would embarrass a junior designer. PTowl's market
+is closer to Craigslist's than to Linear's. Polish above a baseline
+doesn't earn the 10th clinic. Speed, reliability, and trust earn it.
+
 ## The 6-month vision
 
-PTowl becomes **the default open-source tool that PT and dental clinics
-reach for when they want to print patient schedules.** Not because it's
-the cheapest. Because it's the best UX in a niche where every other
-tool is either bloated EHR garbage or a Google Sheet.
+PTowl becomes **the default open-source tool that therapy clinics reach
+for when they want to print patient schedules.** Not because it's the
+cheapest. Because it's the best UX in a niche where every other tool is
+either bloated EHR garbage or a Google Sheet.
 
 Open source under **AGPL-3.0** — anyone can use it; anyone running it
 as a SaaS must share their changes back. Public launch coordinated
@@ -30,6 +51,46 @@ with a polished marketing surface + a Show HN post.
 The strategic theme: **every working clinic creates 3 owl-fan healthcare
 providers** through word-of-mouth, because PTowl saves them 30 minutes a
 day in a niche where no software has cracked it.
+
+## Audience definition (precise)
+
+PTowl serves the **recurring-appointment-series family**:
+
+- Physical therapists (primary)
+- Occupational therapists
+- Speech-language pathologists
+- Chiropractors
+- Mental-health and behavioral therapists
+- Dental hygienists
+- Addiction recovery counselors
+- Any provider who books **multi-week recurring appointment series**
+
+PTowl explicitly does NOT serve:
+
+- Primary care (mostly one-off visits)
+- Specialists doing one-time consults (cardiology, dermatology, etc.)
+- ER / urgent care
+- Surgery scheduling
+- Patient-initiated booking (Calendly does this; we don't)
+
+If "all medical providers" feels broader than this, resist. Saying yes
+to primary care dilutes the message for the audience that actually
+converts.
+
+## Definition of "complete" v1
+
+**A clinic can sign up, generate 10 weekly schedules, print them, and
+text patients the magic link — all without writing a support email.**
+
+That's the bar. Not feature parity with maximalist platforms. The
+[PRODUCTION-GAP-ANALYSIS.md](PRODUCTION-GAP-ANALYSIS.md) doc tracks
+the remaining gap against this bar.
+
+## Success metric
+
+**10 active beta clinics** generating schedules weekly. Not signups —
+active usage. Per the no-monetization rule below, payment is gated
+until 50 active clinics. The first 10 are the proof point.
 
 ## Operating context
 
