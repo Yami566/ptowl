@@ -87,7 +87,7 @@ export function SecurityPage() {
             <p style={styles.textNote}>
               Healthcare providers remain responsible for their own regulatory compliance. If you
               have questions about how PTowl fits into your compliance framework, contact us at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               .
@@ -237,7 +237,7 @@ export function SecurityPage() {
               <h3 style={styles.h3}>How to Report</h3>
               <p style={styles.disclosureText}>
                 Email security issues to{' '}
-                <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+                <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                   help@ptowl.com
                 </a>{' '}
                 with "Security" in the subject line. Please include a description of the
@@ -293,7 +293,7 @@ export function SecurityPage() {
             <h2 style={styles.h2}>Questions?</h2>
             <p style={styles.contactBlock}>
               For security questions or to report a concern, contact us at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               <br />

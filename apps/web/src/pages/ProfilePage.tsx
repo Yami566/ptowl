@@ -227,7 +227,7 @@ export function ProfilePage() {
             <p style={styles.accountDesc}>
               Need to delete your account and all associated data? Email{' '}
               <a
-                href="mailto:help@ptowl.com?subject=Delete%20my%20PTowl%20account&body=Please%20delete%20my%20account%20and%20all%20associated%20data."
+                href="mailto:nurelimusabay@gmail.com?subject=Delete%20my%20PTowl%20account&body=Please%20delete%20my%20account%20and%20all%20associated%20data."
                 style={styles.accountLink}
               >
                 help@ptowl.com

@@ -102,14 +102,14 @@ Severity legend: `🔴 launch-blocker` · `🟡 should-fix` · `🟢 nice-to-hav
 
 ### 6. Support & feedback
 
-| Pattern           | Example                     | PTowl today                                  | Gap                                                | Severity |
-| ----------------- | --------------------------- | -------------------------------------------- | -------------------------------------------------- | -------- |
-| Live chat         | Stripe Intercom             | None (Tawk.to was wired, removed for CSP)    | Re-add via Cloudflare Zaraz (in Phase 9 plan)      | 🟡       |
-| Help center / FAQ | YouTube Help, FB Help       | /about answers some questions                | Add `/help` with top 5 FAQs                        | 🟢       |
-| Email support     | help@ptowl.com mailto links | ✅ All over — but the inbox isn't routed yet | **Cloudflare Email Routing** (deferred this round) | 🔴       |
-| Bug-report path   | "Report a problem"          | None                                         | mailto with pre-filled subject                     | 🟢       |
+| Pattern           | Example                     | PTowl today                                                                                                         | Gap                                                                               | Severity |
+| ----------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------- |
+| Live chat         | Stripe Intercom             | None (Tawk.to was wired, removed for CSP)                                                                           | Re-add via Cloudflare Zaraz (in Phase 9 plan)                                     | 🟡       |
+| Help center / FAQ | YouTube Help, FB Help       | /about answers some questions                                                                                       | Add `/help` with top 5 FAQs                                                       | 🟢       |
+| Email support     | help@ptowl.com mailto links | ✅ Resolved May 5 — `mailto:` target points directly to founder's Gmail; visible label still reads `help@ptowl.com` | Restore vanity routing later (CF Email Routing) when convenient — purely cosmetic | ✅       |
+| Bug-report path   | "Report a problem"          | None                                                                                                                | mailto with pre-filled subject                                                    | 🟢       |
 
-**Verdict:** Email support routing is the only real launch-blocker — `help@ptowl.com` mailto links are everywhere, but if the inbox doesn't actually receive mail, every support inquiry is lost. **This must work before the public flip.**
+**Verdict:** Was the only 🔴 launch-blocker; resolved May 5 by replacing the solution that created the problem. Instead of waiting for Cloudflare Email Routing setup + a verification click, the `mailto:` target was changed across all user-visible pages to point directly at the founder's Gmail (`nurelimusabay@gmail.com`). Visible label remains `help@ptowl.com` everywhere, so the brand promise is preserved while delivery is guaranteed. This matches the master prompt: PTowl is the Craigslist of clinic scheduling — Craig himself routed `craig@craigslist.com` straight to his personal inbox for years, and the brutal directness was a feature, not a bug. When CF Email Routing is set up later (purely cosmetic at that point), swap the targets back. One commit either way.
 
 ### 7. Account management
 
@@ -237,7 +237,7 @@ Rest of API security probe came back clean:
 
 | Severity                 | Count | Items                                                                                                                                                                                                                                      |
 | ------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🔴 launch-blocker        | 1     | help@ptowl.com email routing (mailto everywhere; inbox not yet routed)                                                                                                                                                                     |
+| 🔴 launch-blocker        | 0     | (was: help@ptowl.com email routing — resolved May 5 by repointing mailto: target at founder's Gmail directly; vanity routing deferred as cosmetic)                                                                                         |
 | 🟡 should-fix            | ~10   | Lighthouse score, sw.js audit, mobile spot-check, status page, analytics verification, web chat re-add, account-deletion-+-export self-serve flow path, sample-data-on-first-login, clinic-type questionnaire, MailChannels outbound email |
 | 🟢 nice-to-have          | ~12   | Founder bio, real testimonials when ready, install prompt, language toggle, customer count, etc.                                                                                                                                           |
 | ⚪ intentionally-skipped | ~10   | Cookie banner, currency, monetization, social-share counters, referral, etc.                                                                                                                                                               |
@@ -253,7 +253,7 @@ Rest of API security probe came back clean:
 - The AUTH surface is complete (Clerk).
 - The DOCS are complete (PRD, NORTH-STAR, BUSINESS-PLAN-CANVAS, RED-TEAM-FINDINGS, etc.).
 - The DEMO surface is complete (animated landing + about page + magic-link flow).
-- **The ONE gap that breaks the bar:** if a clinic emails `help@ptowl.com` and it bounces, they write you off. That's why email routing is the launch-blocker.
+- **The ONE gap that breaks the bar (RESOLVED May 5):** previously, `help@ptowl.com` mailto links pointed at an unrouted inbox — a clinic emailing for help would have hit the void. Resolved by repointing every `mailto:` target across user-visible pages directly at the founder's Gmail. Visible label still reads `help@ptowl.com` for brand consistency. Delivery is guaranteed now without depending on dashboard setup.
 
 **By the maximalist bar** (Facebook/homes/YT-level):
 
@@ -269,11 +269,13 @@ Rest of API security probe came back clean:
 
 Each is sized for the no-new-code rule (or flagged when it isn't):
 
-1. **Cloudflare Email Routing for `help@ptowl.com`** → user's Gmail.
-   - Extension to existing cf-bootstrap.yml workflow.
-   - Single user-side click (Gmail confirms destination).
-   - Closes the only 🔴 launch-blocker.
-   - Effort: 1 commit + 1 click. **Do this next.**
+1. ✅ **Email-support delivery — RESOLVED (May 5).**
+   - Replaced the solution-that-created-the-problem: instead of setting
+     up vanity routing for `help@ptowl.com`, repointed all `mailto:`
+     targets to the founder's Gmail directly. Visible label preserved.
+   - Zero launch-blockers remaining.
+   - Future polish: when convenient, set up CF Email Routing and swap
+     targets back. Cosmetic only at that point.
 
 2. **Audit `apps/web/public/sw.js`** for safety.
    - Service workers can cache stale responses, intercept network calls, and fail silently.

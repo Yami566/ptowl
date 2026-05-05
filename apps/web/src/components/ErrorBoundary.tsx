@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const helpHref =
-        'mailto:help@ptowl.com?subject=' +
+        'mailto:nurelimusabay@gmail.com?subject=' +
         encodeURIComponent('Something broke in PTowl') +
         '&body=' +
         encodeURIComponent(

@@ -182,7 +182,7 @@ export function AboutPage() {
               703-400-9900
             </a>
             <span style={styles.contactDivider}>&middot;</span>
-            <a href="mailto:help@ptowl.com" style={styles.contactLink}>
+            <a href="mailto:nurelimusabay@gmail.com" style={styles.contactLink}>
               help@ptowl.com
             </a>
           </div>
@@ -217,7 +217,7 @@ export function AboutPage() {
                 section 1d but hasn't been wired yet; linking to a dead
                 subdomain reads as broken to anyone who clicks. Restore
                 this <a> once the public uptime page is up. */}
-            <a href="mailto:help@ptowl.com" style={styles.footerLink}>
+            <a href="mailto:nurelimusabay@gmail.com" style={styles.footerLink}>
               Help
             </a>
           </div>

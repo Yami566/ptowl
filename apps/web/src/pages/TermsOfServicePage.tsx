@@ -67,7 +67,7 @@ export function TermsOfServicePage() {
               and password (handled through Clerk). You are responsible for maintaining the security
               of your account credentials and for all activity that occurs under your account. If
               you suspect unauthorized access, notify us immediately at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               .
@@ -149,7 +149,7 @@ export function TermsOfServicePage() {
             </p>
             <p style={styles.text}>
               You may also delete your own account at any time by contacting us at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               .
@@ -261,7 +261,7 @@ export function TermsOfServicePage() {
             </p>
             <p style={styles.contactBlock}>
               Email:{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               <br />

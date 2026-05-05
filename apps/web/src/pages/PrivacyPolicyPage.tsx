@@ -90,7 +90,7 @@ export function PrivacyPolicyPage() {
               You can request deletion of your account and all associated data at any time by
               emailing{' '}
               <a
-                href="mailto:help@ptowl.com?subject=Delete%20my%20PTowl%20account"
+                href="mailto:nurelimusabay@gmail.com?subject=Delete%20my%20PTowl%20account"
                 style={styles.inlineLink}
               >
                 help@ptowl.com
@@ -147,7 +147,7 @@ export function PrivacyPolicyPage() {
                 That said, healthcare providers are responsible for their own compliance with
                 applicable regulations. If you have specific compliance questions about your use of
                 PTowl, we are happy to discuss your needs at{' '}
-                <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+                <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                   help@ptowl.com
                 </a>
                 .
@@ -280,7 +280,7 @@ export function PrivacyPolicyPage() {
               </li>
               <li style={styles.listItem}>
                 <strong>Access, correction, deletion.</strong> Patients may also contact{' '}
-                <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+                <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                   help@ptowl.com
                 </a>{' '}
                 to request access, correction, or deletion of any reminder data we hold tied to
@@ -305,7 +305,7 @@ export function PrivacyPolicyPage() {
             <p style={styles.text}>
               You have the right to access, correct, or delete your data at any time. To request
               data export or account deletion, email us at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               . We will process deletion requests within 30 days.
@@ -341,7 +341,7 @@ export function PrivacyPolicyPage() {
             <p style={styles.text}>
               If you believe that Protected Health Information has been inadvertently entered into
               any PTowl text field, please contact us immediately at{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>{' '}
               for prompt removal. We will process PHI removal requests within 24 hours.
@@ -362,7 +362,7 @@ export function PrivacyPolicyPage() {
             <p style={styles.text}>Questions about this privacy policy? We are happy to help.</p>
             <p style={styles.contactBlock}>
               Email:{' '}
-              <a href="mailto:help@ptowl.com" style={styles.inlineLink}>
+              <a href="mailto:nurelimusabay@gmail.com" style={styles.inlineLink}>
                 help@ptowl.com
               </a>
               <br />

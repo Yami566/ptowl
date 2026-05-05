@@ -235,7 +235,7 @@ export function LandingPage() {
               section 1d but hasn't been wired yet; linking to a dead
               subdomain reads as broken to anyone who clicks. Restore
               this <a> once the public uptime page is up. */}
-          <a href="mailto:help@ptowl.com" style={styles.footerLink}>
+          <a href="mailto:nurelimusabay@gmail.com" style={styles.footerLink}>
             Help
           </a>
         </div>
