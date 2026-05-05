@@ -41,27 +41,34 @@ sports-legend aliases as a privacy failsafe instead of patient names.
 These are what we focus on next. Other ideas are in "Backlog" below
 but explicitly deferred.
 
-### 1. Branded magic-link sender — finish what we started
+### 1. Clerk production instance + custom domain (`clerk.ptowl.com`)
 
-**What:** When a user signs in via email, the magic link arrives FROM
-`link@ptowl.com` (not Firebase's default `noreply@ptowl-bdfbe.firebaseapp.com`).
-Replies route to `help@ptowl.com`, which forwards into the founder's
-inbox.
+**What:** Promote Clerk from its Development instance
+(`ethical-dingo-48.clerk.accounts.dev`) to a Production instance
+served from `clerk.ptowl.com`. End result: the OAuth popup users
+see during Google sign-in shows `clerk.ptowl.com` instead of a
+random dev subdomain, and Clerk's transactional emails (verification,
+account recovery) come from a `ptowl.com`-aligned sender.
 
-**Why:** Branded sender is a trust signal — users are more likely to
-click a link from `link@ptowl.com` than a random Firebase domain. Also
-better deliverability (less likely to land in spam). And `help@ptowl.com`
-captures real safety reports ("I didn't request this").
+**Why:** Trust signal — clinic owners and HN readers alike read
+`ethical-dingo-48.clerk.accounts.dev` as "this is a beta toy." The
+custom-domain Clerk instance is the single biggest "this is real
+software" signal we can ship without writing any new app code.
 
-**How it works in plain terms:** Firebase keeps doing the auth. We just
-tell Firebase to use `ptowl.com` as the sender domain, and we paste the
-DNS records Firebase generates into Cloudflare DNS so Firebase is
-authorized to send mail on our behalf. Cloudflare also forwards
-inbound mail at `help@ptowl.com` into Gmail. No new code in the app.
+**How it works in plain terms:** Clerk dashboard walks you through
+"create production instance" → "verify domain." Clerk gives you two
+CNAME records (`clerk.ptowl.com` and `clkmail.clerk.ptowl.com`);
+paste them into Cloudflare DNS. Clerk verifies, then issues new
+production API keys. Update `VITE_CLERK_PUBLISHABLE_KEY` in CF env
+vars and the next deploy picks up the new instance.
 
-**State today:** Frontend code is ready (commit `85279ae` lands the
-magic-link click on `/dashboard`). The DNS work is pending. The current
-email-link click failure is being triaged separately.
+**State today:** Plan documented in
+[CLERK-PRODUCTION-SETUP.md](CLERK-PRODUCTION-SETUP.md). Pending the
+~15-min user-side dashboard walk-through. Should land before the
+Show HN flip. (Supersedes the earlier "Firebase branded magic-link
+sender" plan that was obsoleted by the Phase 4 Firebase→Clerk
+migration; nothing in that plan transfers because Clerk handles
+its own sender domain natively.)
 
 ### 2. Onboarding survey to seeded templates
 
@@ -112,11 +119,12 @@ Cloudflare dashboard if/when scale demands.
 
 ## Phased roadmap
 
-### Phase 1 (this week) — finish the branded sender
+### Phase 1 (this week) — promote Clerk to production
 
-The frontend is already shipped. The remaining work is dashboard
-configuration on Firebase + Cloudflare DNS + Cloudflare Email Routing,
-plus retesting the click flow once those land. No code.
+User-side dashboard work walked through in
+[CLERK-PRODUCTION-SETUP.md](CLERK-PRODUCTION-SETUP.md): create
+production instance, paste 2 CNAMEs into CF DNS, swap the publishable
+key in CF env vars, redeploy. ~15 minutes total. No code.
 
 ### Phase 2 (next ~2 weeks) — backups + log retention
 

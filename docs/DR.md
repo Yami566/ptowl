@@ -2,9 +2,12 @@
 
 ## Database (Cloudflare D1)
 
-D1 ships with **30-day point-in-time recovery** out of the box (no extra
-cost, no code to write). Every D1 database can be rolled back to any
-moment within the past 30 days using the Time Travel feature.
+D1 ships with **point-in-time recovery** out of the box (no extra cost,
+no code to write). Retention is **7 days on the free tier** and
+**30 days on paid plans** — see
+<https://developers.cloudflare.com/d1/reference/time-travel/>. Every D1
+database can be rolled back to any moment within that window using the
+Time Travel feature.
 
 ### When to use this
 
