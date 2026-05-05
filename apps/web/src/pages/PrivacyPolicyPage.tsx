@@ -221,11 +221,6 @@ export function PrivacyPolicyPage() {
                 delivery window. <em>Located in Canada.</em>
               </li>
               <li style={styles.listItem}>
-                <strong>Tawk.to Inc.</strong> — in-app live chat support widget. The widget is
-                loaded only when you open the chat. Chat content you submit is processed by Tawk.to
-                under their privacy policy. <em>Located in Las Vegas, USA.</em>
-              </li>
-              <li style={styles.listItem}>
                 <strong>Legal requirements</strong> — we may disclose information if required by
                 law, court order, or governmental regulation.
               </li>
