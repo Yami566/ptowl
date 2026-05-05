@@ -5,6 +5,19 @@ review across design, UI, security, and missing-feature surfaces.
 This is the operator-facing log of what was found, what was fixed in
 the same session, and what we'd do differently next time.
 
+> **Reconciliation note (May 5, 2026):** The four critical/high
+> findings below all landed on main in commit `6515ed5`
+> ("fix(api,web): red-team pass — CSP, race, cron jitter, ARIA +
+> findings log"). Verified May 5 against the live tree:
+> `meta.changes` rowcount check at `apps/api/src/services/reminders.ts:155`,
+> `halfWindowMs = 15 * 60 * 1000` at `:77`, three `<form method="post">`
+> blocks in `apps/api/src/routes/reminders.ts`, and
+> `aria-describedby`/`aria-invalid` toggling at
+> `apps/web/src/components/schedule/ScheduleWizard.tsx:437-440`.
+> LOW-4 (digest-mode silently broken) is mitigated for v1 launch by
+> hiding the digest-mode toggle in the UI; tracked in PRD.md Phase 9
+> (Email + Reminders).
+
 ## Severity legend
 
 - **CRIT** — would have shipped broken or unsafe to production
@@ -244,10 +257,10 @@ different local hours, which is acceptable for a v1.
 
 | Finding                               | Severity | Status                          |
 | ------------------------------------- | -------- | ------------------------------- |
-| Inline script blocked by CSP          | CRIT     | **Fixed** this session          |
-| Reminder UPDATE rowcount not checked  | CRIT     | **Fixed** this session          |
-| Reminder window too tight             | HIGH     | **Fixed** this session          |
-| Wizard email ARIA association         | HIGH     | **Fixed** this session          |
+| Inline script blocked by CSP          | CRIT     | **Fixed** in `6515ed5`          |
+| Reminder UPDATE rowcount not checked  | CRIT     | **Fixed** in `6515ed5`          |
+| Reminder window too tight             | HIGH     | **Fixed** in `6515ed5`          |
+| Wizard email ARIA association         | HIGH     | **Fixed** in `6515ed5`          |
 | Brittle static-analysis test patterns | MED      | Process note                    |
 | DLQ configured without consumer       | MED      | Deferred                        |
 | Schedule deletion leaves R2 objects   | MED      | Deferred (GDPR endpoint)        |

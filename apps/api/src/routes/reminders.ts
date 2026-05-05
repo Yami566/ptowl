@@ -163,7 +163,7 @@ function renderPage(
   const stateLabel = ctx.state.unsubscribed
     ? 'You are <span class="ok">unsubscribed</span> from all PTOWL reminders.'
     : ctx.state.digest
-      ? 'You currently receive a <span class="ok">daily digest</span> instead of individual reminders.'
+      ? 'You opted into a <span class="ok">daily digest</span>. Daily digest is not yet active — please click <strong>Get individual reminders</strong> below to keep receiving reminders for now.'
       : 'You currently receive <span class="ok">individual reminders</span> 24h and 1h before each appointment.';
 
   const flashHtml = ctx.flashMessage
@@ -188,9 +188,11 @@ function renderPage(
   <form method="post" action="">
     <button class="primary" type="submit" name="action" value="resume" aria-label="Get individual reminders 24 hours and 1 hour before each appointment">Get individual reminders (default)</button>
   </form>
-  <form method="post" action="">
-    <button class="secondary" type="submit" name="action" value="digest" aria-label="Switch to one daily digest email per day">Switch to daily digest (one email/day)</button>
-  </form>
+  <!-- Daily-digest button intentionally hidden until the digest cron is
+       implemented (RED-TEAM-FINDINGS.md LOW-4). The POST handler still
+       accepts action=digest so existing in-flight links don't 400, but
+       the UI no longer offers it as a choice. Restore this form when
+       PRD.md Phase 9 (Email + Reminders) ships the cron. -->
   <form method="post" action="">
     <button class="danger" type="submit" name="action" value="unsubscribe" aria-label="Unsubscribe from all PTOWL reminders">Unsubscribe from all PTOWL reminders</button>
   </form>

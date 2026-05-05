@@ -86,7 +86,7 @@ keyboard-driven clinician."
 | Line                                | Year 1       | Notes                            |
 | ----------------------------------- | ------------ | -------------------------------- |
 | Cloudflare (Workers Paid + R2 + D1) | $60–$240     | Scales with traffic, mostly flat |
-| Firebase (phone OTP)                | $200–$800    | $0.01 per SMS, ~25k SMS/yr       |
+| Clerk (auth)                        | $0           | Free up to 10K MAU, scales after |
 | MailChannels (transactional)        | $60          | $5/mo + low overage              |
 | Domain + DNS                        | $20          | renewal                          |
 | Tawk.to live chat                   | $0           | free tier                        |
