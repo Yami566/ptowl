@@ -131,6 +131,12 @@ export function LandingPage() {
           <span style={styles.betaPoweredBy}>Powered by Claude</span>
         </div>
 
+        {/* Trust microcopy — disarms the "is this going to charge me"
+            reflex right at the conversion moment. Single-line, small,
+            renders just below the Beta badge and just above the auth
+            card. */}
+        <p style={styles.betaTrustNote}>No credit card, ever during beta.</p>
+
         {/* Clerk's drop-in <SignIn /> widget. Providers (Google + email/
             password today) are configured in the Clerk dashboard, not
             here. See AuthWidget.tsx for the wrapper. */}
@@ -415,6 +421,14 @@ const styles: Record<string, React.CSSProperties> = {
   betaIcon: {
     color: 'var(--green-mid)',
     flexShrink: 0,
+  },
+  betaTrustNote: {
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+    margin: '0 0 1rem',
+    fontStyle: 'italic' as const,
+    letterSpacing: '0.01em',
   },
 
   // ── How-it-works animated walkthrough ──

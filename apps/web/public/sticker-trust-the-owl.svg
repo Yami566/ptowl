@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PTowl "TRUST THE OWL" sticker — single-color, print-ready.
+
+  Use cases:
+    - 2-3" round die-cut stickers (Sticker Mule, Stickerapp, etc.)
+    - Single-color screen-print on t-shirts, laptop panels
+    - Email signature inline mark
+    - Tossed in physical mailers to first beta clinics
+
+  Color: uses `currentColor` so the sticker adapts to whichever color
+  the print service or browser context renders it in. Default fill is
+  PTowl green (#1B5E20) when rendered standalone.
+
+  Recommended print spec:
+    - Round die-cut, 3" diameter
+    - Single-color, PTowl green or white-on-dark
+    - Vinyl, matte finish, weatherproof
+
+  Brand source: derived from apps/web/public/favicon.svg (same owl
+  silhouette, simplified for single-color reproduction; no eye whites,
+  no chest gradient — pure silhouette + bold text).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="TRUST THE OWL — PTowl sticker">
+  <!-- Background ring (so the sticker reads as "round" even on transparent surfaces) -->
+  <circle cx="200" cy="200" r="195" fill="none" stroke="currentColor" stroke-width="6" opacity="0.85"/>
+
+  <!-- Inner decorative ring -->
+  <circle cx="200" cy="200" r="180" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- ═══ OWL ═══════════════════════════════════════════════════ -->
+  <g fill="currentColor" transform="translate(110, 65) scale(5.6)">
+    <!-- Body (main ellipse) -->
+    <ellipse cx="16" cy="18" rx="11" ry="12"/>
+    <!-- Ear tufts (left + right triangles peeking up) -->
+    <polygon points="8,9 10,4 13,10"/>
+    <polygon points="24,9 22,4 19,10"/>
+  </g>
+
+  <!-- Eyes — concentric circles cut OUT of the body using the
+       owl's color as the iris ring, with cutout whites to read at
+       small print sizes. We use the same color for everything to
+       keep this single-color-printable; differentiation is via
+       size of the rings. -->
+  <g transform="translate(110, 65) scale(5.6)">
+    <!-- Left eye outer (white "punched out" via stroke-only ring) -->
+    <circle cx="11" cy="14" r="5" fill="white"/>
+    <circle cx="11" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="0.6"/>
+    <circle cx="12" cy="13.5" r="2.5" fill="currentColor"/>
+    <!-- Right eye -->
+    <circle cx="21" cy="14" r="5" fill="white"/>
+    <circle cx="21" cy="14" r="5" fill="none" stroke="currentColor" stroke-width="0.6"/>
+    <circle cx="22" cy="13.5" r="2.5" fill="currentColor"/>
+  </g>
+
+  <!-- Beak (single-color triangle pointing down) -->
+  <polygon points="200,160 184,180 216,180" fill="currentColor"/>
+
+  <!-- ═══ TEXT ══════════════════════════════════════════════════ -->
+  <!-- "TRUST THE OWL" — bold, all-caps, locked-up tightly. Tracking
+       wide enough to read at 2" sticker scale. -->
+  <text
+    x="200"
+    y="320"
+    text-anchor="middle"
+    fill="currentColor"
+    font-family="'Outfit', 'Helvetica Neue', Arial, sans-serif"
+    font-weight="800"
+    font-size="38"
+    letter-spacing="6"
+  >TRUST THE OWL</text>
+
+  <!-- Tiny tagline beneath — quieter, brand voice -->
+  <text
+    x="200"
+    y="350"
+    text-anchor="middle"
+    fill="currentColor"
+    font-family="'Outfit', 'Helvetica Neue', Arial, sans-serif"
+    font-weight="500"
+    font-size="14"
+    letter-spacing="2"
+    opacity="0.7"
+  >ptowl.com</text>
+
+  <!-- Tiny dot decorations around the inner ring at clock positions -->
+  <g fill="currentColor" opacity="0.5">
+    <circle cx="200" cy="35"  r="2"/>  <!-- 12 -->
+    <circle cx="365" cy="200" r="2"/>  <!-- 3  -->
+    <circle cx="200" cy="365" r="2"/>  <!-- 6  -->
+    <circle cx="35"  cy="200" r="2"/>  <!-- 9  -->
+  </g>
+</svg>
