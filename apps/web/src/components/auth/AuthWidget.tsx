@@ -28,9 +28,41 @@ export function AuthWidget() {
   // navigation in the URL fragment so it doesn't collide with our
   // React Router routes. afterSignInUrl + afterSignUpUrl forward to
   // /dashboard so users land where they expect.
+  //
+  // Wrapping div carries `role="region"` + `aria-label` so screen-reader
+  // users get a labeled landmark. `min-height` keeps the card from
+  // collapsing into blank space if Clerk's JS hasn't mounted yet
+  // (adblocker, slow network, stale cache) — closes the silent-failure
+  // path where a visitor sees an empty white rectangle and bounces.
+  // The small footer line is always-visible: it's a one-shot recovery
+  // hint that costs nothing when Clerk works and saves the session
+  // when it doesn't.
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <SignIn routing="hash" afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard" />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div
+        role="region"
+        aria-label="Sign-in form"
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          minHeight: '320px',
+          width: '100%',
+        }}
+      >
+        <SignIn routing="hash" afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard" />
+      </div>
+      <p
+        style={{
+          fontSize: '0.75rem',
+          color: 'var(--gray-text)',
+          marginTop: '0.75rem',
+          textAlign: 'center',
+          maxWidth: '320px',
+          lineHeight: 1.5,
+        }}
+      >
+        Sign-in not loading? Hard refresh (Cmd/Ctrl+Shift+R) or disable ad-blockers for ptowl.com.
+      </p>
     </div>
   );
 }
