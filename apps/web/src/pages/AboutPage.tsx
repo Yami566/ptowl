@@ -138,6 +138,61 @@ export function AboutPage() {
           </div>
         </section>
 
+        {/* Pricing preview — honest, forward-looking. Beta is free.
+            Here's what comes AFTER beta so visitors know we have a
+            plan and aren't going to bait-and-switch. Disarms
+            "will this become expensive?" anxiety up-front. */}
+        <section style={styles.pricingSection}>
+          <h2 style={styles.sectionTitle}>What this will cost (when it costs anything).</h2>
+          <p style={styles.pricingIntro}>
+            PTowl is <strong>free during beta</strong> and stays free until we have 50 active
+            clinics using it weekly. After that, paid tiers turn on for new accounts. Existing free
+            users get advance notice and continued access.
+          </p>
+          <div style={styles.pricingGrid}>
+            <div style={styles.pricingCard}>
+              <h3 style={styles.pricingTier}>Free</h3>
+              <div style={styles.pricingPrice}>
+                $0<span style={styles.pricingPer}>/mo</span>
+              </div>
+              <ul style={styles.pricingFeatures}>
+                <li>Up to 3 active patients</li>
+                <li>All scheduling features</li>
+                <li>Sports-alias privacy</li>
+                <li>Patient magic-link share</li>
+              </ul>
+            </div>
+            <div style={{ ...styles.pricingCard, ...styles.pricingCardFeatured }}>
+              <h3 style={styles.pricingTier}>Solo</h3>
+              <div style={styles.pricingPrice}>
+                $9<span style={styles.pricingPer}>/mo</span>
+              </div>
+              <ul style={styles.pricingFeatures}>
+                <li>Unlimited patients</li>
+                <li>Everything in Free</li>
+                <li>Email reminders</li>
+                <li>Custom clinic logo</li>
+              </ul>
+            </div>
+            <div style={styles.pricingCard}>
+              <h3 style={styles.pricingTier}>Clinic</h3>
+              <div style={styles.pricingPrice}>
+                $29<span style={styles.pricingPer}>/mo per provider</span>
+              </div>
+              <ul style={styles.pricingFeatures}>
+                <li>Multi-provider dashboard</li>
+                <li>Everything in Solo</li>
+                <li>Analytics</li>
+                <li>Priority support</li>
+              </ul>
+            </div>
+          </div>
+          <p style={styles.pricingNote}>
+            Pricing locks the day we hit 50 active clinics. Until then, every account is free and
+            &ldquo;I personally read every email&rdquo; is the support tier.
+          </p>
+        </section>
+
         {/* Why open source */}
         <section style={styles.openSourceSection}>
           <h2 style={styles.sectionTitle}>Open source, on purpose.</h2>
@@ -461,6 +516,74 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '0.75rem',
     paddingTop: '0.75rem',
     borderTop: '1px solid var(--green-bg)',
+  },
+  // ── Pricing preview ──
+  pricingSection: {
+    padding: '3rem 1.5rem',
+    maxWidth: '960px',
+    margin: '0 auto',
+    textAlign: 'center' as const,
+  },
+  pricingIntro: {
+    fontSize: '1rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.6,
+    maxWidth: '640px',
+    margin: '0 auto 2rem',
+  },
+  pricingGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '1.25rem',
+    marginBottom: '1.5rem',
+  },
+  pricingCard: {
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '1.5rem',
+    border: '2px solid var(--green-bg)',
+    textAlign: 'left' as const,
+  },
+  pricingCardFeatured: {
+    border: '2px solid var(--green-mid)',
+    boxShadow: '0 4px 16px rgba(76, 175, 80, 0.15)',
+  },
+  pricingTier: {
+    fontSize: '0.9rem',
+    fontWeight: 700,
+    color: 'var(--green-dark)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+    marginBottom: '0.5rem',
+  },
+  pricingPrice: {
+    fontSize: '2rem',
+    fontWeight: 800,
+    color: 'var(--dark)',
+    fontFamily: 'var(--font-mono)',
+    marginBottom: '1rem',
+  },
+  pricingPer: {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    color: 'var(--gray-text)',
+    fontFamily: 'var(--font-body)',
+    marginLeft: '0.25rem',
+  },
+  pricingFeatures: {
+    listStyle: 'none' as const,
+    padding: 0,
+    margin: 0,
+    fontSize: '0.875rem',
+    color: 'var(--dark)',
+    lineHeight: 1.8,
+  },
+  pricingNote: {
+    fontSize: '0.875rem',
+    color: 'var(--gray-text)',
+    fontStyle: 'italic' as const,
+    maxWidth: '640px',
+    margin: '0 auto',
   },
   openSourceList: {
     listStyle: 'none' as const,
