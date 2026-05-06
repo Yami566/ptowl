@@ -1,68 +1,97 @@
-import { SignIn } from '@clerk/clerk-react';
+import { SignInButton, SignUpButton } from '@clerk/clerk-react';
 
 /**
  * Auth widget rendered on the landing page.
  *
- * Renders Clerk's drop-in `<SignIn />` widget. Renamed from the legacy
- * `FirebaseAuthUI.tsx` filename in May 2026 — the component itself
- * has wrapped Clerk since the Phase 4 migration; only the filename
- * lagged behind.
+ * Renders two redirect-mode Clerk buttons that send the visitor to
+ * accounts.ptowl.com (Clerk's hosted Account Portal on our first-party
+ * subdomain) for the actual sign-in / sign-up flow. After auth, Clerk
+ * sends them back to https://ptowl.com per the after_sign_in_url
+ * configured in the Clerk dashboard, where AuthContext forwards them
+ * to /dashboard.
  *
- * Configuration is owned upstream by `apps/web/src/main.tsx`, which
- * resolves the publishable key from `VITE_CLERK_PUBLISHABLE_KEY`
- * with a baked-in `pk_live_*` fallback so a fresh self-hosted clone
- * works out of the box. By the time React renders this component,
- * `<ClerkProvider>` has already initialized — there's no scenario
- * where Clerk isn't configured, so we render `<SignIn />` directly.
+ * Why this shape (vs. the prior embedded <SignIn /> widget):
+ *   1. The embedded widget pulls additional code chunks from clerk.com
+ *      on demand. Privacy-focused ad-blockers (uBlock Origin, Brave
+ *      Shields, EasyPrivacy lists) commonly block clerk.com hosts,
+ *      which left a blank auth card on the landing page for ~1-3% of
+ *      privacy-conscious visitors (notably the HN audience).
+ *   2. <SignInButton mode="redirect"> renders directly from the
+ *      bundled SDK — no on-demand chunk fetch is required. On click,
+ *      the SDK navigates the browser to accounts.ptowl.com which is
+ *      a CNAME to Clerk under our zone — first-party from the
+ *      browser's perspective, so ad-blockers leave it alone.
+ *   3. accounts.ptowl.com hosts the same Clerk auth experience the
+ *      embedded widget would have shown. Same providers, same
+ *      localization (Welcome back, Doctor Hoo.), same flow.
  *
- * Earlier versions of this component also checked
- * `import.meta.env.VITE_CLERK_PUBLISHABLE_KEY` and rendered a
- * "Sign-in is being upgraded" placeholder when missing. That check
- * was removed on 2026-05-05 because it produced a false negative on
- * Cloudflare Pages builds where the env var was unset (causing
- * production sign-in to silently degrade to the placeholder even
- * though the baked-in `pk_live_` fallback was active).
+ * Configuration is owned upstream:
+ *   - apps/web/src/main.tsx — ClerkProvider with publishableKey +
+ *     localization. Untouched.
+ *   - Clerk dashboard — sign_in_url, sign_up_url, after_sign_in_url
+ *     already point at accounts.ptowl.com / ptowl.com. Verified via
+ *     curl on the public /v1/environment endpoint on 2026-05-06.
  */
 export function AuthWidget() {
-  // Clerk's hosted sign-in widget. routing="hash" keeps internal
-  // navigation in the URL fragment so it doesn't collide with our
-  // React Router routes. afterSignInUrl + afterSignUpUrl forward to
-  // /dashboard so users land where they expect.
-  //
-  // Wrapping div carries `role="region"` + `aria-label` so screen-reader
-  // users get a labeled landmark. `min-height` keeps the card from
-  // collapsing into blank space if Clerk's JS hasn't mounted yet
-  // (adblocker, slow network, stale cache) — closes the silent-failure
-  // path where a visitor sees an empty white rectangle and bounces.
-  // The small footer line is always-visible: it's a one-shot recovery
-  // hint that costs nothing when Clerk works and saves the session
-  // when it doesn't.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <div
-        role="region"
-        aria-label="Sign-in form"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          minHeight: '320px',
-          width: '100%',
-        }}
-      >
-        <SignIn routing="hash" afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard" />
-      </div>
-      <p
-        style={{
-          fontSize: '0.75rem',
-          color: 'var(--gray-text)',
-          marginTop: '0.75rem',
-          textAlign: 'center',
-          maxWidth: '320px',
-          lineHeight: 1.5,
-        }}
-      >
-        Sign-in not loading? Hard refresh (Cmd/Ctrl+Shift+R) or disable ad-blockers for ptowl.com.
-      </p>
+    <div
+      role="region"
+      aria-label="Sign-in"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.75rem',
+        alignItems: 'stretch',
+        width: '100%',
+        maxWidth: '320px',
+        margin: '0 auto',
+      }}
+    >
+      <SignInButton mode="redirect">
+        <button type="button" style={primaryStyles}>
+          Sign in
+        </button>
+      </SignInButton>
+      <SignUpButton mode="redirect">
+        <button type="button" style={secondaryStyles}>
+          Create an account
+        </button>
+      </SignUpButton>
+      <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>
     </div>
   );
 }
+
+const primaryStyles: React.CSSProperties = {
+  padding: '0.875rem 1.5rem',
+  background: 'var(--green-mid)',
+  color: 'white',
+  border: 'none',
+  borderRadius: 'var(--radius)',
+  fontSize: '1rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  width: '100%',
+  fontFamily: 'inherit',
+};
+
+const secondaryStyles: React.CSSProperties = {
+  padding: '0.875rem 1.5rem',
+  background: 'var(--white)',
+  color: 'var(--green-dark)',
+  border: '1.5px solid var(--green-mid)',
+  borderRadius: 'var(--radius)',
+  fontSize: '1rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  width: '100%',
+  fontFamily: 'inherit',
+};
+
+const trustNoteStyles: React.CSSProperties = {
+  fontSize: '0.75rem',
+  color: 'var(--gray-text)',
+  textAlign: 'center',
+  marginTop: '0.5rem',
+  lineHeight: 1.5,
+};
