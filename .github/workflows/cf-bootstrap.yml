@@ -149,6 +149,79 @@ jobs:
             | jq -r '.success, .result.site_tag' || echo "  (web analytics site creation: see error above)"
           echo "Web Analytics site attempted"
 
+      # Clerk production-domain DNS records.
+      # When Clerk is promoted to a production instance with custom
+      # domain `clerk.ptowl.com`, Clerk's "Verify Domain" page shows
+      # 5 CNAME records that must exist in our DNS zone before Clerk
+      # can verify the domain. This step creates all 5 via the
+      # Cloudflare DNS API. Idempotent — re-running treats "identical
+      # record already exists" as success.
+      #
+      # CRITICAL: every record MUST be `proxied: false` (DNS-only,
+      # gray cloud). Clerk's verifier cannot see the real CNAME target
+      # if the record is proxied through Cloudflare's edge.
+      #
+      # Records (per Clerk Dashboard → Configure → Domains as of
+      # 2026-05-05; instance id baked in: k7aa2f64o1aq):
+      #   1. clerk.ptowl.com               → frontend-api.clerk.services
+      #   2. accounts.ptowl.com            → accounts.clerk.services
+      #   3. clkmail.ptowl.com             → mail.k7aa2f64o1aq.clerk.services
+      #   4. clk._domainkey.ptowl.com      → dkim1.k7aa2f64o1aq.clerk.services
+      #   5. clk2._domainkey.ptowl.com     → dkim2.k7aa2f64o1aq.clerk.services
+      - name: Add Clerk production-domain DNS records
+        run: |
+          ZID="${{ steps.zone.outputs.zone_id }}"
+
+          # Each entry is `name|target`.
+          # `name` is the FQDN (Cloudflare API accepts both bare label
+          # and FQDN; FQDN is unambiguous).
+          RECORDS=(
+            "clerk.ptowl.com|frontend-api.clerk.services"
+            "accounts.ptowl.com|accounts.clerk.services"
+            "clkmail.ptowl.com|mail.k7aa2f64o1aq.clerk.services"
+            "clk._domainkey.ptowl.com|dkim1.k7aa2f64o1aq.clerk.services"
+            "clk2._domainkey.ptowl.com|dkim2.k7aa2f64o1aq.clerk.services"
+          )
+
+          for record in "${RECORDS[@]}"; do
+            NAME="${record%|*}"
+            TARGET="${record#*|}"
+            echo "─── Creating CNAME: $NAME → $TARGET"
+
+            BODY=$(jq -n --arg name "$NAME" --arg target "$TARGET" '{
+              type: "CNAME",
+              name: $name,
+              content: $target,
+              ttl: 1,
+              proxied: false
+            }')
+
+            # Use plain `curl -s` (no -f) so we can parse error responses.
+            RESP=$(curl -s -X POST \
+              -H "Authorization: Bearer $CF_TOKEN" \
+              -H "Content-Type: application/json" \
+              --data "$BODY" \
+              "https://api.cloudflare.com/client/v4/zones/$ZID/dns_records")
+
+            SUCCESS=$(echo "$RESP" | jq -r '.success // false')
+            if [ "$SUCCESS" = "true" ]; then
+              echo "    ✓ Created"
+            else
+              ERR=$(echo "$RESP" | jq -r '.errors[0].message // "unknown error"')
+              if echo "$ERR" | grep -qi "identical record already exists\|record already exists"; then
+                echo "    ✓ Already exists (idempotent re-run)"
+              else
+                echo "    ⚠ NOT created — error: $ERR"
+                echo "    Full response: $RESP"
+              fi
+            fi
+          done
+
+          echo
+          echo "Clerk DNS records pushed. Now go to Clerk dashboard →"
+          echo "Configure → Domains → click 'Verify configuration'."
+          echo "Records typically flip green within 1-5 minutes."
+
       - name: Done
         run: |
           echo "Bootstrap complete. Verify in the dashboard:"
@@ -157,3 +230,4 @@ jobs:
           echo "  - Security -> WAF -> Rate Limiting Rules: api-burst-protection present"
           echo "  - Notifications -> PTowl Worker Errors policy present"
           echo "  - Analytics -> Web Analytics: ptowl.com site present"
+          echo "  - DNS -> Records: 5 Clerk CNAMEs added (clerk, accounts, clkmail, clk._domainkey, clk2._domainkey)"

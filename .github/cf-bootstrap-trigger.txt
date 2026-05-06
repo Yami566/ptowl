@@ -5,3 +5,7 @@ that are already configured.
 
 Last run trigger: 2026-05-05 — initial bootstrap of WAF + Bot Fight
 + Rate Limiting + Worker Errors notification + Web Analytics.
+
+2026-05-05 evening — re-fire to add 5 Clerk production-domain DNS
+records (clerk / accounts / clkmail / clk._domainkey / clk2._domainkey).
+Existing bootstrap items re-run idempotently.
