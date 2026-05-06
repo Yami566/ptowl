@@ -1974,3 +1974,21 @@ textarea,
     animation: none;
   }
 }
+
+/* Landing-page public template preview cards. Lift on hover/focus to
+   signal "click me"; the cards anchor-link back to #auth-card so the
+   actual selection happens after sign-in. */
+.landing-template-card:hover,
+.landing-template-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--green-mid) !important;
+  box-shadow: 0 6px 16px rgba(27, 94, 32, 0.12) !important;
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-template-card:hover,
+  .landing-template-card:focus-visible {
+    transform: none;
+  }
+}

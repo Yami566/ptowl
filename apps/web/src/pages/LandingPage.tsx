@@ -4,6 +4,7 @@ import { OwlCityScene } from '../components/decorative/OwlCityScene.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { AuthWidget } from '../components/auth/AuthWidget.js';
+import { DEFAULT_TEMPLATES } from '@ptowl/shared';
 
 // Lazy-load FullCalendar for demo section
 const LazyFullCalendar = lazy(() => import('@fullcalendar/react'));
@@ -140,7 +141,7 @@ export function LandingPage() {
         {/* Clerk's drop-in <SignIn /> widget. Providers (Google + email/
             password today) are configured in the Clerk dashboard, not
             here. See AuthWidget.tsx for the wrapper. */}
-        <div style={styles.authCard} className="landing-auth-card">
+        <div id="auth-card" style={styles.authCard} className="landing-auth-card">
           <AuthWidget />
         </div>
       </section>
@@ -204,6 +205,48 @@ export function LandingPage() {
         </div>
         <p style={styles.howCaption}>
           From blank page to printed schedule in seconds, not minutes.
+        </p>
+      </section>
+
+      {/* Public template preview — visitors see the 6 specialty defaults
+          before signing up so the product feels real. Sources from
+          @ptowl/shared so this stays in sync with what new users actually
+          get seeded on first sign-in. Click any card to bounce visitors
+          to the auth widget — the actual selection happens after sign-in. */}
+      <section
+        style={styles.templatesSection}
+        className="landing-fade-in landing-fade-in-delay-1 landing-templates-section"
+        aria-labelledby="landing-templates-title"
+      >
+        <h2 id="landing-templates-title" style={styles.templatesTitle}>
+          6 templates ready out of the box.
+        </h2>
+        <p style={styles.templatesSubtitle}>
+          Sign in and one of these is already set to a hotkey. Customize anytime.
+        </p>
+        <div style={styles.templatesGrid} className="landing-templates-grid">
+          {DEFAULT_TEMPLATES.map((tmpl) => (
+            <a
+              key={tmpl.hotkey}
+              href="#auth-card"
+              style={styles.templateCard}
+              className="landing-template-card"
+              aria-label={`${tmpl.name} — ${tmpl.sessions_per_week} sessions per week for ${tmpl.duration_weeks} weeks. Sign in to use.`}
+            >
+              <span style={styles.templateHotkey}>{tmpl.hotkey}</span>
+              <div style={styles.templateBody}>
+                <span style={styles.templateName}>{tmpl.name}</span>
+                <span style={styles.templateMeta}>
+                  {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
+                </span>
+                <span style={styles.templateTime}>&#9200; {tmpl.default_time}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+        <p style={styles.templatesNote}>
+          Don&rsquo;t see your specialty? After sign-in you can rename, retime, or replace any
+          template in seconds.
         </p>
       </section>
 
@@ -327,6 +370,87 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto',
     width: '100%',
     boxSizing: 'border-box' as const,
+  },
+  templatesSection: {
+    textAlign: 'center' as const,
+    padding: '2rem 1.5rem 1rem',
+    maxWidth: 'clamp(320px, 90vw, 960px)',
+    margin: '0 auto',
+  },
+  templatesTitle: {
+    fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+    fontWeight: 700,
+    color: 'var(--dark)',
+    marginBottom: '0.25rem',
+  },
+  templatesSubtitle: {
+    fontSize: '0.95rem',
+    color: 'var(--gray-text)',
+    marginBottom: '1.5rem',
+  },
+  templatesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '0.75rem',
+    margin: '0 auto',
+  },
+  templateCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.875rem 1rem',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--green-bg)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    textDecoration: 'none',
+    color: 'var(--dark)',
+    transition: 'transform 0.15s, box-shadow 0.15s, border-color 0.15s',
+    textAlign: 'left' as const,
+  },
+  templateHotkey: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '32px',
+    height: '32px',
+    minWidth: '32px',
+    background: 'var(--green-dark)',
+    color: 'white',
+    borderRadius: '6px',
+    fontFamily: 'var(--font-mono)',
+    fontWeight: 700,
+    fontSize: '0.875rem',
+  },
+  templateBody: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.15rem',
+    flex: 1,
+    minWidth: 0,
+  },
+  templateName: {
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis' as const,
+  },
+  templateMeta: {
+    fontSize: '0.78rem',
+    color: 'var(--gray-text)',
+  },
+  templateTime: {
+    fontSize: '0.72rem',
+    color: 'var(--green-dark)',
+    fontFamily: 'var(--font-mono)',
+  },
+  templatesNote: {
+    fontSize: '0.825rem',
+    color: 'var(--gray-text)',
+    fontStyle: 'italic' as const,
+    marginTop: '1.25rem',
   },
   demoSection: {
     textAlign: 'center' as const,
