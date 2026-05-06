@@ -105,11 +105,10 @@ export function LandingPage() {
         <div style={styles.heroScene}>
           <OwlCityScene size="lg" showWordmark />
         </div>
-        <h1 style={styles.headline}>Stop scheduling. Start treating.</h1>
+        <h1 style={styles.headline}>Recurring patient schedules in 5 keypresses.</h1>
         <p style={styles.subheadline}>
-          Create and print patient schedules in under <strong>5 keypresses</strong>. Built for
-          therapy clinics — PT, OT, SLP, chiropractic, mental-health, and dental hygiene — because
-          your schedule shouldn&apos;t take longer than your coffee order.
+          Built for therapy clinics — PT, OT, SLP, chiropractic, mental-health, and dental hygiene.
+          No PHI stored. Free during beta.
         </p>
 
         {/* Beta badge — sits directly above the auth card so it's
