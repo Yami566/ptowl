@@ -81,7 +81,7 @@
     // Worker fetches `/.well-known/jwks.json` from this URL to verify
     // session JWTs. Production Clerk instances replace this with the
     // custom domain (e.g. https://clerk.ptowl.com).
-    "CLERK_FRONTEND_API_URL": "https://ethical-dingo-48.clerk.accounts.dev"
+    "CLERK_FRONTEND_API_URL": "https://clerk.ptowl.com"
   },
   "routes": [
     { "pattern": "ptowl.com/api/*", "zone_name": "ptowl.com" },
@@ -133,7 +133,7 @@
       "vars": {
         "ENVIRONMENT": "staging",
         "FRONTEND_URL": "https://staging.ptowl.pages.dev",
-        "CLERK_FRONTEND_API_URL": "https://ethical-dingo-48.clerk.accounts.dev"
+        "CLERK_FRONTEND_API_URL": "https://clerk.ptowl.com"
       },
       // Override routes to empty — staging uses *.workers.dev URL only
       "routes": [],

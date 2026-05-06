@@ -17,10 +17,12 @@ import './styles/dark-theme.css';
 // working even if the env var is missing or mid-deploy.
 //
 // Decoded from base64 the key tells the SDK what Clerk frontend
-// API host to talk to: ethical-dingo-48.clerk.accounts.dev.
+// API host to talk to: clerk.ptowl.com (production instance,
+// promoted from the dev `ethical-dingo-48.clerk.accounts.dev`
+// instance on 2026-05-05).
 const CLERK_PUBLISHABLE_KEY: string =
   (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined) ||
-  'pk_test_ZXRoaWNhbC1kaW5nby00OC5jbGVyay5hY2NvdW50cy5kZXYk';
+  'pk_live_Y2xlcmsucHRvd2wuY29tJA';
 
 // SECURITY: Disable React DevTools in production
 if (import.meta.env.PROD) {
