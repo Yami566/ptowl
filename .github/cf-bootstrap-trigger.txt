@@ -14,3 +14,9 @@ Existing bootstrap items re-run idempotently.
 because the previous push also modified the workflow file itself.
 This commit only touches the marker so the workflow auto-fires
 cleanly on a marker-only push.
+
+2026-05-06 evening — re-fire to enable the post-launch edge primitives
+(WAF managed ruleset, Bot Fight Mode, Rate Limiting on /api/*, Worker
+Errors notification → nurelimusabay@gmail.com, Web Analytics for
+ptowl.com). All steps are idempotent so any item already configured
+no-ops cleanly.
