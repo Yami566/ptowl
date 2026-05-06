@@ -90,19 +90,33 @@ Tip for the random secrets: run
 ## Step 4 — Set up Clerk
 
 1. Create a free account at <https://dashboard.clerk.com>.
-2. Create a new application called "PTowl" or whatever you like.
-3. On the API Keys page, copy the **Publishable key** (starts with
-   `pk_test_…`).
-4. Open `apps/web/src/main.tsx` and replace the baked-in
-   `pk_test_ZXRoaWNhbC1kaW5nby00OC5jbGVyay5hY2NvdW50cy5kZXYk` with
-   your own key.
-5. The Clerk **frontend API URL** is encoded in your publishable key
-   — base64-decode the part after `pk_test_` to read it. Update
-   `apps/api/wrangler.jsonc` `vars.CLERK_FRONTEND_API_URL` to
-   `https://<your-decoded-host>` (e.g.,
-   `https://lively-tiger-12.clerk.accounts.dev`).
+2. Create a new application called "PTowl" (or whatever you like).
+3. On the **API Keys** page, copy the **Publishable key** (starts
+   with `pk_test_…` for a development instance, or `pk_live_…` for
+   a production instance with custom domain).
+4. Open `apps/web/src/main.tsx` and replace the baked-in publishable
+   key with **your own**. Search for the `CLERK_PUBLISHABLE_KEY`
+   constant — currently `pk_live_Y2xlcmsucHRvd2wuY29tJA` (the
+   upstream PTowl production key, which won't work for your fork).
+   You can also leave the baked-in alone and instead set
+   `VITE_CLERK_PUBLISHABLE_KEY` in your Cloudflare Pages env vars;
+   the env var takes precedence.
+5. The Clerk **frontend API URL** is encoded in your publishable
+   key — base64-decode the part after `pk_test_` or `pk_live_` to
+   read it. Update `apps/api/wrangler.jsonc` `vars.CLERK_FRONTEND_API_URL`
+   in BOTH places (production env block + base block) to
+   `https://<your-decoded-host>`. Examples:
+   - Dev instance: `https://lively-tiger-12.clerk.accounts.dev`
+   - Production w/ custom domain: `https://clerk.<your-domain>.com`
 6. In Clerk dashboard → **User & Authentication** → enable Email +
    Google sign-in providers.
+7. **If you use a custom domain (production instance):** also update
+   the CSP in `apps/web/public/_headers` to allowlist your Clerk
+   custom-domain hosts. Search the CSP for `clerk.ptowl.com` and
+   `accounts.ptowl.com` — replace those with your equivalents in all
+   six CSP directives (script-src, style-src, font-src, img-src,
+   connect-src, frame-src). If you skip this, the SignIn widget
+   will silently fail to render in production.
 
 ## Step 5 — Apply database migrations
 

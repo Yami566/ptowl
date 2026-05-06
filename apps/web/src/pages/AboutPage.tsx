@@ -138,6 +138,75 @@ export function AboutPage() {
           </div>
         </section>
 
+        {/* How we compare — honest positioning. Not "we're better at
+            everything" — we name where competitors fit different jobs.
+            Pairs well with Jane/WebPT for the EHR side; differentiated
+            from Calendly/Cal.com (patient-initiated vs provider-batch). */}
+        <section style={styles.compareSection}>
+          <h2 style={styles.sectionTitle}>How PTowl compares.</h2>
+          <p style={styles.compareIntro}>Honest positioning. Different tools fit different jobs.</p>
+          <div style={styles.compareTableWrap}>
+            <table style={styles.compareTable}>
+              <thead>
+                <tr>
+                  <th style={styles.compareHeader}>Tool</th>
+                  <th style={styles.compareHeader}>Built for</th>
+                  <th style={styles.compareHeader}>Per-appointment effort</th>
+                  <th style={styles.compareHeader}>Open source</th>
+                  <th style={styles.compareHeader}>Starts at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={styles.compareSelf}>
+                  <td style={styles.compareCell}>
+                    <strong>PTowl</strong>
+                  </td>
+                  <td style={styles.compareCell}>
+                    Therapy clinics; recurring multi-week schedules
+                  </td>
+                  <td style={styles.compareCell}>5 keypresses</td>
+                  <td style={styles.compareCell}>✅ AGPL-3.0</td>
+                  <td style={styles.compareCell}>Free in beta · $9 after</td>
+                </tr>
+                <tr>
+                  <td style={styles.compareCell}>Calendly</td>
+                  <td style={styles.compareCell}>Patient-initiated booking; one-off meetings</td>
+                  <td style={styles.compareCell}>~10 clicks per booking</td>
+                  <td style={styles.compareCell}>❌ Closed</td>
+                  <td style={styles.compareCell}>Free / $10+</td>
+                </tr>
+                <tr>
+                  <td style={styles.compareCell}>Cal.com</td>
+                  <td style={styles.compareCell}>Patient-initiated booking; one-off meetings</td>
+                  <td style={styles.compareCell}>~10 clicks per booking</td>
+                  <td style={styles.compareCell}>✅ AGPL-3.0</td>
+                  <td style={styles.compareCell}>Free / $15+</td>
+                </tr>
+                <tr>
+                  <td style={styles.compareCell}>Jane App</td>
+                  <td style={styles.compareCell}>Full PT EHR (charts, billing, scheduling)</td>
+                  <td style={styles.compareCell}>~12-20 clicks per appt</td>
+                  <td style={styles.compareCell}>❌ Closed</td>
+                  <td style={styles.compareCell}>$54+/mo</td>
+                </tr>
+                <tr>
+                  <td style={styles.compareCell}>WebPT</td>
+                  <td style={styles.compareCell}>Full PT EHR (charts, billing, scheduling)</td>
+                  <td style={styles.compareCell}>~15-20 clicks per appt</td>
+                  <td style={styles.compareCell}>❌ Closed</td>
+                  <td style={styles.compareCell}>$99+/mo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p style={styles.compareNote}>
+            PTowl pairs well with Jane / WebPT — let your EHR handle billing and charts; let PTowl
+            handle the 5-keypress recurring schedules and patient magic-link share. Cal.com /
+            Calendly are different products entirely (patient picks a slot, not provider generates a
+            recurring series).
+          </p>
+        </section>
+
         {/* Pricing preview — honest, forward-looking. Beta is free.
             Here's what comes AFTER beta so visitors know we have a
             plan and aren't going to bait-and-switch. Disarms
@@ -190,6 +259,38 @@ export function AboutPage() {
           <p style={styles.pricingNote}>
             Pricing locks the day we hit 50 active clinics. Until then, every account is free and
             &ldquo;I personally read every email&rdquo; is the support tier.
+          </p>
+        </section>
+
+        {/* What's coming — honest mini-roadmap. Three items, on-brand
+            voice. Doesn't overpromise; flags what's NOT yet shipped. */}
+        <section style={styles.roadmapSection}>
+          <h2 style={styles.sectionTitle}>What&rsquo;s coming next.</h2>
+          <p style={styles.roadmapIntro}>
+            Three things on the immediate roadmap. Honest about what is and isn&rsquo;t built.
+          </p>
+          <ol style={styles.roadmapList}>
+            <li style={styles.roadmapItem}>
+              <strong>Auto-email patient magic-link.</strong> Today providers manually share the
+              <code> /p/&lt;token&gt;</code> URL via text or whatever channel works. Next: when you
+              add the patient&rsquo;s email, we send them the link automatically with the schedule
+              attached.
+            </li>
+            <li style={styles.roadmapItem}>
+              <strong>Multi-provider clinics.</strong> One account, multiple therapists, shared
+              templates and patient lists. Today PTowl is best for solo providers or front-desk
+              staff scheduling on behalf of one provider.
+            </li>
+            <li style={styles.roadmapItem}>
+              <strong>AI-assisted schedule drafting.</strong> Describe the patient in plain English
+              (&ldquo;new ACL repair, post-op week 2, prefers mornings&rdquo;) and PTowl picks the
+              right preset and frequency. The Cloudflare AI binding is wired; the prompt isn&rsquo;t
+              shipped yet.
+            </li>
+          </ol>
+          <p style={styles.roadmapNote}>
+            None of this is hidden behind enterprise sales. As features ship they hit every account.
+            Free during beta covers everything; paid tiers (later) gate volume not features.
           </p>
         </section>
 
@@ -584,6 +685,88 @@ const styles: Record<string, React.CSSProperties> = {
     fontStyle: 'italic' as const,
     maxWidth: '640px',
     margin: '0 auto',
+  },
+  // ── How we compare ──
+  compareSection: {
+    padding: '3rem 1.5rem',
+    maxWidth: '960px',
+    margin: '0 auto',
+    textAlign: 'center' as const,
+  },
+  compareIntro: {
+    fontSize: '1rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.6,
+    marginBottom: '1.5rem',
+  },
+  compareTableWrap: {
+    overflowX: 'auto' as const,
+    borderRadius: 'var(--radius-lg)',
+    border: '1px solid var(--green-bg)',
+    background: 'var(--white)',
+  },
+  compareTable: {
+    width: '100%',
+    borderCollapse: 'collapse' as const,
+    fontSize: '0.875rem',
+    textAlign: 'left' as const,
+  },
+  compareHeader: {
+    padding: '0.75rem 1rem',
+    background: 'var(--green-bg)',
+    color: 'var(--green-dark)',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    borderBottom: '1px solid var(--green-light)',
+  },
+  compareCell: {
+    padding: '0.75rem 1rem',
+    color: 'var(--dark)',
+    borderTop: '1px solid var(--green-bg)',
+    verticalAlign: 'top' as const,
+  },
+  compareSelf: {
+    background: 'var(--green-bg-footer)',
+  },
+  compareNote: {
+    fontSize: '0.875rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.65,
+    fontStyle: 'italic' as const,
+    maxWidth: '720px',
+    margin: '1.25rem auto 0',
+    textAlign: 'left' as const,
+  },
+  // ── What's coming next (mini roadmap) ──
+  roadmapSection: {
+    padding: '3rem 1.5rem',
+    maxWidth: '760px',
+    margin: '0 auto',
+    textAlign: 'left' as const,
+  },
+  roadmapIntro: {
+    fontSize: '1rem',
+    color: 'var(--gray-text)',
+    lineHeight: 1.6,
+    marginBottom: '1.5rem',
+  },
+  roadmapList: {
+    paddingLeft: '1.5rem',
+    margin: 0,
+  },
+  roadmapItem: {
+    fontSize: '0.95rem',
+    color: 'var(--dark)',
+    lineHeight: 1.7,
+    marginBottom: '1rem',
+  },
+  roadmapNote: {
+    fontSize: '0.875rem',
+    color: 'var(--gray-text)',
+    fontStyle: 'italic' as const,
+    marginTop: '1.25rem',
   },
   openSourceList: {
     listStyle: 'none' as const,
