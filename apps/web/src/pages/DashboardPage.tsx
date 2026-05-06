@@ -12,6 +12,7 @@ import { SchedulePreviewOverlay } from '../components/schedule/SchedulePreviewOv
 import { ScheduleWizard } from '../components/schedule/ScheduleWizard.js';
 import { DashboardWizard } from '../components/schedule/DashboardWizard.js';
 import { ScheduleEditor } from '../components/schedule/ScheduleEditor.js';
+import { OnboardingSurveyModal } from '../components/OnboardingSurveyModal.js';
 import type { WizardResult } from '../components/schedule/wizard-constants.js';
 import { useSchedulePreview } from '../hooks/useSchedulePreview.js';
 import { generateScheduleWithRRule } from '@ptowl/shared';
@@ -46,6 +47,8 @@ export function DashboardPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [schedulesLoaded, setSchedulesLoaded] = useState(false);
   const modalInputRef = useRef<HTMLInputElement>(null);
+  const presetsScrollRef = useRef<HTMLDivElement>(null);
+  const [showOnboardingSurvey, setShowOnboardingSurvey] = useState(false);
 
   // Schedule preview overlay
   const {
@@ -161,6 +164,9 @@ export function DashboardPage() {
     apiRequest<Template[]>('/templates').then((r) => {
       if (!cancelled && r.ok && r.data) setTemplates(r.data);
     });
+    apiRequest<{ submitted: boolean }>('/onboarding-survey').then((r) => {
+      if (!cancelled && r.ok && r.data && !r.data.submitted) setShowOnboardingSurvey(true);
+    });
     apiRequest<Schedule[]>('/schedules').then((r) => {
       if (!cancelled && r.ok) {
         // Handle both array and paginated response
@@ -227,7 +233,7 @@ export function DashboardPage() {
       }
 
       const key = parseInt(e.key);
-      if (key >= 2 && key <= 6) {
+      if (key >= 2 && key <= 7) {
         const tmpl = templates.find((t) => t.hotkey === key);
         if (tmpl) {
           setSelectedTemplate(tmpl);
@@ -454,10 +460,124 @@ export function DashboardPage() {
             <h1 style={styles.welcomeTitle} className="ptowl-page-title">
               {greeting}
             </h1>
-            <p style={styles.welcomeText}>
-              Create a new schedule below, or press 2-6 for a preset.
-            </p>
+            <p style={styles.welcomeText}>Pick a template below, or press 2-7 for a preset.</p>
           </div>
+
+          {/* Pick a template — interactive carousel + try-it strip.
+              Hover/focus expands the preview slot inside each card.
+              Scroll-snap on the grid, ◀ ▶ desktop arrows scroll one card. */}
+          {templates.length > 0 && (
+            <div style={styles.presetsSection}>
+              <div style={styles.presetsHeader}>
+                <h3 style={styles.presetsTitle}>Pick a template</h3>
+                <button
+                  style={styles.keyboardHint}
+                  onClick={() => setShowWizard(true)}
+                  title="Open keyboard-only wizard (hotkey: 1)"
+                >
+                  <span style={styles.keyBadge}>1</span> Keyboard Mode
+                </button>
+              </div>
+              <div className="dash-presets-carousel">
+                <button
+                  type="button"
+                  className="dash-presets-arrow dash-presets-arrow-left"
+                  onClick={() =>
+                    presetsScrollRef.current?.scrollBy({ left: -280, behavior: 'smooth' })
+                  }
+                  aria-label="Scroll templates left"
+                >
+                  &#9664;
+                </button>
+                <div
+                  ref={presetsScrollRef}
+                  style={styles.presetsGrid}
+                  className="dash-presets-grid"
+                >
+                  {templates.map((tmpl) => (
+                    <div
+                      key={tmpl.id}
+                      style={styles.presetCardWrap}
+                      className="dash-preset-card-wrap"
+                    >
+                      <button
+                        style={styles.presetCard}
+                        className="dash-preset-card"
+                        onClick={() => {
+                          setSelectedTemplate(tmpl);
+                          setShowInitialsModal(true);
+                          setInitials('');
+                        }}
+                        title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
+                        aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
+                      >
+                        <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
+                        <div style={styles.presetText}>
+                          <span style={styles.presetName}>{tmpl.name}</span>
+                          <span style={styles.presetInfo}>
+                            {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
+                          </span>
+                        </div>
+                        <div className="dash-preset-preview" aria-hidden="true">
+                          <span className="dash-preset-preview-row">
+                            &#9200; {tmpl.default_time || '09:00'}
+                          </span>
+                          <span className="dash-preset-preview-row">
+                            &#128197; {tmpl.duration_weeks} week
+                            {tmpl.duration_weeks !== 1 ? 's' : ''}
+                          </span>
+                          <span className="dash-preset-preview-row">
+                            &#9000; Press {tmpl.hotkey} or click
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        style={styles.deleteTemplateBtn}
+                        title="Delete template"
+                        aria-label={`Delete template ${tmpl.name}`}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm(`Delete template "${tmpl.name}"?`)) return;
+                          const res = await apiRequest(`/templates/${tmpl.id}`, {
+                            method: 'DELETE',
+                          });
+                          if (res.ok) {
+                            setTemplates((prev) => prev.filter((t) => t.id !== tmpl.id));
+                            toast.success('Template deleted');
+                          } else {
+                            toast.error('Failed to delete template');
+                          }
+                        }}
+                      >
+                        &#10005;
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="dash-presets-arrow dash-presets-arrow-right"
+                  onClick={() =>
+                    presetsScrollRef.current?.scrollBy({ left: 280, behavior: 'smooth' })
+                  }
+                  aria-label="Scroll templates right"
+                >
+                  &#9654;
+                </button>
+              </div>
+              <div className="dash-presets-tryit" aria-hidden="true">
+                <span className="dash-tryit-label">Try it:</span>
+                {templates.slice(0, 6).map((tmpl, i) => (
+                  <span key={tmpl.id} className={`dash-tryit-key dash-tryit-key-${i + 1}`}>
+                    {tmpl.hotkey}
+                  </span>
+                ))}
+                <span className="dash-tryit-caption">
+                  Press a number above or click any template
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* #1 Today's Appointments Card */}
           {activeToday.length > 0 && (
@@ -518,63 +638,6 @@ export function DashboardPage() {
           {/* Inline Mouse-Friendly Wizard */}
           <DashboardWizard onComplete={handleWizardComplete} />
 
-          {/* Quick Presets */}
-          <div style={styles.presetsSection}>
-            <div style={styles.presetsHeader}>
-              <h3 style={styles.presetsTitle}>Quick Presets</h3>
-              <button
-                style={styles.keyboardHint}
-                onClick={() => setShowWizard(true)}
-                title="Open keyboard-only wizard (hotkey: 1)"
-              >
-                <span style={styles.keyBadge}>1</span> Keyboard Mode
-              </button>
-            </div>
-            <div style={styles.presetsGrid} className="dash-presets-grid">
-              {templates.map((tmpl) => (
-                <div key={tmpl.id} style={styles.presetCardWrap}>
-                  <button
-                    style={styles.presetCard}
-                    className="dash-preset-card"
-                    onClick={() => {
-                      setSelectedTemplate(tmpl);
-                      setShowInitialsModal(true);
-                      setInitials('');
-                    }}
-                    title={`${tmpl.name}\n${tmpl.sessions_per_week} sessions/week for ${tmpl.duration_weeks} weeks\nHotkey: ${tmpl.hotkey}`}
-                    aria-label={`Template ${tmpl.hotkey}: ${tmpl.name}, ${tmpl.sessions_per_week} times per week for ${tmpl.duration_weeks} weeks`}
-                  >
-                    <span style={styles.presetHotkey}>{tmpl.hotkey}</span>
-                    <div style={styles.presetText}>
-                      <span style={styles.presetName}>{tmpl.name}</span>
-                      <span style={styles.presetInfo}>
-                        {tmpl.sessions_per_week}x/wk &middot; {tmpl.duration_weeks} wks
-                      </span>
-                    </div>
-                  </button>
-                  <button
-                    style={styles.deleteTemplateBtn}
-                    title="Delete template"
-                    aria-label={`Delete template ${tmpl.name}`}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!confirm(`Delete template "${tmpl.name}"?`)) return;
-                      const res = await apiRequest(`/templates/${tmpl.id}`, { method: 'DELETE' });
-                      if (res.ok) {
-                        setTemplates((prev) => prev.filter((t) => t.id !== tmpl.id));
-                        toast.success('Template deleted');
-                      } else {
-                        toast.error('Failed to delete template');
-                      }
-                    }}
-                  >
-                    &#10005;
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* #6 Keyboard Shortcut Cheat Sheet */}
           <div style={styles.shortcutsWrap}>
             <button style={styles.shortcutsToggle} onClick={() => setShowShortcuts(!showShortcuts)}>
@@ -586,7 +649,7 @@ export function DashboardPage() {
                   <kbd style={styles.emptyKbd}>1</kbd> Open wizard
                 </div>
                 <div style={styles.shortcutItem}>
-                  <kbd style={styles.emptyKbd}>2</kbd>-<kbd style={styles.emptyKbd}>6</kbd> Quick
+                  <kbd style={styles.emptyKbd}>2</kbd>-<kbd style={styles.emptyKbd}>7</kbd> Quick
                   preset
                 </div>
                 <div style={styles.shortcutItem}>
@@ -755,6 +818,10 @@ export function DashboardPage() {
               updateAppointment(apptId, { reminder_sent: newValue });
             }}
           />
+        )}
+
+        {showOnboardingSurvey && (
+          <OnboardingSurveyModal onClose={() => setShowOnboardingSurvey(false)} />
         )}
       </div>
     </PageLayout>

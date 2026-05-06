@@ -7,9 +7,7 @@ export const emailSchema = z
   .min(1, 'Email is required')
   .max(254, 'Email too long')
   .transform((v) => v.trim().toLowerCase())
-  .pipe(
-    z.string().regex(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/, 'Invalid email format'),
-  );
+  .pipe(z.string().regex(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/, 'Invalid email format'));
 
 export const passwordSchema = z
   .string({ message: 'Password is required' })
@@ -25,9 +23,7 @@ export const initialsSchema = z
   .min(1, 'Initials are required')
   .regex(/^[A-Za-z]{2}$/, 'Initials must be exactly 2 letters');
 
-export const displayNameSchema = z
-  .string()
-  .max(50, 'Name must be 50 characters or less');
+export const displayNameSchema = z.string().max(50, 'Name must be 50 characters or less');
 
 export const scheduleParamsSchema = z.object({
   sessions_per_week: z
@@ -80,7 +76,10 @@ export const updateTemplateSchema = z.object({
   name: z.string().min(1).max(100).transform(stripHtml).optional(),
   sessions_per_week: z.number().int().min(1).max(7).optional(),
   duration_weeks: z.number().int().min(1).max(52).optional(),
-  default_time: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time format').optional(),
+  default_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, 'Invalid time format')
+    .optional(),
   is_active: z.union([z.boolean(), z.literal(0), z.literal(1)]).optional(),
 });
 
@@ -90,6 +89,35 @@ export const linkCodeSchema = z.object({
 
 export const aliasRequestSchema = z.object({
   initials: initialsSchema,
+});
+
+// Onboarding survey — first-visit questions used to inform future template
+// generation. Stored in a compartmentalized table; never joined with templates.
+export const onboardingClinicTypes = [
+  'PT',
+  'OT',
+  'SLP',
+  'Chiro',
+  'Mental',
+  'Dental',
+  'Other',
+  'skipped',
+] as const;
+export const onboardingFoundUsVia = [
+  'HN',
+  'Reddit',
+  'Word of mouth',
+  'Search',
+  'Social',
+  'Other',
+] as const;
+
+export const onboardingSurveySchema = z.object({
+  clinic_type: z.enum(onboardingClinicTypes),
+  specialty: z.string().max(100).optional(),
+  sessions_per_week_avg: z.number().int().min(1).max(7).optional(),
+  weekend_hours: z.boolean().optional(),
+  found_us_via: z.enum(onboardingFoundUsVia).optional(),
 });
 
 // ── Type inference exports ──
@@ -103,3 +131,4 @@ export type ZodScheduleParamsInput = z.input<typeof scheduleParamsSchema>;
 export type ZodLoginRequest = z.infer<typeof loginRequestSchema>;
 export type ZodRegisterRequest = z.infer<typeof registerRequestSchema>;
 export type ZodCreateScheduleRequest = z.infer<typeof createScheduleRequestSchema>;
+export type ZodOnboardingSurvey = z.infer<typeof onboardingSurveySchema>;

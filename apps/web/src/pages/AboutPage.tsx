@@ -152,7 +152,6 @@ export function AboutPage() {
                   <th style={styles.compareHeader}>Tool</th>
                   <th style={styles.compareHeader}>Built for</th>
                   <th style={styles.compareHeader}>Per-appointment effort</th>
-                  <th style={styles.compareHeader}>Open source</th>
                   <th style={styles.compareHeader}>Starts at</th>
                 </tr>
               </thead>
@@ -165,35 +164,30 @@ export function AboutPage() {
                     Therapy clinics; recurring multi-week schedules
                   </td>
                   <td style={styles.compareCell}>5 keypresses</td>
-                  <td style={styles.compareCell}>✅ AGPL-3.0</td>
                   <td style={styles.compareCell}>Free in beta · $9 after</td>
                 </tr>
                 <tr>
                   <td style={styles.compareCell}>Calendly</td>
                   <td style={styles.compareCell}>Patient-initiated booking; one-off meetings</td>
                   <td style={styles.compareCell}>~10 clicks per booking</td>
-                  <td style={styles.compareCell}>❌ Closed</td>
                   <td style={styles.compareCell}>Free / $10+</td>
                 </tr>
                 <tr>
                   <td style={styles.compareCell}>Cal.com</td>
                   <td style={styles.compareCell}>Patient-initiated booking; one-off meetings</td>
                   <td style={styles.compareCell}>~10 clicks per booking</td>
-                  <td style={styles.compareCell}>✅ AGPL-3.0</td>
                   <td style={styles.compareCell}>Free / $15+</td>
                 </tr>
                 <tr>
                   <td style={styles.compareCell}>Jane App</td>
                   <td style={styles.compareCell}>Full PT EHR (charts, billing, scheduling)</td>
                   <td style={styles.compareCell}>~12-20 clicks per appt</td>
-                  <td style={styles.compareCell}>❌ Closed</td>
                   <td style={styles.compareCell}>$54+/mo</td>
                 </tr>
                 <tr>
                   <td style={styles.compareCell}>WebPT</td>
                   <td style={styles.compareCell}>Full PT EHR (charts, billing, scheduling)</td>
                   <td style={styles.compareCell}>~15-20 clicks per appt</td>
-                  <td style={styles.compareCell}>❌ Closed</td>
                   <td style={styles.compareCell}>$99+/mo</td>
                 </tr>
               </tbody>
@@ -294,39 +288,6 @@ export function AboutPage() {
           </p>
         </section>
 
-        {/* Why open source */}
-        <section style={styles.openSourceSection}>
-          <h2 style={styles.sectionTitle}>Open source, on purpose.</h2>
-          <p style={styles.openSourceCopy}>
-            PTowl is released under the <strong>GNU Affero General Public License v3.0</strong>.
-            That means three things, in order of how much we care:
-          </p>
-          <ul style={styles.openSourceList}>
-            <li style={styles.openSourceItem}>
-              <strong>Anyone can read the code, fork it, and run it themselves.</strong> A small
-              clinic with a Cloudflare account can self-host PTowl on the free tier and never pay us
-              a dollar. We think that&rsquo;s correct.
-            </li>
-            <li style={styles.openSourceItem}>
-              <strong>
-                Anyone modifying PTowl and running it as a service must share their changes back.
-              </strong>{' '}
-              The &ldquo;Affero&rdquo; clause is what stops a competitor from wholesale-rebranding
-              our work as a closed-source product. It keeps the community contributing instead of
-              taking.
-            </li>
-            <li style={styles.openSourceItem}>
-              <strong>We chose this niche on purpose.</strong> Healthcare scheduling is full of
-              bloated EHR systems and Word documents. Open source is how a tool becomes the default
-              in a niche where no one&rsquo;s paying attention.
-            </li>
-          </ul>
-          <p style={styles.openSourceCopy}>
-            If AGPL-3.0 is incompatible with your situation, we&rsquo;re open to discussing a
-            commercial license. Reach out via email below.
-          </p>
-        </section>
-
         {/* FAQ — clinician-facing, plain-language. Five high-leverage
             questions visitors actually ask. Drawn from the SHOW-HN
             comment defenses but tuned for clinic owners (less tech-
@@ -378,42 +339,19 @@ export function AboutPage() {
             <details style={styles.faqItem}>
               <summary style={styles.faqQ}>What happens to our data if PTowl shuts down?</summary>
               <p style={styles.faqA}>
-                PTowl is open source under AGPL-3.0. The whole thing — frontend, API, schema — is on
-                GitHub at <code>github.com/Yami566/ptowl</code>. If we shut down, you (or your IT
-                person) can fork the repo and self-host on your own Cloudflare account in about 15
-                minutes. The walkthrough is in the README. Free tier covers ~10,000 monthly users on
-                Cloudflare and Clerk, so the self-host bill is $0/month for most clinics. We
-                can&rsquo;t lock you in even if we wanted to.
+                Your data is yours. From your profile you can export schedules to iCal anytime —
+                drops cleanly into Apple Calendar, Google Calendar, or Outlook. If we ever wind
+                down, we&rsquo;d give 90 days&rsquo; notice and provide a final bulk export. We
+                don&rsquo;t plan on disappearing quietly.
               </p>
             </details>
           </div>
         </section>
 
-        {/* Founder note — solo-founder transparency, on-brand for AGPL.
-            Photo and final name go here pre-launch; this placeholder
-            keeps the section in the layout so the page composition
-            doesn't shift when you add them. */}
-        <section style={styles.founderSection}>
-          <h2 style={styles.sectionTitle}>Built by one person.</h2>
-          <p style={styles.founderCopy}>
-            PTowl is a solo project. I read every email myself — when you write to help@ptowl.com,
-            it lands directly in my inbox during beta. If you find a bug, hit me with details. If
-            you find a clinic workflow that PTowl doesn&rsquo;t fit, tell me what&rsquo;s missing.
-            The tool gets better because the people using it tell me what&rsquo;s broken.
-          </p>
-          <p style={styles.founderCopy}>
-            The repo is on GitHub under AGPL-3.0 — you can read the code, fork it, run your own
-            copy, or watch how it changes over time. No CMO seeing a deck made me build this. No VC
-            pressure shapes the roadmap. Just me, your feedback, and steadily-better PT scheduling.
-          </p>
-        </section>
-
         {/* Contact */}
         <section style={styles.contactSection}>
           <h2 style={styles.contactTitle}>Get in Touch</h2>
-          <p style={styles.contactDesc}>
-            For sales, commercial licensing, or partnership inquiries:
-          </p>
+          <p style={styles.contactDesc}>For sales or partnership inquiries:</p>
           <div style={styles.contactInfo}>
             <a href="tel:+17034009900" style={styles.contactLink}>
               703-400-9900
@@ -559,31 +497,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '3rem 1.5rem',
     maxWidth: '960px',
     margin: '0 auto',
-  },
-  openSourceSection: {
-    padding: '3rem 1.5rem',
-    maxWidth: '760px',
-    margin: '0 auto',
-    textAlign: 'left' as const,
-  },
-  openSourceCopy: {
-    fontSize: '1rem',
-    color: 'var(--dark)',
-    lineHeight: 1.7,
-    marginBottom: '1rem',
-  },
-  founderSection: {
-    padding: '2.5rem 1.5rem',
-    maxWidth: '760px',
-    margin: '0 auto',
-    textAlign: 'left' as const,
-    borderTop: '1px solid var(--green-bg)',
-  },
-  founderCopy: {
-    fontSize: '1rem',
-    color: 'var(--dark)',
-    lineHeight: 1.7,
-    marginBottom: '1rem',
   },
   faqSection: {
     padding: '2.5rem 1.5rem',
@@ -767,24 +680,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--gray-text)',
     fontStyle: 'italic' as const,
     marginTop: '1.25rem',
-  },
-  openSourceList: {
-    listStyle: 'none' as const,
-    padding: 0,
-    margin: '1.5rem 0',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1rem',
-  },
-  openSourceItem: {
-    background: 'var(--white)',
-    padding: '1.25rem 1.5rem',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--green-bg)',
-    borderLeft: '4px solid var(--green-mid)',
-    fontSize: '0.95rem',
-    color: 'var(--dark)',
-    lineHeight: 1.65,
   },
   sectionTitle: { fontSize: '1.5rem', fontWeight: 700, color: 'var(--dark)', marginBottom: '2rem' },
   steps: {

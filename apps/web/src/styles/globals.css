@@ -1806,3 +1806,171 @@ textarea,
     min-height: unset;
   }
 }
+
+/* Dashboard interactive template chooser
+   Carousel scroll-snap + ◀▶ desktop arrows + hover-expand preview slot
+   inside each card + try-it demo strip reusing existing key-auto-press
+   keyframes. All behavior is CSS-driven; no extra JS state. */
+.dash-presets-carousel {
+  position: relative;
+}
+.dash-presets-grid {
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 0.5rem;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.dash-presets-grid::-webkit-scrollbar {
+  display: none;
+}
+.dash-preset-card-wrap {
+  scroll-snap-align: start;
+}
+
+.dash-presets-arrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--green-light);
+  background: var(--white);
+  color: var(--green-dark);
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-50%);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.dash-presets-arrow:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  transform: translateY(-50%) scale(1.08);
+}
+.dash-presets-arrow-left {
+  left: -10px;
+}
+.dash-presets-arrow-right {
+  right: -10px;
+}
+@media (min-width: 640px) {
+  .dash-presets-arrow {
+    display: block;
+  }
+}
+
+/* Hover/focus expansion of the preview slot inside each card. */
+.dash-preset-card {
+  position: relative;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.dash-preset-card:hover,
+.dash-preset-card:focus-visible {
+  border-color: var(--green-mid) !important;
+  box-shadow: 0 4px 12px rgba(27, 94, 32, 0.12);
+  transform: translateY(-2px);
+}
+.dash-preset-preview {
+  display: none;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-left: 0.625rem;
+  padding-left: 0.625rem;
+  border-left: 1px dashed var(--green-light);
+  font-size: 0.7rem;
+  color: var(--gray-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dash-preset-card:hover .dash-preset-preview,
+.dash-preset-card:focus-within .dash-preset-preview {
+  display: flex;
+  animation: dash-preset-preview-in 0.18s ease;
+}
+.dash-preset-preview-row {
+  line-height: 1.3;
+}
+@keyframes dash-preset-preview-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Try-it demo strip — reuses key-auto-press; each key cycles via
+   animation-delay so the row reads as 1→2→3→4→5→6 over 6s. */
+.dash-presets-tryit {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  background: var(--green-bg);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  color: var(--gray-text);
+  flex-wrap: wrap;
+}
+.dash-tryit-label {
+  font-weight: 600;
+  color: var(--green-dark);
+}
+.dash-tryit-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--white);
+  border: 1px solid var(--green-light);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--green-dark);
+  opacity: 0.4;
+  animation: key-auto-press 6s infinite ease both;
+}
+.dash-tryit-key-1 {
+  animation-delay: 0s;
+}
+.dash-tryit-key-2 {
+  animation-delay: 1s;
+}
+.dash-tryit-key-3 {
+  animation-delay: 2s;
+}
+.dash-tryit-key-4 {
+  animation-delay: 3s;
+}
+.dash-tryit-key-5 {
+  animation-delay: 4s;
+}
+.dash-tryit-key-6 {
+  animation-delay: 5s;
+}
+.dash-tryit-caption {
+  margin-left: auto;
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-tryit-key {
+    animation: none;
+    opacity: 1;
+  }
+  .dash-preset-card:hover .dash-preset-preview,
+  .dash-preset-card:focus-within .dash-preset-preview {
+    animation: none;
+  }
+}
