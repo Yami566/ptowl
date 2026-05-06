@@ -82,15 +82,38 @@ jobs:
           workingDirectory: apps/api
           command: deploy
 
-      # Frontend deploy. Reads apps/web/wrangler.jsonc and uploads ./dist
-      # (produced by the earlier `pnpm build` step) as the static-asset
-      # payload of the `ptowl` Worker. Replaces the Cloudflare Workers
-      # Builds dashboard integration which was failing intermittently
-      # without surfacing a fixable error.
-      - name: Deploy Frontend to Cloudflare Workers (static assets)
+      # Frontend deploy — REDUNDANT BACKUP, intentionally non-fatal.
+      #
+      # Why this step exists: on 2026-05-05 Cloudflare Pages git
+      # integration started failing intermittently. We added this CI
+      # step as a fallback path. Within hours CF Pages started working
+      # again and has been deploying every push reliably (~60s after
+      # the push).
+      #
+      # Why this step now has continue-on-error: apps/web/package.json
+      # doesn't pin wrangler (apps/api does — `^4.86.0`). When
+      # wrangler-action runs without a pin and without a local
+      # node_modules wrangler, it can fail intermittently. That
+      # failure used to fail the whole workflow → email spam → fake
+      # "deploy failed" anxiety even though the actual frontend
+      # deploy via CF Pages succeeded.
+      #
+      # The fix:
+      #   - Pin wranglerVersion: '4' so the action always installs a
+      #     known-good wrangler instead of guessing.
+      #   - Mark continue-on-error: true so a failure here doesn't
+      #     fail the workflow (CF Pages is the primary path; this
+      #     step is a backup that only matters if CF Pages breaks).
+      #
+      # If you ever want to remove this step entirely (when you trust
+      # CF Pages 100%), just delete the block. Nothing else depends
+      # on it.
+      - name: Deploy Frontend to Cloudflare Workers (static assets, redundant fallback)
         uses: cloudflare/wrangler-action@v3
+        continue-on-error: true
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/web
+          wranglerVersion: '4'
           command: deploy
