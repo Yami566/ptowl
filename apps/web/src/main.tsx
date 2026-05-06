@@ -46,10 +46,76 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   });
 }
 
+// Clerk localization — owl-themed copy throughout the auth flow.
+// Replaces the default "Sign in to your application" strings with
+// PTowl voice ("Welcome back, Doctor Hoo." / "Pleased to meet you,
+// Doctor Hoo." / etc.). Keys are Clerk's standard localization
+// shape; any key not specified falls back to Clerk's English
+// default. Reference: https://clerk.com/docs/customization/localization
+const ptowlClerkLocalization = {
+  signIn: {
+    start: {
+      title: 'Welcome back, Doctor Hoo.',
+      subtitle: 'Sign in to print schedules in 5 keypresses.',
+      actionText: 'New here?',
+      actionLink: 'Make an account',
+    },
+    password: {
+      title: 'Enter your password',
+      subtitle: 'Welcome back. We saved your perch.',
+    },
+    emailCode: {
+      title: 'Check your email',
+      subtitle: 'A one-time code is on its way.',
+    },
+    forgotPassword: {
+      title: 'Forgot your password?',
+      subtitle: 'No judgement. Pick how to reset it.',
+    },
+    resetPassword: {
+      title: 'Set a new password',
+      subtitle: 'Make it memorable. Make it weird.',
+    },
+  },
+  signUp: {
+    start: {
+      title: 'Pleased to meet you, Doctor.',
+      subtitle: 'Free during beta. No credit card, ever.',
+      actionText: 'Already flying with us?',
+      actionLink: 'Sign in',
+    },
+    emailCode: {
+      title: 'Check your email',
+      subtitle: 'A one-time code is on its way.',
+    },
+    continue: {
+      title: 'Almost there',
+      subtitle: 'A couple more details and you are done.',
+    },
+  },
+  userButton: {
+    action__signOut: 'Sign out',
+    action__manageAccount: 'Manage account',
+  },
+  formFieldLabel__emailAddress: 'Email',
+  formFieldLabel__password: 'Password',
+  formButtonPrimary: 'Continue',
+  socialButtonsBlockButton: 'Continue with {{provider|titleize}}',
+  dividerText: 'or',
+  footerActionLink__useAnotherMethod: 'Try a different way',
+  badge__primary: 'Primary',
+  badge__verified: 'Verified',
+  badge__unverified: 'Unverified',
+};
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {CLERK_PUBLISHABLE_KEY ? (
-      <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <ClerkProvider
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        afterSignOutUrl="/"
+        localization={ptowlClerkLocalization}
+      >
         <App />
       </ClerkProvider>
     ) : (
