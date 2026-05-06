@@ -90,8 +90,11 @@ talk about a separate commercial license.
 
 ## Vision & roadmap
 
+- **[docs/INDEX.md](docs/INDEX.md)** — start here. Navigation hub
+  for all 25+ docs grouped by purpose (strategy / launch /
+  operations / security / reference / history).
 - [docs/PTOWL-NORTH-STAR.md](docs/PTOWL-NORTH-STAR.md) — the long-arc
-  vision: open-source default tool for PT/dental schedule generation.
+  vision: open-source default tool for therapy-clinic schedule generation.
 - [docs/AUTOMATION-PLAN.md](docs/AUTOMATION-PLAN.md) — what we automate
   next, in plain English.
 - [docs/PRODUCTION-LAUNCH-RUNBOOK.md](docs/PRODUCTION-LAUNCH-RUNBOOK.md) —
