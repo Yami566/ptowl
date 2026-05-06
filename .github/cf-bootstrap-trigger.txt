@@ -9,3 +9,8 @@ Last run trigger: 2026-05-05 — initial bootstrap of WAF + Bot Fight
 2026-05-05 evening — re-fire to add 5 Clerk production-domain DNS
 records (clerk / accounts / clkmail / clk._domainkey / clk2._domainkey).
 Existing bootstrap items re-run idempotently.
+
+2026-05-05 evening (retry) — first re-fire didn't propagate, possibly
+because the previous push also modified the workflow file itself.
+This commit only touches the marker so the workflow auto-fires
+cleanly on a marker-only push.
