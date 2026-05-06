@@ -8,34 +8,22 @@ import { SignIn } from '@clerk/clerk-react';
  * has wrapped Clerk since the Phase 4 migration; only the filename
  * lagged behind.
  *
- * Behavior:
- *   - When VITE_CLERK_PUBLISHABLE_KEY is set (or the baked fallback
- *     in main.tsx is in use), ClerkProvider activates and this
- *     component renders Clerk's hosted sign-in widget.
- *   - When the env var is missing AND no fallback is baked, falls
- *     back to a friendly placeholder so the page never crashes.
+ * Configuration is owned upstream by `apps/web/src/main.tsx`, which
+ * resolves the publishable key from `VITE_CLERK_PUBLISHABLE_KEY`
+ * with a baked-in `pk_live_*` fallback so a fresh self-hosted clone
+ * works out of the box. By the time React renders this component,
+ * `<ClerkProvider>` has already initialized — there's no scenario
+ * where Clerk isn't configured, so we render `<SignIn />` directly.
+ *
+ * Earlier versions of this component also checked
+ * `import.meta.env.VITE_CLERK_PUBLISHABLE_KEY` and rendered a
+ * "Sign-in is being upgraded" placeholder when missing. That check
+ * was removed on 2026-05-05 because it produced a false negative on
+ * Cloudflare Pages builds where the env var was unset (causing
+ * production sign-in to silently degrade to the placeholder even
+ * though the baked-in `pk_live_` fallback was active).
  */
 export function AuthWidget() {
-  const clerkConfigured = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-
-  if (!clerkConfigured) {
-    return (
-      <div
-        style={{
-          padding: '2rem 1rem',
-          textAlign: 'center',
-          color: 'var(--gray-text)',
-          lineHeight: 1.6,
-        }}
-      >
-        <p style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Sign-in is being upgraded.</p>
-        <p style={{ fontSize: '0.85rem' }}>
-          PTowl is moving to a faster sign-in. Please check back in a few minutes.
-        </p>
-      </div>
-    );
-  }
-
   // Clerk's hosted sign-in widget. routing="hash" keeps internal
   // navigation in the URL fragment so it doesn't collide with our
   // React Router routes. afterSignInUrl + afterSignUpUrl forward to
