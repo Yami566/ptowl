@@ -41,8 +41,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <div style={styles.card}>
               <h1 style={styles.title}>The owl flew off course.</h1>
               <p style={styles.message}>
-                Something broke. The error has been logged and the page should recover with a
-                refresh. If it keeps happening, let us know and we&apos;ll fix it.
+                Something broke mid-flight. Don&rsquo;t panic — Hoo&rsquo;s seen worse. The error
+                has been logged and a refresh usually does the trick. If it keeps happening, send us
+                a help request and we&rsquo;ll fix it.
               </p>
               <div style={styles.buttonRow}>
                 <button

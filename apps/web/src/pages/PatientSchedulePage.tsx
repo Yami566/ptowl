@@ -160,6 +160,9 @@ export function PatientSchedulePage() {
       <section style={styles.heroCard}>
         <p style={styles.heroLabel}>Schedule for</p>
         <h1 style={styles.heroAlias}>{schedule.patient_alias || schedule.patient_initials}</h1>
+        <p style={styles.aliasNote}>
+          🦉 Your owl-approved alias. Your real name is never stored on our servers.
+        </p>
         <p style={styles.heroMeta}>
           {schedule.sessions_per_week}× per week · {schedule.duration_weeks} weeks ·{' '}
           {totalAppointments} sessions total
@@ -276,6 +279,13 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--dark)',
     margin: '0 0 0.5rem',
     lineHeight: 1.1,
+  },
+  aliasNote: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    fontStyle: 'italic' as const,
+    marginBottom: '0.75rem',
+    opacity: 0.85,
   },
   heroMeta: {
     fontSize: '0.95rem',

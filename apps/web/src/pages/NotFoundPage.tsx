@@ -13,10 +13,10 @@ export function NotFoundPage() {
 
         <div style={styles.card} className="ptowl-center-card">
           <h1 style={styles.code}>404</h1>
-          <p style={styles.title}>Page Not Found</p>
+          <p style={styles.title}>Hoo took it?</p>
           <p style={styles.message}>
-            Even owls with 270° vision can't spot this page.
-            It may have been moved, removed, or never existed.
+            Not us. Even owls with 270° vision can&rsquo;t spot this page. It may have been moved,
+            renamed, or never existed.
           </p>
 
           <div style={styles.buttonRow}>

@@ -148,15 +148,16 @@ export function TemplateEditorPage() {
               <div style={s.emptyIcon} aria-hidden="true">
                 🦉
               </div>
-              <h3 style={s.emptyTitle}>You&apos;ve removed all templates.</h3>
+              <h3 style={s.emptyTitle}>The roost is empty.</h3>
               <p style={s.emptyText}>
-                Templates power the dashboard hotkeys (2-6) for one-press schedule creation. Email{' '}
+                You&rsquo;ve plucked all the templates out. Templates power dashboard hotkeys
+                <kbd style={s.emptyKbd}>2</kbd>&ndash;<kbd style={s.emptyKbd}>6</kbd> for one-press
+                schedule creation — without them, the wizard (<kbd style={s.emptyKbd}>1</kbd>) is
+                your only path. To re-feather the nest, email{' '}
                 <a href="mailto:nurelimusabay@gmail.com" style={s.emptyLink}>
                   help@ptowl.com
                 </a>{' '}
-                to restore the defaults, or use the keyboard wizard (press{' '}
-                <kbd style={s.emptyKbd}>1</kbd> on the dashboard) to create custom schedules without
-                a template.
+                and the owl will deliver fresh defaults.
               </p>
             </div>
           )}

@@ -86,41 +86,41 @@ export function DashboardPage() {
     const variants: string[] =
       h < 12
         ? [
-            'Sunday rounds, {Name}. Owls work weekends.',
-            "Game day, Coach. Let's start the week strong.",
-            "Charts cleared, {Name}. Tuesday's looking clean.",
+            "Sunday rounds, {Name}. Hoo's working weekends with you?",
+            "Game day, Doctor Hoo. Let's start the week strong.",
+            "Charts cleared, {Name}. Hoo's ready for Tuesday?",
             'Hump day. The owl believes in you, {Name}.',
-            'Almost Friday, Coach. Hold the line.',
+            "Almost Friday, Coach. Hoo's holding the line? You.",
             'Friday, {Name}. Schedules first, weekend second.',
             'Saturday rounds, {Name}? The owl is impressed.',
           ]
         : h < 17
           ? [
               'Sunday afternoon. Easy schedules ahead, {Name}.',
-              "Monday halftime, Coach. You're winning.",
+              "Monday halftime, Coach. The owl says you're winning.",
               "Afternoon, {Name}. Schedule like nobody's watching.",
-              'Mid-week, {Name}. 5 keys and done — go.',
+              "Mid-week, {Name}. 5 keys and done — go. Hoo's got time?",
               "Thursday's a good day to be a doctor, {Name}.",
-              'Friday afternoon, Coach. Almost home.',
-              "Saturday clinic, {Name}? You're a hero.",
+              'Friday afternoon, Coach. Almost time to roost.',
+              "Saturday clinic, {Name}? You're a hero in the owl's eyes.",
             ]
           : h < 20
             ? [
                 'Sunday evening prep, {Name}. The week is yours.',
-                'Monday wrap, Coach. Mark it as a win.',
+                "Monday wrap, Coach. Mark it as a win. Hoo's tired? Not you.",
                 'Tuesday evening, {Name}. Easy charts before dinner.',
                 'Wednesday wrap-up. The owl is proud, {Name}.',
                 'Thursday evening, Coach. One more push to Friday.',
-                'Friday evening, {Name}. Schedule. Print. Go home.',
+                'Friday evening, {Name}. Schedule. Print. Roost.',
                 'Saturday evening rounds? You earned the night, {Name}.',
               ]
             : [
                 'Sunday night, {Name}? The owl is concerned but supportive.',
-                "Monday night clinic? You're built different, Coach.",
-                'Late Tuesday, {Name}. Hydrate.',
+                "Monday night clinic? You're built different, Coach. Even the owl is impressed.",
+                'Late Tuesday, {Name}. Hydrate. The owl insists.',
                 'Wednesday late shift. The owl salutes you, {Name}.',
                 'Late Thursday, Coach. Tomorrow is the last whistle.',
-                'Friday night, {Name}? Print and run.',
+                'Friday night, {Name}? Print and roost.',
                 'Saturday night clinic, {Name}? The owl is impressed and worried.',
               ];
 
