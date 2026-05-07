@@ -16,7 +16,9 @@
 - **Auth:** Clerk on `clerk.ptowl.com` (production custom domain).
 - **Edge hardening:** WAF managed ruleset + Bot Fight Mode + Rate
   Limiting on `/api/*` + Worker Errors notification + Web Analytics —
-  all driven by `.github/workflows/cf-bootstrap.yml`.
+  one-time Cloudflare dashboard config, durable. (Originally driven by
+  `.github/workflows/cf-bootstrap.yml`; workflow deleted 2026-05-07
+  after final successful run.)
 - **Status page:** `status.ptowl.com` — **planned**, not live.
   Upptime recipe in [Status page](#status-page) section.
 - **Rollback:** Workers `wrangler rollback` (~60s); CF Pages dashboard
@@ -55,47 +57,43 @@ ptowl (Static Assets)    ptowl-api (Hono Worker)         clerk.ptowl.com
 
 ---
 
-## Edge hardening (configured via cf-bootstrap.yml)
+## Edge hardening (one-time Cloudflare dashboard config — DONE)
 
-`.github/workflows/cf-bootstrap.yml` is a one-shot, idempotent
-GitHub Actions workflow. Touch `.github/cf-bootstrap-trigger.txt`
-and push to `main` to re-fire (or use `workflow_dispatch`).
+Edge primitives (WAF Free Managed Ruleset, Bot Fight Mode, Rate
+Limiting on `/api/*`, Worker Errors notification, Web Analytics)
+are configured in the Cloudflare dashboard. Confirmed live on
+2026-05-06 via commit `b31fd29` after the final cf-bootstrap.yml
+run. Config is durable — survives across deploys without further
+action.
 
-### Required `CLOUDFLARE_API_TOKEN` scopes
+The Workers `cf-bootstrap.yml` workflow that originally applied
+these via the Cloudflare API was deleted on 2026-05-07 (PR removing
+`.github/workflows/cf-bootstrap.yml` + `.github/cf-bootstrap-trigger.txt`).
+Reasoning: one-shot configuration is now durable; carrying ~100 lines
+of YAML for a workflow that has fired its last is dead weight.
 
-| Scope                          | Why                              |
-| ------------------------------ | -------------------------------- |
-| Zone → WAF → Edit              | Managed ruleset + rate limiting  |
-| Zone → Zone Settings → Edit    | Bot Fight Mode                   |
-| Account → Notifications → Edit | Worker Errors policy             |
-| Account → Web Analytics → Edit | RUM site                         |
-| Zone → DNS → Edit              | Clerk CNAMEs (currently missing) |
+### What's currently configured (verify in dashboard if needed)
 
-### What the workflow configures
+| Item                       | Where                                             |
+| -------------------------- | ------------------------------------------------- |
+| WAF Free Managed Ruleset   | Security → WAF → Managed Rules                    |
+| Bot Fight Mode             | Security → Bots → Bot Fight Mode `ON`             |
+| Rate Limiting `/api/*`     | Security → WAF → Rate Limiting Rules              |
+| Worker Errors notification | Notifications → email → `nurelimusabay@gmail.com` |
+| Web Analytics              | Analytics & Logs → Web Analytics → `ptowl.com`    |
 
-| Step                         | Result                                                 |
-| ---------------------------- | ------------------------------------------------------ |
-| Resolve zone id              | Looks up `ptowl.com` zone via API                      |
-| WAF Free Managed Ruleset     | `execute` action on entry-point ruleset, `latest` ver  |
-| Bot Fight Mode               | `fight_mode: true` on `/bot_management`                |
-| Rate Limiting `/api/*`       | 100 req/min/IP, block 10 min, by `cf.colo.id + ip.src` |
-| Worker Errors notification   | Email policy → `nurelimusabay@gmail.com`               |
-| Web Analytics                | `auto_install: true` for `ptowl.com`                   |
-| Clerk DNS records (5 CNAMEs) | DNS-only (gray) — see Gotchas                          |
+### Re-applying if ever wiped (manual, ~10 min)
 
-### Re-fire procedure
+The original workflow had each step's exact API call; recover from
+git history if you need it:
 
 ```bash
-# bump trigger file, commit, push to main — workflow runs
-date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/cf-bootstrap-trigger.txt
-git add .github/cf-bootstrap-trigger.txt
-git commit -m "ops: re-fire cf-bootstrap"
-git push origin main
+git show 60fd371:.github/workflows/cf-bootstrap.yml
+# (last commit before the workflow was deleted; substitute as
+#  appropriate if other commits modified it later)
 ```
 
-State (as of `b31fd29`): cf-bootstrap has been run successfully —
-WAF, Bot Fight, Rate Limiting, Worker Errors notification, Web
-Analytics confirmed live in dashboard.
+Or apply via the dashboard manually using the table above.
 
 ### SSL/TLS hardening (verify, dashboard-only)
 
