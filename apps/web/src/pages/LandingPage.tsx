@@ -78,21 +78,14 @@ function DemoCalendarSection() {
 
 export function LandingPage() {
   usePageTitle('Log In');
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
-  // Show loading while session restores — warm message for returning users
-  if (loading) {
-    return (
-      <main style={{ ...styles.page, justifyContent: 'center', alignItems: 'center' }}>
-        <OwlLogo size="lg" linkTo="/" />
-        <p style={{ ...styles.subheadline, marginTop: '2rem' }}>
-          Welcome back — restoring your session...
-        </p>
-      </main>
-    );
-  }
-
-  // Already logged in — redirect handled by AuthContext
+  // Render the landing immediately. AuthContext checks session in the
+  // background and redirects signed-in users to /dashboard within a
+  // fraction of a second. No "restoring session" splash — that wording
+  // mis-greeted first-time visitors as if they were returning users.
+  // The brief flash signed-in users see before the redirect is
+  // imperceptible at typical Clerk init times (~200-500ms).
   if (user) return null;
 
   return (
