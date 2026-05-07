@@ -18,14 +18,16 @@ Last updated: 2026-05-06.
 
 ## TL;DR
 
-Launch on a Tuesday or Wednesday at 9-10 AM Eastern Time. Flip the
-GitHub repo to public, submit Show HN, then sit in the comment thread
-for 6 hours. After the HN post stabilizes, cross-post to
+Soft launch on a Tuesday or Wednesday morning. Tell your personal
+network first (text + email + a single LinkedIn post), then post to
 r/physicaltherapy, r/dentistry, r/selfhosted, r/cloudflare, and
-Twitter/X. The Phase-8 success metric is **10 active beta clinics** —
-"active" means 3 schedules created in 7 days plus at least one patient
-view. HN is a flash, not a flywheel; the real outreach is personal-
-network DMs and walk-in visits to local clinics.
+Twitter/X using the templates in this doc. The real outreach — and
+the only thing that actually moves the Phase-8 success metric — is
+personal-network DMs and walk-in visits to local clinics. The
+**Phase-8 success metric is 10 active beta clinics** — "active"
+means 3 schedules created in 7 days plus at least one patient view.
+Online posts drive curiosity; in-person and 1-on-1 outreach drives
+adoption.
 
 ---
 
@@ -65,135 +67,96 @@ If any checkbox above isn't ticked, **don't launch tomorrow.** Push by
 
 - [ ] **Eat.** Don't launch hungry. Coffee/water within reach.
 - [ ] **Phone on Do Not Disturb** except for SMS from a small pre-cleared
-      list (partner, co-founder if any). HN comment threads need
-      undivided attention.
+      list (partner, co-founder if any). You'll want focus for the
+      next few hours of replies and outreach.
 - [ ] **Open these tabs and leave them open all day:**
-  - https://news.ycombinator.com/show
-  - https://news.ycombinator.com/newest
-  - https://github.com/Yami566/ptowl (your repo)
   - https://ptowl.com (your live site)
   - https://dash.cloudflare.com (CF dashboard, in case anything hits)
   - Your Gmail
-  - This file — comment-defense answers, ready to copy-paste
-- [ ] **Re-read** the "11 comment defenses" section below — three
-      minutes. The defenses should be in your head, not just on paper.
+  - The cross-post templates section below — ready to copy-paste
 
-### T-0: the flip
+### T-0: the launch
 
-#### Step 1 — Flip the repo to public (~30 sec)
+#### Step 1 — Personal-network announce (~10 min)
 
-1. github.com/Yami566/ptowl → Settings → Danger Zone → Change visibility
-   → Public
-2. Confirm the prompt
-3. Verify by opening `https://github.com/Yami566/ptowl` in incognito —
-   should load without auth
+Send the texts and emails from the "Beta outreach — 5-channel
+playbook → Channel 1: Personal network" section below to ~10-20
+people you trust who know clinicians. Personalized. One at a time.
+This is the highest-yield channel; do it FIRST.
 
-#### Step 2 — Submit Show HN (~2 min)
+#### Step 2 — Cross-posts to communities (~30 min)
 
-1. https://news.ycombinator.com/submit
-2. Title: paste from the "Show HN — submission post" section below
-3. URL: `https://ptowl.com`
-4. Text: paste the body from the "Show HN — submission post" section
-5. Submit
-6. **DO NOT post the URL anywhere else for the first 30 minutes.**
-   HN's anti-gaming heuristic flags any submission whose URL is being
-   shared on other sites simultaneously. Let HN organic traffic do its
-   thing first.
+Post the templates from the "Cross-post templates" section below
+to:
 
-#### Step 3 — Confirm post is visible (~30 sec)
+- [ ] r/physicaltherapy
+- [ ] r/dentistry
+- [ ] r/selfhosted
+- [ ] r/cloudflare
+- [ ] Twitter/X
 
-1. Click your username at top-right → "submissions" → your post should
-   be at the top
-2. Note the post URL (will be `news.ycombinator.com/item?id=XXXXXXXX`)
+**Stagger by ~30 minutes between Reddit posts** so it doesn't look like
+a campaign. Reddit moderation is sharp; mass-posting gets accounts
+flagged.
 
-#### Step 4 — First comment is yours (~3 min, important)
+#### Step 3 — First clinic outreach (~1 hr)
 
-Within 5 minutes of submission, post a thoughtful first comment. Not
-"thanks for reading," but a substantive one — typically:
+Pick 3 local clinics within driving distance. Walk in OR call them
+using the script from the "Beta outreach → Channel 2: Walk-in"
+section below. **In-person beats every other channel** for trust
+and conversion.
 
-> "Two things I'd especially love feedback on: (1) **_, (2) _**."
-
-This signals to readers that you're present and seeking input. HN
-front-page algorithm rewards posts where the OP comments early.
-
-Pre-canned candidates for the "two things" — pick whichever feels
-genuine that day:
-
-1. The sports-alias privacy mechanism — does it feel honest or weird?
-2. The "free during beta, no monetization until 50 active clinics"
-   approach — do you find it credible or naive?
-3. Whether the "5 keypresses" benchmark holds up against actual PT/OT/
-   SLP/chiro/mental-health/dental-hygiene workflow you've seen
-4. Anything about the AGPL-3.0 license choice for clinic SaaS
-
-### T+0 to T+6h: the comment-thread shift
-
-This is where Show HN posts succeed or fail. **Be present.**
+### T+1h to T+6h: be present for replies
 
 What to do:
 
-- [ ] Refresh your post every 5 minutes for the first hour
-- [ ] Reply to **every** comment within 15 minutes during peak. Even a
-      "good question, will get back to you in 1h" is better than silence
-- [ ] Use the "11 comment defenses" section below as your answer
-      template — but rephrase in your own voice; don't paste verbatim
-- [ ] Upvote thoughtful critiques (not just praise). HN community
-      recognizes founders who reward criticism
-- [ ] If a thread gets technical, link to specific files in the repo:
+- [ ] **Reply to every Reddit comment within 30 minutes.** Even a
+      "good question, will get back to you in 1h" is better than
+      silence.
+- [ ] **Check your Gmail every 30 minutes** — the personal-network
+      emails will start coming back. Reply to each personally.
+- [ ] **If anyone signs up, email them within 1 hour:** "Saw you
+      signed up — anything I can help with? What brought you here?"
+- [ ] **If a thread gets technical, link to specific files in the repo:**
       `apps/api/src/routes/schedules.ts:533` style
 
 What NOT to do:
 
 - **Don't argue.** If someone's wrong, factually correct them once.
   If they double down, "agreed to disagree, thanks for the take" and
-  move on
-- **Don't ask for upvotes** anywhere
-- **Don't @ anyone famous** ("hey @pmarca what do you think?")
-- **Don't post the link to Twitter/Reddit/Slack within the first
-  2 hours.** Wait until the HN post has stabilized in the rankings
-- **Don't leave** the thread for more than 30 minutes during the first
-  4 hours
+  move on.
+- **Don't ask for upvotes** anywhere.
+- **Don't fake urgency.** "Limited-time beta" framing reads as
+  sales-y; just be honest about what you have and what you're
+  building.
 
 Signals of going well:
 
-- Front-page within 1 hour
-- Comment count > 20 within 2 hours
-- Multiple top-level comments asking detailed product questions
+- 3+ clinicians ask detailed workflow questions on Reddit
+- 2+ personal-network replies say "I'll forward this to my PT/dentist"
+- 1+ clinic agrees to a 15-minute walkthrough
 
 Signals of going meh:
 
-- Stuck on /show page (no /front page placement) at 1 hour
-- Most comments are "this is just Calendly" or generic dismissals
-- No clinical professionals comment
+- All replies are generic ("cool, will check it out") with no
+  follow-up
+- No clinical professionals chime in within 6 hours
+- Subreddits are silent (mods didn't approve, or post got buried)
 
-If meh, don't try to push. Show HN is a lottery. Re-submit in 4-6
-weeks with what you've learned.
-
-### T+1h (post-launch): cross-posts
-
-Only after HN has settled (front page or stable on /show), post to
-the secondary channels using the templates in the "Cross-post
-templates" section below.
-
-- [ ] r/physicaltherapy — paste the template
-- [ ] r/dentistry — paste the template
-- [ ] r/selfhosted — paste the template
-- [ ] r/cloudflare — paste the template
-- [ ] Twitter/X — paste the short version
-
-**Stagger by ~30 minutes between Reddit posts** so it doesn't look like
-a campaign. Reddit moderation is sharper than HN's; mass-posting gets
-your account flagged.
+If meh, don't push. Adoption is slow on launch day; the 10-clinic
+goal will be reached over weeks via 1-on-1 outreach, not via
+launch-day blasts.
 
 ### T+6h: the wind-down
 
-- [ ] Last comment-thread sweep — any unanswered questions?
-- [ ] Save the HN post URL, top comment, and any criticism worth
-      remembering
-- [ ] Note unique signups in the dashboard (CF Web Analytics if
-      enabled, otherwise just the user count)
-- [ ] **Email every signup that day** within 24 hours: "Saw you signed
-      up — anything I can help with? What brought you here?"
+- [ ] Last reply sweep across Reddit / Twitter / email — any
+      unanswered questions?
+- [ ] Save links to anything notable (well-received reply, useful
+      critique, supportive thread)
+- [ ] Note unique signups in the dashboard (CF Web Analytics, or
+      just the user count in D1)
+- [ ] **Email every signup that day** within 24 hours: "Saw you
+      signed up — anything I can help with? What brought you here?"
 
 ### T+24h: the next-day debrief
 
@@ -204,12 +167,12 @@ Write down (in a private note, not yet a doc):
    landing-page problem, not a product problem.
 3. **Total signups** in 24h.
 4. **Active users** in 24h (created at least one schedule).
-5. **Mood check.** If you're crushed, that's normal. Show HN is brutal
-   for half of submissions and you might be in that half. The 10
-   active clinics goal is _unrelated_ to whether HN went well.
+5. **Mood check.** If you're crushed, that's normal. Launch days are
+   often quieter than expected. The 10 active clinics goal is reached
+   over weeks of outreach, NOT in the first 24 hours.
 
-If signups < 50 in 24h, it didn't catch fire — totally normal, focus
-on the small group of people who DID sign up. Each one is more valuable
+If signups < 20 in 24h, it didn't catch — totally normal. Focus on
+the small group of people who DID sign up. Each one is more valuable
 than 10 from a viral spike.
 
 ### "What could break" cheat sheet
@@ -229,175 +192,12 @@ For each of these symptoms during the launch, the one thing to check:
 
 ---
 
-## Show HN — submission post (lead, scrubbed)
-
-### Title (80 char max on HN)
-
-> Show HN: PTowl — schedule recurring patient appointments in 5 keypresses
-
-If "PT" or "patient" reads as ambiguous, alt title:
-
-> Show HN: PTowl — recurring patient schedule generator for clinics
-
-### URL
-
-`https://ptowl.com`
-
-### Body (HN supports plain text + bare URLs; no markdown)
-
-```text
-Hi HN — I'm an independent solo founder who got tired of watching therapy clinics waste 30 minutes a day building patient schedules in Word. So I made PTowl: 5 keypresses, print-ready, sports-alias privacy failsafe instead of real names. Free during beta.
-
-What it does
-
-You're a PT, OT, SLP, chiropractor, mental-health therapist, or dental hygienist. Patient walks in. They need a 6-week recurring schedule, 3x/week, mornings. Today you open Word, hand-type a table, save as PDF, print, hand it to them. ~30 minutes if it's busy.
-
-With PTowl, you press: 2-J-S-Enter (preset 2, patient initials JS, confirm). Out comes a clean print-ready schedule with the patient's sports alias ("Brady" instead of "JS") on top, the 18 appointment dates underneath, ICS file for their phone calendar, and a magic-link URL you can text them so they see it on their phone without an app.
-
-The 5-keypress promise is the whole pitch. I rebuilt it from scratch maybe 6 times to actually keep that promise.
-
-Who it's for
-
-Therapy clinics that book recurring patient series — PT, OT, SLP, chiro, mental-health, dental hygiene recalls. Not primary-care intake. Not Calendly-style patient-initiated booking. Provider-driven bulk recurring scheduling for clinics that today print schedules on paper.
-
-Stack
-
-- React 19 + Vite (frontend, ~660KB bundle)
-- Cloudflare Workers + Hono (API)
-- Cloudflare D1 (SQLite at the edge)
-- Cloudflare R2 (clinic logos)
-- Clerk (auth, drop-in widget) on a custom domain (clerk.ptowl.com)
-- ical-generator + rrule (calendar feeds)
-
-Whole thing is ~$0/month at <10k MAU. Cloudflare free tier + Clerk free tier carry it.
-
-The privacy gimmick
-
-PTowl never stores patient names. Provider types initials, system maps to a sports legend ("JS" → "Brady", "AS" → "Pelé", 676 alias pairs). Schedules display + print the alias. Provider knows JS = Jane Smith; system has no idea. Not HIPAA-compliant (deliberately — that's a different product), but it's a real-world workable privacy failsafe for the "I just need to print a schedule" use case.
-
-What's not built yet
-
-- SMS reminders with 2-way reply (Twilio-shaped)
-- Multi-provider clinics (one account, many therapists)
-- AI-assisted schedule drafting (cf-ai is bound; haven't wired the prompt)
-- Pricing/payments (no monetization yet, free during beta)
-
-Feedback wanted on
-
-- The 5-keypress flow on tablet vs desktop. Tested fine on Mac/Windows; mobile keyboards are weird.
-- The sports-alias mapping. Some are obvious (Brady, Pelé, Serena). Some are deeply random. Open to feedback that improves the mapping.
-- Whether dental hygiene + mental-health practices actually want this. Built originally for PT; adjacent therapy folks keep asking when they can use it.
-
-Live: https://ptowl.com
-```
-
----
-
-## Show HN — 11 comment defenses
-
-These tend to come up on Show HN posts. Have honest answers ready,
-don't be defensive. Each answer is one HN comment — short enough to
-type fast in the launch-day rush. Rephrase in your own voice; don't
-paste verbatim.
-
-### 1. "Why isn't this HIPAA compliant?"
-
-On purpose. Real HIPAA compliance is a different product (2-3x the
-build cost, ongoing audit fees, BAAs with every vendor). PTowl is for
-the clinics that print schedules on paper anyway; the privacy floor is
-"real names never enter our servers." Sports aliases enforce that
-floor in code. We say this explicitly on the security page rather than
-hand-waving.
-
-### 2. "Why Cloudflare specifically?"
-
-Free tier carries the whole stack through ~10K MAU. D1 + Workers + R2
-
-- Clerk means one-vendor hosting for database, runtime, storage, auth.
-  Reduces the "weekend project" self-host cost to literally $0. Also:
-  the AGPL repo has a one-click Deploy-to-Cloudflare button — anyone
-  can fork and run their own instance in 15 minutes.
-
-### 3. "Why Clerk over Auth0/Supabase/build-it-yourself?"
-
-Drop-in widget meant we didn't have to build sign-in UI. Free tier
-10K MAU. Auth via Clerk on a custom domain (clerk.ptowl.com). The
-tradeoff is a vendor dependency, but auth is the LAST thing a solo
-founder should hand-roll.
-
-### 4. "Why AGPL not MIT?"
-
-To discourage drive-by SaaS rip-offs while keeping the code open for
-community contribution + self-host use. Anyone running modified PTowl
-as a network service must share their changes. Permissive enough for
-individual contributors, protective enough that "PTowl Pro by
-Competitors-Inc.com" can't legally exist as closed-source. If AGPL is
-incompatible with your situation, we'll do a commercial license — open
-an issue.
-
-### 5. "Where's the AI / ML?"
-
-Not yet. Cloudflare AI binding is wired up in wrangler.jsonc but I
-haven't shipped the prompt-to-schedule feature. Top of roadmap; what
-AI feature would actually help a clinician vs. just being demo theater
-is the question I'd love answers to.
-
-### 6. "Have any clinics actually used this?"
-
-Less than 10 active beta clinics today. Pre-validated the "5
-keypresses to print" UX with one PT in person; everything else is
-hypothesis. Goal for the next 30 days: get to 10 active clinics. Will
-update launch numbers honestly.
-
-### 7. "Why don't I just use Calendly / Cal.com?"
-
-Calendly is patient-initiated booking — patient picks a slot from a
-public URL. PTowl is provider-initiated bulk-recurring scheduling —
-the provider generates a 12-week schedule for a specific patient based
-on a treatment plan. Different product entirely. We'd actually pair
-with Calendly if a clinic uses it for new-patient intake.
-
-### 8. "Why text-based 'sports aliases' for de-identification? Just encrypt the names."
-
-Encryption protects against data exfil; it doesn't protect against
-your front-desk reading a printed schedule out loud. The alias is a
-SOCIAL privacy mechanism: the printed schedule says "Brady" not "John
-Smith", so when it's left on a clipboard, in a fax, or visible during
-a hallway conversation, the patient's identity isn't exposed by
-default. It's honest-to-paper privacy, which is what clinics actually
-need.
-
-### 9. "What happens at scale?"
-
-D1 free tier covers ~5GB and ~5M reads/day. We can handle thousands
-of clinics on free Cloudflare. The only thing that scales linearly
-with usage is outbound email (Phase 9 — not shipped yet). At 50
-active clinics, we wire LemonSqueezy + MailChannels.
-
-### 10. "How do I trust your privacy claims when I can't audit them?"
-
-You can. Repo is on GitHub under AGPL-3.0:
-github.com/Yami566/ptowl. The auth verification, schedule writes, and
-patient-data handling are all in apps/api/src/. Privacy policy at
-ptowl.com/privacy is also in source. No "trust me bro" surface — the
-"no real names" claim is a checkbox you can verify by grepping for
-`patient_name` (you won't find it).
-
-### 11. "Who are you?"
-
-Solo founder, technical background, building this because therapy-
-clinic friends complained about how slow scheduling was. Reachable at
-help@ptowl.com (mailto routes directly to my inbox during beta). I'll
-be in this thread for the next 6 hours.
-
----
-
 ## Cross-post templates
 
-Pre-canned copy for the major secondary channels. Tone matches each
-forum's culture; don't re-use HN copy verbatim.
+Pre-canned copy for the launch channels. Tone matches each
+forum's culture; tweak each one to your voice.
 
-### r/physicaltherapy (post ~2 hours after HN)
+### r/physicaltherapy
 
 ```
 title: I made a free scheduling tool for PT clinics — 5 keypresses to a printed schedule [open source]
@@ -425,7 +225,7 @@ weekly and tell me what's broken. https://ptowl.com — sign in,
 generate a schedule, hit me up at help@ptowl.com.
 ```
 
-### r/dentistry (post ~3 hours after HN)
+### r/dentistry
 
 ```
 title: PTowl — 5-keypress recurring schedule generator for dental hygiene + recall
@@ -495,7 +295,7 @@ Live: ptowl.com
 ### Twitter / X
 
 ```
-Just shipped Show HN: PTowl — clinic scheduling tool.
+Just shipped: PTowl — clinic scheduling tool.
 
 5 keypresses to a printed patient schedule.
 Privacy by sports-alias (real names never stored).
@@ -510,7 +310,7 @@ https://ptowl.com
 
 **Goal:** A 30-second screencast that lives in the README, shows the
 5-keypress promise from blank-state to printed schedule + patient
-magic-link share, and earns the HN reader's attention before they
+magic-link share, and earns the viewer's attention before they
 scroll past.
 
 **Total target length:** 28-32 seconds. Anything longer loses the HN
@@ -634,7 +434,7 @@ to the calendar app to show the appointments populated.
 
 #### 00:30 — End
 
-Hard cut. Don't fade. Don't add an outro card. The HN reader is
+Hard cut. Don't fade. Don't add an outro card. The viewer is
 already gone or hooked.
 
 ### Post-production (5 minutes)
@@ -664,7 +464,7 @@ ptowl.com directly. Reference in the README:
 ```
 
 For HN-friendlier embedding, also upload to YouTube as **unlisted**
-and swap the README link to the YouTube URL. HN posts with YouTube
+and swap the README link to the YouTube URL. Posts with YouTube
 embeds get noticeably more click-through than self-hosted MP4s, even
 if the video is identical.
 
@@ -705,11 +505,11 @@ Mistakes are forgivable; pacing is what matters.
 - ❌ Showing the sign-in flow at the start. Already-signed-in
   dashboard is the cold open. Cuts ~10s of friction.
 - ❌ Using a real patient name. Use `JS` initials (or your own).
-- ❌ Logo splash card at the start. Wastes 3s the HN reader doesn't
+- ❌ Logo splash card at the start. Wastes 3s the viewer doesn't
   have. Open cold on the dashboard.
 - ❌ Recording at 1920×1080 in full-screen. 1280×720 windowed is
   sharper at HN-thumbnail resolution and embeds cleanly on YouTube.
-- ❌ Background music. Voiceover only. HN audience watches with sound
+- ❌ Background music. Voiceover only. Tech-curious viewers watch with sound
   ON for instructional clips; music distracts.
 
 **After the take:**
@@ -719,7 +519,7 @@ Mistakes are forgivable; pacing is what matters.
 2. Export as MP4, H.264, 1280×720, target file size <8MB
    (HandBrake or `ffmpeg -crf 28` does this in one pass).
 3. Save to `apps/web/public/screencast.mp4`.
-4. ALSO upload to YouTube as **unlisted** — HN preview embeds
+4. ALSO upload to YouTube as **unlisted** — Reddit + Twitter previews embed
    YouTube cleanly, MP4-from-domain works but is jankier.
 5. Update README to reference whichever URL renders better
    (YouTube unlisted is usually the answer).
@@ -727,7 +527,7 @@ Mistakes are forgivable; pacing is what matters.
 ### What NOT to do
 
 - **Don't add a logo splash card at the start.** Wastes 3 seconds the
-  HN reader doesn't have.
+  viewer doesn't have.
 - **Don't show the sign-in flow.** Already-signed-in dashboard is
   the start state. Sign-in is interesting to clinicians, not to HN
   readers.
@@ -772,7 +572,7 @@ Pick whichever feels less stressful to record. Both work.
 **Goal:** First 10 active beta clinics actually using PTowl weekly.
 Not signups — clinics that come back next week and the week after.
 
-**Bias:** Personal channels first. Cold outreach second. Hacker News
+**Bias:** Personal channels first. Cold outreach second. Online communities
 last (it's a flash, not a flywheel).
 
 ### Unblock list (read this first)
@@ -871,7 +671,7 @@ Follow up by email in 3 days.
 
 ### Channel 3 — Reddit (cold but warm-ish)
 
-After Show HN OR independently. Templates already in the
+Independently or alongside outreach. Templates already in the
 "Cross-post templates" section above for these subreddits:
 
 - r/physicaltherapy
@@ -962,7 +762,7 @@ you have:
   build under the no-new-code rule)?
 
 You only need 10. That's it. You don't need to go viral. You don't
-need HN to put you on the front page. **Ten clinics that come back
+need a viral spike to put you on the map. **Ten clinics that come back
 next week and the week after** is the entire game right now.
 
 ---
@@ -1047,7 +847,7 @@ provider clinics, AI-assisted drafting. Not before.
 - You built and shipped a real product as a solo founder.
 - The repo is open-source under AGPL-3.0 (revealed at launch, not
   marketed before).
-- HN goodwill is earned by responsiveness in the comment thread, not
+- Online-community goodwill is earned by responsiveness in reply threads, not
   by the post copy.
 - The first paying clinic is one comment thread or one walk-in away.
 - Then close the laptop and eat dinner. The work continues tomorrow.

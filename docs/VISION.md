@@ -267,7 +267,7 @@ Honest roadmap. Each item flagged with rough sequencing or "deferred."
 - **AI-assisted schedule creation** — provider types "ankle sprain
   6 weeks" → Cloudflare AI binding (already in `wrangler.jsonc`)
   drafts a template + reminder copy. Saves ~2 minutes per schedule.
-  Magical first-impression for press / Show HN. **Deferred** to after
+  Magical first-impression for press. **Deferred** to after
   the first 50 active clinics validate the manual flow.
 - **SMS reminders + 2-way reply** — Twilio webhook → Worker. Patient
   gets reminder, replies "C" to confirm or "R" to reschedule.
@@ -407,7 +407,7 @@ support email.
   first-50-clinics scale)
 - Status page (Upptime fork, ~10 min user-side, deferred)
 - Real testimonials, customer counts, press mentions (will follow
-  Show HN naturally — don't fake)
+  real launches naturally — don't fake)
 - Analytics measurement (CF Web Analytics, partial — needs
   verification post-launch)
 
@@ -510,7 +510,7 @@ doesn't lose them.
    to send (Phase 9).
 5. **Public Clerk production cutover timing.** Currently deferred.
    Trigger: when we want `clerk.ptowl.com` (not the dev instance) in
-   OAuth popups for the Show HN launch.
+   OAuth popups for the production launch.
 6. **PII detection on patient initials inputs.** Worth doing because
    random people will try to type real names. Library: `compromise`
    or a regex on `^[A-Z][a-z]+\s+[A-Z][a-z]+$`.
@@ -528,7 +528,7 @@ Append-only. Date + one sentence. Newest at the bottom.
   tool for therapy-clinic schedule generation.
 - **2026-05-03** — Chose AGPL-3.0 over MIT/Apache to discourage
   drive-by SaaS rip-offs while keeping community adoption open.
-- **2026-05-03** — Public launch deferred until coordinated Show HN
+- **2026-05-03** — Public launch deferred until coordinated rollout
   moment.
 - **2026-05-03** — Patient-facing magic-link schedule view picked as
   the next feature to build (Phase 5).
