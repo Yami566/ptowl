@@ -1,29 +1,25 @@
-import { SignInButton, SignUpButton } from '@clerk/clerk-react';
-
 /**
  * Auth widget rendered on the landing page.
  *
- * Renders two redirect-mode Clerk buttons that send the visitor to
- * accounts.ptowl.com (Clerk's hosted Account Portal on our first-party
- * subdomain) for the actual sign-in / sign-up flow. After auth, Clerk
- * sends them back to https://ptowl.com per the after_sign_in_url
- * configured in the Clerk dashboard, where AuthContext forwards them
- * to /dashboard.
+ * Plain anchor tags pointing directly at accounts.ptowl.com (Clerk's
+ * hosted Account Portal on our first-party subdomain). On click, the
+ * browser navigates there for the actual sign-in / sign-up flow.
+ * After auth, Clerk sends the visitor back to https://ptowl.com per
+ * the after_sign_in_url configured in the Clerk dashboard, where
+ * AuthContext forwards them to /dashboard.
  *
- * Why this shape (vs. the prior embedded <SignIn /> widget):
- *   1. The embedded widget pulls additional code chunks from clerk.com
- *      on demand. Privacy-focused ad-blockers (uBlock Origin, Brave
- *      Shields, EasyPrivacy lists) commonly block clerk.com hosts,
- *      which left a blank auth card on the landing page for ~1-3% of
- *      privacy-conscious visitors (notably the HN audience).
- *   2. <SignInButton mode="redirect"> renders directly from the
- *      bundled SDK — no on-demand chunk fetch is required. On click,
- *      the SDK navigates the browser to accounts.ptowl.com which is
- *      a CNAME to Clerk under our zone — first-party from the
- *      browser's perspective, so ad-blockers leave it alone.
- *   3. accounts.ptowl.com hosts the same Clerk auth experience the
- *      embedded widget would have shown. Same providers, same
- *      localization (Welcome back, Doctor Hoo.), same flow.
+ * Why anchors (not Clerk's <SignInButton> component):
+ *   1. Reliability: anchor tags with hrefs are browser-native — they
+ *      work pre-JS-hydration, work if Clerk's SDK is blocked entirely
+ *      by an ad-blocker, and don't depend on a click-handler getting
+ *      cloned-and-injected onto a child button (which was failing for
+ *      some users).
+ *   2. Same destination: accounts.ptowl.com is a CNAME to Clerk under
+ *      our zone — first-party from the browser's perspective, so
+ *      ad-blockers leave it alone.
+ *   3. Same UX: visitor sees a button, clicks, lands on Clerk's
+ *      hosted sign-in page with all configured providers (Google +
+ *      email/password) and our owl-themed localization.
  *
  * Configuration is owned upstream:
  *   - apps/web/src/main.tsx — ClerkProvider with publishableKey +
@@ -47,17 +43,13 @@ export function AuthWidget() {
         margin: '0 auto',
       }}
     >
-      <SignInButton mode="redirect">
-        <button type="button" style={primaryStyles}>
-          <GoogleGIcon />
-          <span>Sign in</span>
-        </button>
-      </SignInButton>
-      <SignUpButton mode="redirect">
-        <button type="button" style={secondaryStyles}>
-          Create an account
-        </button>
-      </SignUpButton>
+      <a href="https://accounts.ptowl.com/sign-in" style={primaryStyles}>
+        <GoogleGIcon />
+        <span>Sign in</span>
+      </a>
+      <a href="https://accounts.ptowl.com/sign-up" style={secondaryStyles}>
+        Create an account
+      </a>
       <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>
     </div>
   );
@@ -78,6 +70,9 @@ const primaryStyles: React.CSSProperties = {
   cursor: 'pointer',
   width: '100%',
   fontFamily: 'inherit',
+  textDecoration: 'none',
+  textAlign: 'center',
+  boxSizing: 'border-box',
 };
 
 /**
@@ -124,6 +119,9 @@ function GoogleGIcon() {
 }
 
 const secondaryStyles: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   padding: '0.875rem 1.5rem',
   background: 'var(--white)',
   color: 'var(--green-dark)',
@@ -134,6 +132,9 @@ const secondaryStyles: React.CSSProperties = {
   cursor: 'pointer',
   width: '100%',
   fontFamily: 'inherit',
+  textDecoration: 'none',
+  textAlign: 'center',
+  boxSizing: 'border-box',
 };
 
 const trustNoteStyles: React.CSSProperties = {
