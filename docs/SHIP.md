@@ -668,6 +668,62 @@ and swap the README link to the YouTube URL. HN posts with YouTube
 embeds get noticeably more click-through than self-hosted MP4s, even
 if the video is identical.
 
+### Shot-by-shot recording card (press record, follow this)
+
+**The card.** Each row is one shot. Total target: 30 seconds. Read the
+voiceover line as you do the action; voiceover length is roughly
+calibrated to the time slot. If you're new to recording, do shot 1
+through shot 7 in order without stopping — single take is fine.
+Mistakes are forgivable; pacing is what matters.
+
+| #   | Time            | What's on screen                                                                                | What you do                                                                             | Voiceover                                                                                     |
+| --- | --------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | `00:00 – 00:03` | Dashboard, signed in, **empty schedule list**                                                   | Just hold still                                                                         | "Most clinic schedules take thirty clicks."                                                   |
+| 2   | `00:03 – 00:06` | Same dashboard                                                                                  | Press **`2`** on the keyboard                                                           | "PTowl takes five keypresses."                                                                |
+| 3   | `00:06 – 00:11` | Initials modal pops open ("Sports PT" preset selected)                                          | Type **`J`** then **`S`** (auto-submits on the second letter)                           | "Two letters. Real names never enter the system — PTowl maps them to a sports-figure alias."  |
+| 4   | `00:11 – 00:18` | Schedule preview overlay slides in: 12 sessions on a calendar grid, "Walt Frazier" alias at top | Don't click — let the calendar render visibly                                           | "Twelve weeks of sessions, generated. No more clicking through a calendar to place each one." |
+| 5   | `00:18 – 00:23` | Schedule still visible                                                                          | Click **`Print`** button (top-right of the schedule view); browser print dialog appears | "Print, hand it over."                                                                        |
+| 6   | `00:23 – 00:28` | Close the print dialog (Cancel); back on the schedule                                           | Click **`Share ▾`** → click **`Copy patient link`**                                     | "Or share the magic link — patient sees their alias on top, never their real name."           |
+| 7   | `00:28 – 00:30` | Navigate back to ptowl.com homepage                                                             | Just land on the homepage                                                               | "Free during beta. ptowl dot com."                                                            |
+
+**Single-take rules of thumb:**
+
+- Don't narrate every click ("now I'm going to click this") — let the
+  action speak.
+- If you stumble on a word, keep going. The cut point is at the END
+  of the take, not mid-shot.
+- The voiceover lines above total ~85 spoken syllables → ~25 seconds
+  at a normal speaking pace. The remaining 5s is breathing room
+  between shots.
+- Don't worry about background noise unless it's a fire alarm. HN
+  forgives.
+- Record with **headphones in** so the laptop's built-in mic doesn't
+  pick up speaker feedback if you're playing music.
+
+**Common mistakes to avoid (mistakes burn 2-3s of your 30):**
+
+- ❌ Showing the sign-in flow at the start. Already-signed-in
+  dashboard is the cold open. Cuts ~10s of friction.
+- ❌ Using a real patient name. Use `JS` initials (or your own).
+- ❌ Logo splash card at the start. Wastes 3s the HN reader doesn't
+  have. Open cold on the dashboard.
+- ❌ Recording at 1920×1080 in full-screen. 1280×720 windowed is
+  sharper at HN-thumbnail resolution and embeds cleanly on YouTube.
+- ❌ Background music. Voiceover only. HN audience watches with sound
+  ON for instructional clips; music distracts.
+
+**After the take:**
+
+1. Trim head + tail in the recording tool (Cmd-Shift-5's built-in
+   trimmer on macOS, OBS clip editor, etc.).
+2. Export as MP4, H.264, 1280×720, target file size <8MB
+   (HandBrake or `ffmpeg -crf 28` does this in one pass).
+3. Save to `apps/web/public/screencast.mp4`.
+4. ALSO upload to YouTube as **unlisted** — HN preview embeds
+   YouTube cleanly, MP4-from-domain works but is jankier.
+5. Update README to reference whichever URL renders better
+   (YouTube unlisted is usually the answer).
+
 ### What NOT to do
 
 - **Don't add a logo splash card at the start.** Wastes 3 seconds the
