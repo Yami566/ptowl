@@ -14,15 +14,16 @@ explicitly NOT a HIPAA-secure system).
 
 ## The doc library
 
-Four canonical docs replace the old ~30-doc tree. Each is self-contained
+Five canonical docs cover the project end-to-end. Each is self-contained
 and cross-linked.
 
-| Doc                                    | Purpose                                                                                                                                                                          |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **[docs/VISION.md](./docs/VISION.md)** | Strategy, audience, locked decisions, market positioning, pricing, roadmap. The "why" and "for whom."                                                                            |
-| **[docs/BUILD.md](./docs/BUILD.md)**   | Engineering reference: stack, architecture, repo layout, deploy paths, CI gates, self-host, Clerk setup, subprocessors. The "how it's built."                                    |
-| **[docs/SHIP.md](./docs/SHIP.md)**     | Launch playbook: T-24h → T+24h checklist, Show HN draft + 11 comment defenses, cross-post templates, screencast script, 5-channel beta outreach. The "how it gets out the door." |
-| **[docs/RUN.md](./docs/RUN.md)**       | Operations handbook: edge hardening, monitoring, disaster recovery, open security findings, common gotchas. The "how to keep it healthy."                                        |
+| Doc                                          | Purpose                                                                                                                                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **[docs/VISION.md](./docs/VISION.md)**       | Strategy, audience, locked decisions, market positioning, pricing, roadmap. The "why" and "for whom."                                                                            |
+| **[docs/BUILD.md](./docs/BUILD.md)**         | Engineering reference: stack, architecture, repo layout, deploy paths, CI gates, self-host, Clerk setup, subprocessors. The "how it's built."                                    |
+| **[docs/SHIP.md](./docs/SHIP.md)**           | Launch playbook: T-24h → T+24h checklist, Show HN draft + 11 comment defenses, cross-post templates, screencast script, 5-channel beta outreach. The "how it gets out the door." |
+| **[docs/RUN.md](./docs/RUN.md)**             | Operations handbook: edge hardening, monitoring, disaster recovery, open security findings, common gotchas. The "how to keep it healthy."                                        |
+| **[docs/OPERATING.md](./docs/OPERATING.md)** | Development posture: 6-Q Discovery cap, PR-gate for prod deploys, Cost + Compliance lenses, 8-persona checklist, 6 milestone gates. The "how we collaborate."                    |
 
 Standard project files at the repo root: [CONTRIBUTING.md](./CONTRIBUTING.md),
 [SECURITY.md](./SECURITY.md), [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md),
