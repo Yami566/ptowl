@@ -34,11 +34,11 @@
     ]
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.6.0",
-    "@commitlint/config-conventional": "^19.6.0",
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
     "@playwright/test": "^1.58.2",
     "husky": "^9.1.7",
-    "lint-staged": "^15.2.10",
+    "lint-staged": "^17.0.2",
     "prettier": "^3.4.2"
   }
 }
