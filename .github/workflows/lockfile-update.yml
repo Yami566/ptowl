@@ -1,11 +1,16 @@
 name: Update pnpm-lock.yaml
 
-# One-shot workflow_dispatch helper. Runs pnpm install with
-# --no-frozen-lockfile so it can regenerate the lockfile after deps were
-# added directly to package.json (typical when there is no local Node
-# toolchain). Commits the resulting lockfile back to main so Cloudflare
-# Workers Builds (which uses frozen-lockfile semantics) can install
-# cleanly on subsequent pushes.
+# Workflow_dispatch helper. Runs pnpm install with --no-frozen-lockfile
+# so it can regenerate the lockfile after deps were added directly to
+# package.json (typical when there is no local Node toolchain). Commits
+# the resulting lockfile back to the SAME branch the workflow was
+# dispatched against so Cloudflare Workers Builds (which uses
+# frozen-lockfile semantics) can install cleanly on subsequent pushes.
+#
+# Push target = the workflow's caller ref. Triggering against `main` is
+# blocked by branch protection (PR-required); use a feature branch and
+# the workflow commits the lockfile change to that branch, after which
+# you open a PR. Aligns with the OPERATING.md Tier 2 PR-flow rule.
 
 on:
   workflow_dispatch:
@@ -54,4 +59,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add pnpm-lock.yaml
           git commit -m "chore: regenerate pnpm-lock.yaml after dep changes"
-          git push origin HEAD:main
+          git push origin HEAD:${{ github.ref_name }}
