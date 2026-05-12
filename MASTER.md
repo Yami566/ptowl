@@ -5,6 +5,7 @@
 > [docs/VISION.md](docs/VISION.md) and be productive in one prompt.
 >
 > Defers to:
+>
 > - [docs/VISION.md](docs/VISION.md) — what & for whom (positioning, audience, locked decisions, pricing).
 > - [docs/BUILD.md](docs/BUILD.md) — how the code is laid out.
 > - [docs/OPERATING.md](docs/OPERATING.md) — dev posture, working agreements.
@@ -32,20 +33,20 @@ See [docs/VISION.md](docs/VISION.md) for why.
 
 ## Stack
 
-| Layer | Choice | Why |
-| --- | --- | --- |
-| DNS + WAF + CDN | Cloudflare | One pane of glass, edge-fast, cheap. |
-| Frontend hosting | Cloudflare Workers Static Assets (primary) + Pages (fallback) | Same network as the API; no third-party hop. |
-| API runtime | Cloudflare Workers (Hono) | Same edge; no cold starts; per-request pricing. |
-| Database | Cloudflare D1 | SQLite on the edge; 7-day Time Travel free. |
-| Object storage | Cloudflare R2 | S3-compatible; no egress fees. |
-| AI inference | Workers AI (`@cf/meta/llama-3.1-8b-instruct`) | For clinic-timezone inference from address. |
-| Auth | Clerk (`clerk.ptowl.com` custom domain) | Drop-in, MFA + Google OAuth; JWKS-based verify. |
-| Outbound email | MailChannels (`relay.mailchannels.net`) | Free-tier for Cloudflare Workers; transactional only. |
-| Calendar export | `ical-generator` package | RFC-5545 .ics out of the box. |
-| Bot protection | Cloudflare Turnstile | Captcha for auth-sensitive endpoints. |
-| CI/CD | GitHub Actions | Lockfile-driven, deploy on push to `main`. |
-| Analytics | Cloudflare Web Analytics | First-party, privacy-friendly, no cookie banner. |
+| Layer            | Choice                                                        | Why                                                   |
+| ---------------- | ------------------------------------------------------------- | ----------------------------------------------------- |
+| DNS + WAF + CDN  | Cloudflare                                                    | One pane of glass, edge-fast, cheap.                  |
+| Frontend hosting | Cloudflare Workers Static Assets (primary) + Pages (fallback) | Same network as the API; no third-party hop.          |
+| API runtime      | Cloudflare Workers (Hono)                                     | Same edge; no cold starts; per-request pricing.       |
+| Database         | Cloudflare D1                                                 | SQLite on the edge; 7-day Time Travel free.           |
+| Object storage   | Cloudflare R2                                                 | S3-compatible; no egress fees.                        |
+| AI inference     | Workers AI (`@cf/meta/llama-3.1-8b-instruct`)                 | For clinic-timezone inference from address.           |
+| Auth             | Clerk (`clerk.ptowl.com` custom domain)                       | Drop-in, MFA + Google OAuth; JWKS-based verify.       |
+| Outbound email   | MailChannels (`relay.mailchannels.net`)                       | Free-tier for Cloudflare Workers; transactional only. |
+| Calendar export  | `ical-generator` package                                      | RFC-5545 .ics out of the box.                         |
+| Bot protection   | Cloudflare Turnstile                                          | Captcha for auth-sensitive endpoints.                 |
+| CI/CD            | GitHub Actions                                                | Lockfile-driven, deploy on push to `main`.            |
+| Analytics        | Cloudflare Web Analytics                                      | First-party, privacy-friendly, no cookie banner.      |
 
 Locked decisions about the stack live in [docs/VISION.md](docs/VISION.md#locked-decisions-do-not-relitigate).
 Do not relitigate them here.
@@ -54,18 +55,18 @@ Do not relitigate them here.
 
 ## Service map (where each piece is configured)
 
-| Service | Config location | Owner action when changing |
-| --- | --- | --- |
-| Cloudflare Workers (API) | [apps/api/wrangler.jsonc](apps/api/wrangler.jsonc) | Wrangler deploy via GH Actions. |
-| Cloudflare Workers (web assets) | [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc) | Same. |
-| D1 schema | [apps/api/src/migrations/](apps/api/src/migrations/) | `wrangler d1 migrations apply` (auto in deploy.yml). |
-| R2 buckets | Cloudflare dashboard → R2 → `ptowl-logos`, `ptowl-logos-staging` | Manual create with `wrangler r2 bucket create`. |
-| DNS for `ptowl.com` | Cloudflare dashboard → DNS | Manual via dashboard. |
-| Clerk auth | Clerk dashboard | URLs, providers, custom domain. |
-| MailChannels | MailChannels console | API key + DNS for `ptowl.com`. |
-| GitHub Actions | [.github/workflows/](.github/workflows/) | Edit in repo; secrets in GH repo settings. |
-| CSP / security headers | [apps/web/public/_headers](apps/web/public/_headers) | Edit + redeploy. |
-| WAF + rate limits | Cloudflare dashboard → Security | Manual via dashboard. |
+| Service                         | Config location                                                  | Owner action when changing                           |
+| ------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| Cloudflare Workers (API)        | [apps/api/wrangler.jsonc](apps/api/wrangler.jsonc)               | Wrangler deploy via GH Actions.                      |
+| Cloudflare Workers (web assets) | [apps/web/wrangler.jsonc](apps/web/wrangler.jsonc)               | Same.                                                |
+| D1 schema                       | [apps/api/src/migrations/](apps/api/src/migrations/)             | `wrangler d1 migrations apply` (auto in deploy.yml). |
+| R2 buckets                      | Cloudflare dashboard → R2 → `ptowl-logos`, `ptowl-logos-staging` | Manual create with `wrangler r2 bucket create`.      |
+| DNS for `ptowl.com`             | Cloudflare dashboard → DNS                                       | Manual via dashboard.                                |
+| Clerk auth                      | Clerk dashboard                                                  | URLs, providers, custom domain.                      |
+| MailChannels                    | MailChannels console                                             | API key + DNS for `ptowl.com`.                       |
+| GitHub Actions                  | [.github/workflows/](.github/workflows/)                         | Edit in repo; secrets in GH repo settings.           |
+| CSP / security headers          | [apps/web/public/\_headers](apps/web/public/_headers)            | Edit + redeploy.                                     |
+| WAF + rate limits               | Cloudflare dashboard → Security                                  | Manual via dashboard.                                |
 
 ---
 
@@ -74,15 +75,15 @@ Do not relitigate them here.
 All secrets are managed via Cloudflare Worker secrets (`wrangler secret put NAME`)
 unless noted. None should ever appear in committed files.
 
-| Secret | Used by | How to rotate | Notes |
-| --- | --- | --- | --- |
-| `JWT_SECRET` | API — signs internal unsubscribe tokens | `wrangler secret put JWT_SECRET --env production`. 64-char hex. | Rotating invalidates any in-flight unsubscribe links. |
-| `ADMIN_EMAIL` | API — destination for admin notifications | `wrangler secret put ADMIN_EMAIL --env production`. | Plain email address. |
-| `EMAIL_API_KEY` | API — MailChannels send | Generate new key in MailChannels console → `wrangler secret put EMAIL_API_KEY --env production` → revoke old. | Cron silently no-ops if missing — safe default. |
-| `EMAIL_ENCRYPTION_KEY` | API — AES-GCM for patient emails in D1 | One-time generate (32 bytes base64) → `wrangler secret put EMAIL_ENCRYPTION_KEY --env production`. **Do not rotate** without re-encrypting existing rows. | Loss = unreadable patient emails. Worth a personal backup. |
-| `TURNSTILE_SECRET_KEY` | API — verifies Turnstile challenges | Regenerate in CF dashboard → Turnstile → `wrangler secret put TURNSTILE_SECRET_KEY --env production`. | Public site key is in frontend; this is the server-side. |
-| `CLOUDFLARE_API_TOKEN` | GitHub Actions deploy | CF dashboard → My Profile → API Tokens → recreate → GH repo settings → Secrets. | Scope: Workers Edit + D1 Edit + R2 Edit on the ptowl account. |
-| `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions deploy | CF dashboard → right sidebar → Account ID → GH repo settings. | Not secret, but kept out of the workflow file for clarity. |
+| Secret                  | Used by                                   | How to rotate                                                                                                                                             | Notes                                                         |
+| ----------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `JWT_SECRET`            | API — signs internal unsubscribe tokens   | `wrangler secret put JWT_SECRET --env production`. 64-char hex.                                                                                           | Rotating invalidates any in-flight unsubscribe links.         |
+| `ADMIN_EMAIL`           | API — destination for admin notifications | `wrangler secret put ADMIN_EMAIL --env production`.                                                                                                       | Plain email address.                                          |
+| `EMAIL_API_KEY`         | API — MailChannels send                   | Generate new key in MailChannels console → `wrangler secret put EMAIL_API_KEY --env production` → revoke old.                                             | Cron silently no-ops if missing — safe default.               |
+| `EMAIL_ENCRYPTION_KEY`  | API — AES-GCM for patient emails in D1    | One-time generate (32 bytes base64) → `wrangler secret put EMAIL_ENCRYPTION_KEY --env production`. **Do not rotate** without re-encrypting existing rows. | Loss = unreadable patient emails. Worth a personal backup.    |
+| `TURNSTILE_SECRET_KEY`  | API — verifies Turnstile challenges       | Regenerate in CF dashboard → Turnstile → `wrangler secret put TURNSTILE_SECRET_KEY --env production`.                                                     | Public site key is in frontend; this is the server-side.      |
+| `CLOUDFLARE_API_TOKEN`  | GitHub Actions deploy                     | CF dashboard → My Profile → API Tokens → recreate → GH repo settings → Secrets.                                                                           | Scope: Workers Edit + D1 Edit + R2 Edit on the ptowl account. |
+| `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions deploy                     | CF dashboard → right sidebar → Account ID → GH repo settings.                                                                                             | Not secret, but kept out of the workflow file for clarity.    |
 
 There is no Stripe / LemonSqueezy secret yet because paid tiers are
 gated past 50 active clinics (see VISION.md).
@@ -156,6 +157,45 @@ that's the JWKS issuer, decoupled from where the sign-in form renders.
 auto-runs typecheck → unit tests → build → D1 migrations → API deploy →
 frontend fallback deploy. ~5–8 minutes.
 
+### 5a. Rapid finalize (one command)
+
+After a fresh launch — or any time you need to re-verify the
+launch-side configuration — run the bundled automation script. It does
+the three tasks that have programmatic APIs (CF Web Analytics, MailChannels
+DNS records, Clerk Account Portal paths) and tells you what's left for
+manual rotation.
+
+```sh
+# Set these in your shell — never commit them.
+export CLOUDFLARE_API_TOKEN=<scopes: Account:Web Analytics Edit + Zone:DNS:Edit>
+export CLOUDFLARE_ACCOUNT_ID=<32-char hex, CF dashboard sidebar>
+export CLOUDFLARE_ZONE_ID=<32-char hex, ptowl.com → Overview>
+export MAILCHANNELS_DKIM_PUBLIC_KEY=<from MailChannels console>   # optional
+export CLERK_SECRET_KEY=sk_live_...                                # optional
+
+pnpm launch:finalize
+```
+
+What it does (see [scripts/finalize-launch.mjs](scripts/finalize-launch.mjs)):
+
+1. **Cloudflare Web Analytics** — creates a Web Analytics site for `ptowl.com`
+   if missing, extracts the beacon token, patches `apps/web/index.html`
+   replacing the `__CF_ANALYTICS_TOKEN__` placeholder. After it runs, you
+   commit + push the patched file to make the beacon live.
+2. **MailChannels DNS** — ensures SPF (with `relay.mailchannels.net`),
+   DKIM TXT at `mailchannels._domainkey`, and the Domain Lockdown TXT at
+   `_mailchannels` exist on the zone. Idempotent — re-running is safe.
+3. **Clerk paths** — PATCHes the production instance's sign-in / sign-up /
+   after-sign-in URLs to `https://ptowl.com/accounts/*`. Optional and only
+   runs when `CLERK_SECRET_KEY` is set.
+
+What it does NOT do (you must run manually):
+
+- Rotate the MailChannels API key — no management API. Rotate in their
+  console, then `cd apps/api && wrangler secret put EMAIL_API_KEY`.
+- Commit the patched `apps/web/index.html` — the script prints the
+  exact `git add && git commit` line to copy.
+
 ### 6. Smoke test
 
 - `https://ptowl.com` returns 200; HSTS + CSP headers present (`curl -sI`).
@@ -183,6 +223,7 @@ D1 Time Travel (5 min, 30-day window).
 ## Current status (as of this commit)
 
 **Live and healthy:**
+
 - All core scheduling flows (create, edit, share, print, .ics export).
 - Clerk auth (Google + email/password + MFA).
 - Patient magic-link share at `/p/<token>` with `.ics` and JSON views.
@@ -192,12 +233,14 @@ D1 Time Travel (5 min, 30-day window).
 - Email reminder cron (sends directly via MailChannels, no queue dependency).
 
 **Behind a flag / user-side action:**
+
 - MailChannels API key — must be set as `EMAIL_API_KEY` Worker secret for
   reminders to actually send. Code silently no-ops without it.
 - CF Web Analytics token — beacon script is in `index.html` with a
   placeholder; works as soon as the user pastes the real token.
 
 **Deferred (intentional, see VISION.md):**
+
 - Paid tiers (Solo $9 / Clinic $29) — gated past 50 active beta clinics.
 - LemonSqueezy payment integration.
 - Daily-digest reminder mode (`digest_mode` plumbing exists; scheduling not).
@@ -207,6 +250,7 @@ D1 Time Travel (5 min, 30-day window).
 - Status page (Upptime fork) — ~10 minutes user-side.
 
 **Known low-priority TODOs in code:**
+
 - Persist clinic timezone on profile rather than inferring per-request
   ([apps/api/src/services/reminders.ts:25](apps/api/src/services/reminders.ts#L25)).
 - Implement the daily digest dispatcher
