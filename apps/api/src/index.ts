@@ -211,7 +211,7 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     // Reminder scan runs every cron tick (15 min).
     ctx.waitUntil(
-      findAndEnqueueDueReminders(env).catch((err) =>
+      findAndSendDueReminders(env).catch((err) =>
         console.error('Reminder scan failed:', err instanceof Error ? err.message : err),
       ),
     );

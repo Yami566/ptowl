@@ -14,3 +14,13 @@ playwright-report/
 *.tsbuildinfo
 .turbo/
 .claude/
+
+# Session-artifact PTowl planning notes — kept local-only.
+# MASTER.md and STACK-TEMPLATE.md are intentionally tracked.
+PTOWL-CONTEXT.md
+PTOWL-LAUNCH-STATUS.md
+PTOWL-DEPLOYMENT-STEPS.md
+PTOWL-DEPLOYMENT-DRAFT.md
+PTOWL-MAILCHANNELS-LEMONSQUEEZY-SETUP.md
+PTOWL-FINAL-DEPLOYMENT-GUIDE.md
+.agent.md

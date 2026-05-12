@@ -12,36 +12,6 @@
     // (see scheduled() in src/index.ts).
     "crons": ["*/15 * * * *"]
   },
-  // Cloudflare Queue for outbound reminder emails. DISABLED for now —
-  // Queues require Workers Paid ($5/mo) and the email-reminder feature
-  // is deferred (see docs/AUTOMATION-PLAN.md "What we are NOT automating
-  // right now"). When re-enabling:
-  //   1. Upgrade to Workers Paid in the Cloudflare dashboard
-  //   2. wrangler queues create ptowl-reminders
-  //   3. wrangler queues create ptowl-reminders-dlq
-  //   4. wrangler queues create ptowl-reminders-staging
-  //   5. Uncomment the "queues" block below in BOTH the top-level config
-  //      and the env.staging block
-  // The Worker code is already defensive — env.EMAIL_QUEUE is optional
-  // (apps/api/src/types/env.ts) and the cron handler short-circuits when
-  // the binding is absent (apps/api/src/services/reminders.ts:62).
-  // "queues": {
-  //   "producers": [
-  //     {
-  //       "binding": "EMAIL_QUEUE",
-  //       "queue": "ptowl-reminders"
-  //     }
-  //   ],
-  //   "consumers": [
-  //     {
-  //       "queue": "ptowl-reminders",
-  //       "max_batch_size": 25,
-  //       "max_batch_timeout": 5,
-  //       "max_retries": 3,
-  //       "dead_letter_queue": "ptowl-reminders-dlq"
-  //     }
-  //   ]
-  // },
   "d1_databases": [
     {
       "binding": "DB",
@@ -111,25 +81,6 @@
       "ai": {
         "binding": "AI"
       },
-      // "queues" block disabled in staging too — see top-level config
-      // for the re-enable steps. Staging mirrors prod intentionally so
-      // we don't deploy to staging with a binding prod doesn't have.
-      // "queues": {
-      //   "producers": [
-      //     {
-      //       "binding": "EMAIL_QUEUE",
-      //       "queue": "ptowl-reminders-staging"
-      //     }
-      //   ],
-      //   "consumers": [
-      //     {
-      //       "queue": "ptowl-reminders-staging",
-      //       "max_batch_size": 25,
-      //       "max_batch_timeout": 5,
-      //       "max_retries": 3
-      //     }
-      //   ]
-      // },
       "vars": {
         "ENVIRONMENT": "staging",
         "FRONTEND_URL": "https://staging.ptowl.pages.dev",
