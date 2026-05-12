@@ -1,32 +1,32 @@
 /**
  * Auth widget rendered on the landing page.
  *
- * Plain anchor tags pointing directly at accounts.ptowl.com (Clerk's
- * hosted Account Portal on our first-party subdomain). On click, the
- * browser navigates there for the actual sign-in / sign-up flow.
- * After auth, Clerk sends the visitor back to https://ptowl.com per
- * the after_sign_in_url configured in the Clerk dashboard, where
- * AuthContext forwards them to /dashboard.
+ * Same-origin anchor tags pointing at /accounts/sign-in and
+ * /accounts/sign-up, which mount Clerk's full <SignIn> / <SignUp>
+ * components inline (see apps/web/src/pages/SignInPage.tsx). The URL
+ * bar stays on ptowl.com end-to-end; no third-party domain hop.
  *
- * Why anchors (not Clerk's <SignInButton> component):
- *   1. Reliability: anchor tags with hrefs are browser-native — they
- *      work pre-JS-hydration, work if Clerk's SDK is blocked entirely
- *      by an ad-blocker, and don't depend on a click-handler getting
- *      cloned-and-injected onto a child button (which was failing for
- *      some users).
- *   2. Same destination: accounts.ptowl.com is a CNAME to Clerk under
- *      our zone — first-party from the browser's perspective, so
- *      ad-blockers leave it alone.
- *   3. Same UX: visitor sees a button, clicks, lands on Clerk's
- *      hosted sign-in page with all configured providers (Google +
- *      email/password) and our owl-themed localization.
+ * Why same-origin embedded Clerk (not subdomain redirect, not
+ * <SignInButton>):
+ *   1. Trust: visitors never leave ptowl.com during auth, which reads
+ *      cleaner for a SaaS launch and avoids the "huh, what's
+ *      clerk.ptowl.com?" question.
+ *   2. Reliability: <SignIn> / <SignUp> are real form components,
+ *      not click-handler wrappers. They render inline; ad-blockers
+ *      that previously clobbered <SignInButton> have no surface here.
+ *   3. Anchors-not-buttons: plain <a href> still works pre-hydration
+ *      and survives ad-blockers that touch click handlers.
  *
- * Configuration is owned upstream:
- *   - apps/web/src/main.tsx — ClerkProvider with publishableKey +
- *     localization. Untouched.
- *   - Clerk dashboard — sign_in_url, sign_up_url, after_sign_in_url
- *     already point at accounts.ptowl.com / ptowl.com. Verified via
- *     curl on the public /v1/environment endpoint on 2026-05-06.
+ * Configuration owned upstream:
+ *   - apps/web/src/main.tsx — ClerkProvider with signInUrl/signUpUrl
+ *     pinned to /accounts/sign-in and /accounts/sign-up so signed-out
+ *     redirects land on these paths.
+ *   - apps/web/src/App.tsx — wildcard routes /accounts/sign-in/*
+ *     and /accounts/sign-up/* so Clerk's internal step routing
+ *     (factor-one, verify-email) resolves under the mount path.
+ *   - Clerk dashboard — Sign-in URL / Sign-up URL / After sign-in URL
+ *     must be updated to ptowl.com/accounts/sign-in etc. once this
+ *     ships (one-time user-side task).
  */
 export function AuthWidget() {
   return (
@@ -43,11 +43,11 @@ export function AuthWidget() {
         margin: '0 auto',
       }}
     >
-      <a href="https://accounts.ptowl.com/sign-in" style={primaryStyles}>
+      <a href="/accounts/sign-in" style={primaryStyles}>
         <GoogleGIcon />
         <span>Sign in</span>
       </a>
-      <a href="https://accounts.ptowl.com/sign-up" style={secondaryStyles}>
+      <a href="/accounts/sign-up" style={secondaryStyles}>
         Create an account
       </a>
       <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>
