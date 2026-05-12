@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { App } from './App.js';
+import clerkStringsJson from './locale/clerk-strings.json';
 import './styles/globals.css';
 import './styles/responsive.css';
 import './styles/dark-theme.css';
@@ -47,66 +48,31 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 }
 
 // Clerk localization — owl-themed copy throughout the auth flow.
-// Replaces the default "Sign in to your application" strings with
-// PTowl voice ("Welcome back, Doctor Hoo." / "Pleased to meet you,
-// Doctor Hoo." / etc.). Keys are Clerk's standard localization
-// shape; any key not specified falls back to Clerk's English
-// default. Reference: https://clerk.com/docs/customization/localization
-const ptowlClerkLocalization = {
-  signIn: {
-    start: {
-      title: 'Welcome back, Doctor Hoo.',
-      subtitle: 'Sign in to print schedules in 5 keypresses.',
-      actionText: 'New here?',
-      actionLink: 'Make an account',
-    },
-    password: {
-      title: 'Enter your password',
-      subtitle: 'Welcome back. We saved your perch.',
-    },
-    emailCode: {
-      title: 'Check your email',
-      subtitle: 'A one-time code is on its way.',
-    },
-    forgotPassword: {
-      title: 'Forgot your password?',
-      subtitle: 'No judgement. Pick how to reset it.',
-    },
-    resetPassword: {
-      title: 'Set a new password',
-      subtitle: 'Make it memorable. Make it weird.',
-    },
-  },
-  signUp: {
-    start: {
-      title: 'Pleased to meet you, Doctor.',
-      subtitle: 'Free during beta. No credit card, ever.',
-      actionText: 'Already flying with us?',
-      actionLink: 'Sign in',
-    },
-    emailCode: {
-      title: 'Check your email',
-      subtitle: 'A one-time code is on its way.',
-    },
-    continue: {
-      title: 'Almost there',
-      subtitle: 'A couple more details and you are done.',
-    },
-  },
-  userButton: {
-    action__signOut: 'Sign out',
-    action__manageAccount: 'Manage account',
-  },
-  formFieldLabel__emailAddress: 'Email',
-  formFieldLabel__password: 'Password',
-  formButtonPrimary: 'Continue',
-  socialButtonsBlockButton: 'Continue with {{provider|titleize}}',
-  dividerText: 'or',
-  footerActionLink__useAnotherMethod: 'Try a different way',
-  badge__primary: 'Primary',
-  badge__verified: 'Verified',
-  badge__unverified: 'Unverified',
+// Source of truth lives in JSON so non-technical edits don't touch
+// code: apps/web/src/locale/clerk-strings.json.
+//
+// The JSON has a "Welcome back, Doctor {animal}." template plus an
+// `_animal_roster` array (Hoo, Vesper, Reed, Glen, Brook, Ember,
+// Birch, Cove, Lark, Sage). On each visit we substitute one of the
+// names so the sign-in greeting rotates — calming animals + one
+// mythical (phoenix as Ember), curated for a therapy-clinic context.
+const {
+  _animal_roster: animalRoster = ['Hoo'],
+  _meta,
+  _animal_notes,
+  ...clerkStrings
+} = clerkStringsJson as Record<string, unknown> & {
+  _animal_roster?: string[];
+  _meta?: unknown;
+  _animal_notes?: unknown;
 };
+void _meta;
+void _animal_notes;
+
+const animal = animalRoster[Math.floor(Math.random() * animalRoster.length)] || 'Hoo';
+const ptowlClerkLocalization = JSON.parse(
+  JSON.stringify(clerkStrings).replaceAll('{animal}', animal),
+);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -114,8 +80,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ClerkProvider
         publishableKey={CLERK_PUBLISHABLE_KEY}
         afterSignOutUrl="/"
-        signInUrl="/accounts/sign-in"
-        signUpUrl="/accounts/sign-up"
+        signInUrl="/accounts/signin"
+        signUpUrl="/accounts/signup"
         signInFallbackRedirectUrl="/dashboard"
         signUpFallbackRedirectUrl="/dashboard"
         localization={ptowlClerkLocalization}

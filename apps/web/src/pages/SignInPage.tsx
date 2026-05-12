@@ -3,14 +3,14 @@ import { useAuth } from '../contexts/AuthContext.js';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 
 /**
- * Sign-in page mounted at /accounts/sign-in (and any subpath Clerk routes
+ * Sign-in page mounted at /accounts/signin (and any subpath Clerk routes
  * to internally — factor-one, verify-email, etc.). The parent route in
  * App.tsx uses a wildcard suffix so Clerk's internal step routing works
  * inside the same mount path.
  *
  * Why a same-origin embedded component instead of an anchor redirect
  * to clerk.ptowl.com:
- *   - URL bar stays on the canonical domain (ptowl.com/accounts/sign-in).
+ *   - URL bar stays on the canonical domain (ptowl.com/accounts/signin).
  *   - No third-party domain hop in the auth flow (better trust signal).
  *   - Different from the prior failed attempt with <SignInButton> — that
  *     component wraps a child and injects a click handler that
@@ -34,14 +34,40 @@ export function SignInPage() {
   return (
     <main style={pageStyles}>
       <SignIn
-        path="/accounts/sign-in"
+        path="/accounts/signin"
         routing="path"
-        signUpUrl="/accounts/sign-up"
+        signUpUrl="/accounts/signup"
         fallbackRedirectUrl="/dashboard"
+        appearance={clerkAppearance}
       />
     </main>
   );
 }
+
+// Match the embedded Clerk form to PTOwl's brand tokens so the
+// sign-in screen looks first-party instead of using Clerk's default
+// purple. Green primary (--green-mid), orange accent for danger
+// states (--orange-mid), royal-violet for focus rings as a nod to
+// the dark-theme purple palette.
+const clerkAppearance = {
+  variables: {
+    colorPrimary: '#4caf50',
+    colorDanger: '#e53935',
+    colorSuccess: '#43a047',
+    colorWarning: '#ff7043',
+    colorTextOnPrimaryBackground: '#ffffff',
+    borderRadius: '0.5rem',
+    fontFamily: '"Outfit", system-ui, sans-serif',
+  },
+  elements: {
+    formButtonPrimary: {
+      backgroundColor: '#4caf50',
+      '&:hover': { backgroundColor: '#43a047' },
+      '&:focus': { boxShadow: '0 0 0 3px rgba(108, 71, 255, 0.35)' },
+    },
+    card: { boxShadow: '0 8px 32px rgba(15, 32, 39, 0.08)' },
+  },
+};
 
 const pageStyles: React.CSSProperties = {
   minHeight: '100vh',
