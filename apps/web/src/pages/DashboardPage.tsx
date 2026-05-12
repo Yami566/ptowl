@@ -1088,15 +1088,18 @@ const styles: Record<string, React.CSSProperties> = {
   },
   emptyKbd: {
     display: 'inline-block',
-    padding: '0.125rem 0.4rem',
+    minWidth: '1.6em',
+    padding: '0.2rem 0.55rem',
     background: 'var(--gray-light)',
     border: '1px solid var(--gray-mid)',
+    borderBottomWidth: '2px',
     borderRadius: '4px',
     fontFamily: 'var(--font-mono)',
-    fontSize: '0.85em',
+    fontSize: '0.95em',
     fontWeight: 600,
     color: 'var(--dark)',
     margin: '0 0.125rem',
+    textAlign: 'center' as const,
   },
 
   // Saved-schedule status chip (Active / Upcoming / Past)

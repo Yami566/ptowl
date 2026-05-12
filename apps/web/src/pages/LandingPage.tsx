@@ -44,24 +44,19 @@ function DemoCalendarSection() {
     dayGridPromise.then((m) => setDayGridPlugin(m.default));
   }, []);
 
-  if (!dayGridPlugin) return <div style={{ minHeight: '300px' }} />;
+  const placeholderStyles: React.CSSProperties = {
+    minHeight: '300px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'var(--gray-text)',
+    fontSize: '0.9rem',
+  };
+
+  if (!dayGridPlugin) return <div style={placeholderStyles}>Loading calendar preview…</div>;
 
   return (
-    <Suspense
-      fallback={
-        <div
-          style={{
-            minHeight: '300px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--gray-text)',
-          }}
-        >
-          Loading calendar...
-        </div>
-      }
-    >
+    <Suspense fallback={<div style={placeholderStyles}>Loading calendar preview…</div>}>
       <LazyFullCalendar
         plugins={[dayGridPlugin]}
         initialView="dayGridMonth"
@@ -303,7 +298,7 @@ export function LandingPage() {
             >
               <path
                 d="M12 2 L13.5 9.5 L22 11 L13.5 14.5 L12 22 L10.5 14.5 L2 11 L10.5 9.5 Z"
-                fill="#D97757"
+                style={{ fill: 'var(--orange-mid)' }}
               />
             </svg>
           </a>
@@ -319,7 +314,7 @@ export function LandingPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    background: 'linear-gradient(180deg, var(--green-bg) 0%, #ffffff 40%)',
+    background: 'linear-gradient(180deg, var(--green-bg) 0%, var(--white) 40%)',
     display: 'flex',
     flexDirection: 'column' as const,
   },
@@ -408,7 +403,7 @@ const styles: Record<string, React.CSSProperties> = {
     height: '32px',
     minWidth: '32px',
     background: 'var(--green-dark)',
-    color: 'white',
+    color: 'var(--white)',
     borderRadius: '6px',
     fontFamily: 'var(--font-mono)',
     fontWeight: 700,
