@@ -66,16 +66,22 @@
     <script type="module" src="/src/main.tsx"></script>
 
     <!--
-      Cloudflare Web Analytics
-      ─────────────────────────
-      Enabled via Pages dashboard auto-insert (no manual script needed):
-      Cloudflare → Workers & Pages → ptowl → Analytics & Logs →
-      Web Analytics → Enable. Auto-inserts the beacon at edge,
-      privacy-friendly, no cookies, no GDPR banner needed.
+      Cloudflare Web Analytics — belt-and-suspenders.
+      ────────────────────────────────────────────────
+      Two paths converge on the same beacon:
+        1. Dashboard auto-insert: Cloudflare → Workers & Pages → ptowl →
+           Web Analytics → Enable. Privacy-friendly, no cookies, no
+           GDPR banner.
+        2. Explicit script tag below — fires regardless of dashboard
+           setting, important for SPA route changes that auto-insert
+           sometimes misses.
 
-      If you prefer a manual <script> tag instead of dashboard auto-insert,
-      paste the snippet from the Web Analytics dashboard here.
+      The token is PUBLIC (renders in HTML for the browser to read) — safe
+      to commit once filled in. Get it from CF dashboard → Web Analytics
+      → ptowl.com → site token. Until then the placeholder no-ops.
     -->
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon='{"token": "__CF_ANALYTICS_TOKEN__"}'></script>
 
     <!--
       Tawk.to chat removed: the inline loader was blocked by the strict
