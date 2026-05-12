@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "commitlint": "commitlint",
+    "launch:finalize": "node scripts/finalize-launch.mjs",
     "prepare": "husky"
   },
   "engines": {
