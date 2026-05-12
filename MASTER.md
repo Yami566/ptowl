@@ -130,17 +130,58 @@ Cloudflare DNS for `ptowl.com`:
 - `TXT` `mailchannels._domainkey` → DKIM public key from MailChannels.
 - `TXT` `_mailchannels` → `v=mc1 cfid=<account-id>.workers.dev` (Domain Lockdown).
 
-### 3. Clerk dashboard URLs
+### 3. Clerk Account Portal paths
 
-After this PR lands, set in Clerk → Customization → Paths:
+The sign-in form lives at `ptowl.com/accounts/sign-in` (and sign-up at
+`/accounts/sign-up`) via embedded `<SignIn>` / `<SignUp>` components —
+see [apps/web/src/pages/SignInPage.tsx](apps/web/src/pages/SignInPage.tsx).
+The Clerk Backend needs to know that's where the form lives so its
+redirects don't bounce visitors off-domain.
 
-- Sign-in URL: `https://ptowl.com/accounts/sign-in`
-- Sign-up URL: `https://ptowl.com/accounts/sign-up`
-- After sign-in URL: `https://ptowl.com/dashboard`
-- After sign-up URL: `https://ptowl.com/dashboard`
+Three places have to agree:
 
-`CLERK_FRONTEND_API_URL` in wrangler.jsonc stays at `https://clerk.ptowl.com` —
-that's the JWKS issuer, decoupled from where the sign-in form renders.
+| Where                     | What                                                                                                     | How                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `apps/web/src/main.tsx`   | `ClerkProvider` props `signInUrl`, `signUpUrl`, `signInFallbackRedirectUrl`, `signUpFallbackRedirectUrl` | Already set in code — no action                   |
+| Clerk dashboard           | Component paths radios → "page on application domain" with the same paths                                | One-time dashboard click, see below               |
+| `apps/api/wrangler.jsonc` | `CLERK_FRONTEND_API_URL` = `https://clerk.ptowl.com` (the JWKS issuer)                                   | Stays put — decoupled from where the form renders |
+
+**Dashboard click recipe** (`dashboard.clerk.com` → PTowl → Production →
+Configure → Developers → Paths):
+
+For **`<SignIn />`**: select "Sign-in page on application domain" →
+enter `/accounts/sign-in`.
+
+For **`<SignUp />`**: select "Sign-up page on application domain" →
+enter `/accounts/sign-up`.
+
+For **"Signing Out"**: select "Path on application domain" → enter
+`/` (or `/accounts/sign-in` if you'd rather send signed-out visitors
+straight back to the form).
+
+Leave "Application paths → Home URL" blank (defaults to the apex).
+
+Clerk's dashboard banner notes that this page is being deprecated in
+favor of code-side configuration — our code-side config in `main.tsx`
+is already future-proof. The dashboard flip is the compat layer.
+
+**Automation path (Pro plan)**: the Clerk Backend API exposes
+`PATCH /v1/instance` for setting these URLs programmatically. The
+bundled `pnpm launch:finalize` script (see §5a) does this when
+`CLERK_SECRET_KEY` is exported — useful for re-applying config after
+an instance migration or for bootstrapping a sibling app.
+
+**Verify** by fetching Clerk's public environment endpoint after
+saving:
+
+```sh
+curl -s "https://clerk.ptowl.com/v1/environment" \
+  -H "Origin: https://ptowl.com" \
+  | python -c "import sys,json; e=json.load(sys.stdin)['display_config']; \
+    print('sign_in:', e['sign_in_url']); print('sign_up:', e['sign_up_url'])"
+```
+
+Should print URLs containing `/accounts/sign-in` and `/accounts/sign-up`.
 
 ### 4. Cloudflare Web Analytics
 
