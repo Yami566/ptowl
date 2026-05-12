@@ -13,7 +13,7 @@ import { calendarRoutes } from './routes/calendar.js';
 import { remindersRoutes } from './routes/reminders.js';
 import { onboardingRoutes } from './routes/onboarding.js';
 import {
-  findAndEnqueueDueReminders,
+  findAndSendDueReminders,
   processReminderMessage,
   type ReminderMessage,
 } from './services/reminders.js';
