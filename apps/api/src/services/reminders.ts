@@ -55,20 +55,18 @@ interface DueRow {
 }
 
 /**
- * Cron entry point. Scans for due 24h + 1h reminders and enqueues each
- * one. Uses a 15-minute window centered on the target offset.
+ * Cron entry point. Scans for due 24h + 1h reminders and sends each
+ * one directly. Uses a 15-minute window centered on the target offset.
  */
-export async function findAndEnqueueDueReminders(env: Env): Promise<{ enqueued: number }> {
-  if (!env.EMAIL_QUEUE) return { enqueued: 0 };
-
-  let enqueued = 0;
+export async function findAndSendDueReminders(env: Env): Promise<{ sent: number }> {
+  let sent = 0;
   for (const type of ['24h', '1h'] as const) {
-    enqueued += await scanAndEnqueueOne(env, type);
+    sent += await scanAndSendOne(env, type);
   }
-  return { enqueued };
+  return { sent };
 }
 
-async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> {
+async function scanAndSendOne(env: Env, type: ReminderType): Promise<number> {
   const offsetMs = (type === '24h' ? 24 : 1) * 60 * 60 * 1000;
   // 15-min half-window = 30-min full window. Cron runs every 15 min, so a
   // 30-min tolerance guarantees every appointment falls in at least one
@@ -169,8 +167,12 @@ async function scanAndEnqueueOne(env: Env, type: ReminderType): Promise<number> 
       clinicName: row.clinic_name || 'PT Appointment',
     };
 
-    await env.EMAIL_QUEUE!.send(message);
-    count++;
+    const ok = await processReminderMessage(env, message);
+    if (ok) {
+      count++;
+    } else {
+      console.error('Failed to send reminder for appointment', message.appointmentId);
+    }
   }
   return count;
 }

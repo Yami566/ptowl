@@ -35,7 +35,8 @@
   --off-white: #0F0A1A;
   --gray-light: #231A35;
   --gray-mid: #2D1F4E;
-  --gray-text: #A89BC2;
+  /* Lightened from #A89BC2 to clear WCAG AA against --off-white #0F0A1A. */
+  --gray-text: #C4B9D6;
   --dark: #E8E0F0;
   --dark-alt: #C8BDD8;
 

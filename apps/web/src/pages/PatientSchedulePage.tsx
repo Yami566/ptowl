@@ -150,6 +150,20 @@ export function PatientSchedulePage() {
   const upcoming = appointments.filter((a) => a.appointment_date >= today);
   const past = appointments.filter((a) => a.appointment_date < today);
 
+  // Three one-tap calendar subscribe targets, all derived from the
+  // same per-schedule .ics feed:
+  //   - Apple Calendar (and any client that honors webcal://) — opens
+  //     the OS Calendar app and prompts to subscribe.
+  //   - Google Calendar — official ?cid= deep link that adds the feed
+  //     as a subscribed calendar (auto-updates on schedule edits).
+  //   - Plain .ics download — Outlook, Android default, Fantastical,
+  //     and anyone who wants a one-shot import.
+  // Mirrors the clinic-side pattern in apps/web/src/pages/SchedulePage.tsx.
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ptowl.com';
+  const httpsIcsUrl = ics_url.startsWith('http') ? ics_url : `${origin}${ics_url}`;
+  const webcalUrl = httpsIcsUrl.replace(/^https?:\/\//, 'webcal://');
+  const googleCalUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(httpsIcsUrl)}`;
+
   return (
     <main style={styles.page}>
       <header style={styles.header}>
@@ -167,9 +181,31 @@ export function PatientSchedulePage() {
           {schedule.sessions_per_week}× per week · {schedule.duration_weeks} weeks ·{' '}
           {totalAppointments} sessions total
         </p>
-        <a href={ics_url} style={styles.ctaButton} aria-label="Add this schedule to your calendar">
-          📅 Add to my calendar
-        </a>
+        <div style={styles.calendarGroup} role="group" aria-label="Add to calendar">
+          <a
+            href={googleCalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.ctaButton}
+            aria-label="Subscribe in Google Calendar"
+          >
+            Add to Google Calendar
+          </a>
+          <a
+            href={webcalUrl}
+            style={styles.ctaButtonSecondary}
+            aria-label="Subscribe in Apple Calendar"
+          >
+            Add to Apple Calendar
+          </a>
+          <a
+            href={ics_url}
+            style={styles.ctaButtonTertiary}
+            aria-label="Download .ics file for Outlook or other calendars"
+          >
+            Download .ics (Outlook / other)
+          </a>
+        </div>
       </section>
 
       {upcoming.length > 0 && (
@@ -292,16 +328,52 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--gray-text)',
     marginBottom: '1.5rem',
   },
+  calendarGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    alignItems: 'stretch',
+  },
   ctaButton: {
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     background: 'var(--green-mid)',
     color: 'var(--white)',
-    padding: '0.875rem 1.5rem',
+    padding: '0.875rem 1.25rem',
     borderRadius: 'var(--radius-md)',
     fontSize: '1rem',
     fontWeight: 600,
     textDecoration: 'none',
     boxShadow: '0 4px 12px rgba(102, 187, 106, 0.25)',
+    minHeight: '44px',
+  },
+  ctaButtonSecondary: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'var(--white)',
+    color: 'var(--green-dark)',
+    padding: '0.75rem 1.25rem',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    textDecoration: 'none',
+    border: '1.5px solid var(--green-mid)',
+    minHeight: '44px',
+  },
+  ctaButtonTertiary: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
+    color: 'var(--gray-text)',
+    padding: '0.625rem 1rem',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    textDecoration: 'underline',
+    minHeight: '44px',
   },
   section: {
     marginBottom: '1.75rem',

@@ -49,6 +49,12 @@ const NotFoundPage = lazy(() =>
 const PatientSchedulePage = lazy(() =>
   import('./pages/PatientSchedulePage.js').then((m) => ({ default: m.PatientSchedulePage })),
 );
+const SignInPage = lazy(() =>
+  import('./pages/SignInPage.js').then((m) => ({ default: m.SignInPage })),
+);
+const SignUpPage = lazy(() =>
+  import('./pages/SignUpPage.js').then((m) => ({ default: m.SignUpPage })),
+);
 
 export function App() {
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -112,6 +118,12 @@ export function App() {
                 <Route path="/privacy" element={<PrivacyPolicyPage />} />
                 <Route path="/terms" element={<TermsOfServicePage />} />
                 <Route path="/security" element={<SecurityPage />} />
+                {/* Embedded Clerk sign-in / sign-up — same-origin so the
+                    URL bar stays on ptowl.com. Wildcard suffix is required
+                    so Clerk's internal step routing (factor-one, verify-
+                    email, etc.) resolves under the same mount path. */}
+                <Route path="/accounts/sign-in/*" element={<SignInPage />} />
+                <Route path="/accounts/sign-up/*" element={<SignUpPage />} />
 
                 {/* Protected routes — require authenticated user */}
                 <Route

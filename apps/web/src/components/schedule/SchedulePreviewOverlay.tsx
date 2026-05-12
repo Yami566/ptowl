@@ -114,8 +114,11 @@ export function SchedulePreviewOverlay({
         method: 'POST',
       });
       if (result.ok && result.data) {
-        const apiBase = window.location.origin.replace('ptowl.com', 'api.ptowl.com');
-        const url = `${apiBase}/api/v1/cal/${result.data.share_token}.ics`;
+        // API is mounted at /api/* on the canonical origin (see
+        // apps/api/wrangler.jsonc routes). The earlier api.ptowl.com
+        // subdomain rewrite never had DNS, so it returned a broken URL
+        // in production.
+        const url = `${window.location.origin}/api/v1/cal/${result.data.share_token}.ics`;
         setShareUrl(url);
         setShowSharePanel(true);
       }

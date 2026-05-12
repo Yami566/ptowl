@@ -13,7 +13,7 @@ import { calendarRoutes } from './routes/calendar.js';
 import { remindersRoutes } from './routes/reminders.js';
 import { onboardingRoutes } from './routes/onboarding.js';
 import {
-  findAndEnqueueDueReminders,
+  findAndSendDueReminders,
   processReminderMessage,
   type ReminderMessage,
 } from './services/reminders.js';
@@ -211,7 +211,7 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     // Reminder scan runs every cron tick (15 min).
     ctx.waitUntil(
-      findAndEnqueueDueReminders(env).catch((err) =>
+      findAndSendDueReminders(env).catch((err) =>
         console.error('Reminder scan failed:', err instanceof Error ? err.message : err),
       ),
     );

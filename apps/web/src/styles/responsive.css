@@ -122,9 +122,10 @@
   }
 
   .schedule-stat-card {
-    min-width: 60px !important;
+    min-width: 80px !important;
     padding: 0.375rem 0.5rem !important;
     font-size: 0.8rem !important;
+    overflow-wrap: break-word;
   }
 
   .schedule-table-wrap {
@@ -217,8 +218,8 @@
   }
 
   .landing-code-input {
-    font-size: 1.5rem !important;
-    letter-spacing: 0.5rem !important;
+    font-size: clamp(1rem, 4vw, 1.5rem) !important;
+    letter-spacing: 0.35rem !important;
   }
 }
 
