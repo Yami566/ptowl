@@ -92,7 +92,7 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
       <span
         className="ptowl-logo"
         style={{ display: 'inline-flex', alignItems: 'baseline', letterSpacing: gap }}
-        aria-label="PT OWL"
+        aria-label="PTOwl"
       >
         {/* P — orange */}
         <span
@@ -139,7 +139,7 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
           O
         </span>
 
-        {/* WL — green */}
+        {/* wl — green, lowercase to render the mark as "PTOwl" */}
         <span
           style={{
             fontFamily: 'var(--font-mono)',
@@ -148,7 +148,7 @@ export function OwlLogo({ size = 'md', linkTo }: OwlLogoProps) {
             color: 'var(--green-dark)',
           }}
         >
-          WL
+          wl
         </span>
 
         {/* Classic owl mascot — to the right of PTOWL */}

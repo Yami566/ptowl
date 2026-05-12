@@ -380,10 +380,10 @@ export function OwlCityScene({ size = 'md', className, showWordmark = false }: O
               />
             </text>
             <text x="191" y="58" fontSize="34" fill="#A5D6A7">
-              W
+              w
             </text>
             <text x="220" y="58" fontSize="34" fill="#A5D6A7">
-              L
+              l
             </text>
           </g>
 

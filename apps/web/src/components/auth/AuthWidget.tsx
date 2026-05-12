@@ -1,8 +1,8 @@
 /**
  * Auth widget rendered on the landing page.
  *
- * Same-origin anchor tags pointing at /accounts/sign-in and
- * /accounts/sign-up, which mount Clerk's full <SignIn> / <SignUp>
+ * Same-origin anchor tags pointing at /accounts/signin and
+ * /accounts/signup, which mount Clerk's full <SignIn> / <SignUp>
  * components inline (see apps/web/src/pages/SignInPage.tsx). The URL
  * bar stays on ptowl.com end-to-end; no third-party domain hop.
  *
@@ -19,13 +19,13 @@
  *
  * Configuration owned upstream:
  *   - apps/web/src/main.tsx — ClerkProvider with signInUrl/signUpUrl
- *     pinned to /accounts/sign-in and /accounts/sign-up so signed-out
+ *     pinned to /accounts/signin and /accounts/signup so signed-out
  *     redirects land on these paths.
- *   - apps/web/src/App.tsx — wildcard routes /accounts/sign-in/*
- *     and /accounts/sign-up/* so Clerk's internal step routing
+ *   - apps/web/src/App.tsx — wildcard routes /accounts/signin/*
+ *     and /accounts/signup/* so Clerk's internal step routing
  *     (factor-one, verify-email) resolves under the mount path.
  *   - Clerk dashboard — Sign-in URL / Sign-up URL / After sign-in URL
- *     must be updated to ptowl.com/accounts/sign-in etc. once this
+ *     must be updated to ptowl.com/accounts/signin etc. once this
  *     ships (one-time user-side task).
  */
 export function AuthWidget() {
@@ -43,11 +43,11 @@ export function AuthWidget() {
         margin: '0 auto',
       }}
     >
-      <a href="/accounts/sign-in" style={primaryStyles}>
+      <a href="/accounts/signin" style={primaryStyles}>
         <GoogleGIcon />
         <span>Sign in</span>
       </a>
-      <a href="/accounts/sign-up" style={secondaryStyles}>
+      <a href="/accounts/signup" style={secondaryStyles}>
         Create an account
       </a>
       <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>

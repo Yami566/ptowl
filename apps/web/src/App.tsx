@@ -122,8 +122,8 @@ export function App() {
                     URL bar stays on ptowl.com. Wildcard suffix is required
                     so Clerk's internal step routing (factor-one, verify-
                     email, etc.) resolves under the same mount path. */}
-                <Route path="/accounts/sign-in/*" element={<SignInPage />} />
-                <Route path="/accounts/sign-up/*" element={<SignUpPage />} />
+                <Route path="/accounts/signin/*" element={<SignInPage />} />
+                <Route path="/accounts/signup/*" element={<SignUpPage />} />
 
                 {/* Protected routes — require authenticated user */}
                 <Route
