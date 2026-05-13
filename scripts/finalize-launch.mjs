@@ -220,9 +220,12 @@ async function configureClerkPaths() {
   // the current instance's URLs. The exact endpoint surface evolves; we
   // PATCH the well-known fields and tolerate "field not editable" errors
   // by re-reading the instance after.
+  // No-hyphen forms — Clerk's validator strips hyphens from sign_in_url /
+  // sign_up_url and persists /accounts/signin and /accounts/signup. The
+  // React Router routes were renamed to match in PR #48.
   const desired = {
-    sign_in_url: 'https://ptowl.com/accounts/sign-in',
-    sign_up_url: 'https://ptowl.com/accounts/sign-up',
+    sign_in_url: 'https://ptowl.com/accounts/signin',
+    sign_up_url: 'https://ptowl.com/accounts/signup',
     after_sign_in_url: 'https://ptowl.com/dashboard',
     after_sign_up_url: 'https://ptowl.com/dashboard',
     home_url: 'https://ptowl.com',
@@ -242,23 +245,48 @@ async function configureClerkPaths() {
 
 // ─── main ────────────────────────────────────────────────────────────
 
+async function runStep(name, fn) {
+  try {
+    await fn();
+    return { name, ok: true };
+  } catch (err) {
+    console.log(`\n✗ ${name} failed: ${err.message}`);
+    return { name, ok: false, error: err.message };
+  }
+}
+
 async function main() {
   required('CLOUDFLARE_API_TOKEN');
   console.log('ptowl launch finalize\n─────────────────────');
 
-  await enableWebAnalytics();
-  await configureMailChannelsDns();
-  await configureClerkPaths();
+  // Per-task try-catch so a 403-on-Web-Analytics doesn't prevent the
+  // Clerk paths from being patched, etc. Designed for CI-friendliness.
+  const results = [];
+  results.push(await runStep('Web Analytics', enableWebAnalytics));
+  results.push(await runStep('MailChannels DNS', configureMailChannelsDns));
+  results.push(await runStep('Clerk paths', configureClerkPaths));
 
-  console.log('\n✓ all automatable tasks complete.');
-  console.log('Remaining manual steps:');
+  console.log('\n─────────────────────');
+  console.log('Summary:');
+  for (const r of results) {
+    console.log(`  ${r.ok ? '✓' : '✗'} ${r.name}${r.error ? ` — ${r.error}` : ''}`);
+  }
+
+  console.log('\nRemaining manual steps (no API exists):');
   console.log('  • Rotate MailChannels API key in their console, then:');
   console.log('      cd apps/api && wrangler secret put EMAIL_API_KEY');
   console.log('  • If apps/web/index.html was patched, commit + push:');
   console.log('      git add apps/web/index.html && git commit -m "chore(analytics): set CF Web Analytics token"');
+
+  // Non-zero exit only if EVERY step failed — partial success is OK.
+  const allFailed = results.every((r) => !r.ok);
+  if (allFailed) {
+    console.error('\n✗ all steps failed.');
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
-  console.error('\n✗ finalize failed:', err.message);
+  console.error('\n✗ unrecoverable error:', err.message);
   process.exit(1);
 });
