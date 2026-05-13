@@ -33,7 +33,7 @@ function createParticles(count: number) {
   return particles;
 }
 
-export function LoadingOverlay({ message = 'Loading...' }: LoadingOverlayProps) {
+export function LoadingOverlay({ message = 'Just a moment…' }: LoadingOverlayProps) {
   const particles = useMemo(() => createParticles(12), []);
 
   return (
@@ -46,17 +46,21 @@ export function LoadingOverlay({ message = 'Loading...' }: LoadingOverlayProps) 
             <span
               key={i}
               className="ptowl-sand"
-              style={{
-                '--sand-delay': `${p.delay}s`,
-                '--sand-x-start': `${p.xStart}px`,
-                '--sand-x-end': `${p.xEnd}px`,
-                '--sand-size': `${p.size}px`,
-              } as React.CSSProperties}
+              style={
+                {
+                  '--sand-delay': `${p.delay}s`,
+                  '--sand-x-start': `${p.xStart}px`,
+                  '--sand-x-end': `${p.xEnd}px`,
+                  '--sand-size': `${p.size}px`,
+                } as React.CSSProperties
+              }
             />
           ))}
 
           {/* The O — the hourglass itself */}
-          <span className="ptowl-hourglass-o" aria-hidden="true">O</span>
+          <span className="ptowl-hourglass-o" aria-hidden="true">
+            O
+          </span>
 
           {/* Sand pile at bottom — grows and shrinks */}
           <div className="ptowl-sand-pile" />
