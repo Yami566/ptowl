@@ -105,7 +105,7 @@ export function App() {
           <a href="#main-content" className="skip-to-main">
             Skip to main content
           </a>
-          <Suspense fallback={<LoadingOverlay message="Loading..." />}>
+          <Suspense fallback={<LoadingOverlay message="Just a moment…" />}>
             <ErrorBoundary>
               <Routes>
                 {/* Public routes — accessible without authentication */}
