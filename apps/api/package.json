@@ -15,7 +15,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply ptowl-db --remote"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.7.6",
+    "@hono/zod-validator": "^0.8.0",
     "@ptowl/shared": "workspace:*",
     "hono": "^4.6.0",
     "ical-generator": "^10.2.0",
