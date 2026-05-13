@@ -82,35 +82,25 @@ jobs:
           workingDirectory: apps/api
           command: deploy
 
-      # Frontend deploy — REDUNDANT BACKUP, intentionally non-fatal.
+      # Frontend deploy — REAL deploy path (not "fallback" anymore).
       #
-      # Why this step exists: on 2026-05-05 Cloudflare Pages git
-      # integration started failing intermittently. We added this CI
-      # step as a fallback path. Within hours CF Pages started working
-      # again and has been deploying every push reliably (~60s after
-      # the push).
+      # History: this step originally landed as a fallback for when
+      # Cloudflare Pages git integration was unreliable on 2026-05-05.
+      # It was marked continue-on-error because wrangler-action would
+      # intermittently fail to install wrangler when apps/web didn't
+      # pin it locally — npm tripped on pnpm's `workspace:*` protocol
+      # while trying `npm i wrangler@4`. The mask hid a real recurring
+      # failure: PR #48's PTOwl rebrand merged but never reached
+      # production because this step silently failed for three deploys
+      # in a row.
       #
-      # Why this step now has continue-on-error: apps/web/package.json
-      # doesn't pin wrangler (apps/api does — `^4.86.0`). When
-      # wrangler-action runs without a pin and without a local
-      # node_modules wrangler, it can fail intermittently. That
-      # failure used to fail the whole workflow → email spam → fake
-      # "deploy failed" anxiety even though the actual frontend
-      # deploy via CF Pages succeeded.
-      #
-      # The fix:
-      #   - Pin wranglerVersion: '4' so the action always installs a
-      #     known-good wrangler instead of guessing.
-      #   - Mark continue-on-error: true so a failure here doesn't
-      #     fail the workflow (CF Pages is the primary path; this
-      #     step is a backup that only matters if CF Pages breaks).
-      #
-      # If you ever want to remove this step entirely (when you trust
-      # CF Pages 100%), just delete the block. Nothing else depends
-      # on it.
-      - name: Deploy Frontend to Cloudflare Workers (static assets, redundant fallback)
+      # Now that wrangler@^4.86.0 is pinned in apps/web/package.json
+      # (matches apps/api), the action finds it locally via
+      # `npx --no-install wrangler` and skips the broken installer.
+      # Continue-on-error removed so future failures surface
+      # immediately instead of silently dropping frontend changes.
+      - name: Deploy Frontend to Cloudflare Workers (static assets)
         uses: cloudflare/wrangler-action@v3
-        continue-on-error: true
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
