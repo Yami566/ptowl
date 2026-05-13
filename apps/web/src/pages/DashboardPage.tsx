@@ -418,8 +418,12 @@ export function DashboardPage() {
           <OwlLogo size="md" linkTo="/" />
           <div style={styles.headerRight} className="ptowl-header-actions">
             <details style={styles.menuRoot} className="ptowl-menu">
-              <summary style={styles.menuSummary} aria-label="Open profile menu">
-                Profile &#9662;
+              <summary
+                style={styles.menuSummary}
+                aria-label={`Signed in as ${user.email}. Open profile menu`}
+                title={user.email}
+              >
+                {user.display_name || user.email} &#9662;
               </summary>
               <div style={styles.menuPanel} role="menu">
                 <button
