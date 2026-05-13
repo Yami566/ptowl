@@ -1,14 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <!-- Owl body -->
   <ellipse cx="16" cy="18" rx="11" ry="12" fill="#2E7D32"/>
-  <!-- Left eye -->
+  <!-- Left eye whites -->
   <circle cx="11" cy="14" r="5" fill="white"/>
-  <circle cx="12" cy="13.5" r="2.5" fill="#1B5E20"/>
-  <circle cx="12.8" cy="12.8" r="0.8" fill="white"/>
-  <!-- Right eye -->
+  <!-- Right eye whites -->
   <circle cx="21" cy="14" r="5" fill="white"/>
-  <circle cx="22" cy="13.5" r="2.5" fill="#1B5E20"/>
-  <circle cx="22.8" cy="12.8" r="0.8" fill="white"/>
+  <!-- Left pupil — blinks every 5s via SMIL ry collapse -->
+  <circle cx="12" cy="13.5" r="2.5" fill="#1B5E20">
+    <animate attributeName="ry" values="2.5;2.5;2.5;0.2;2.5" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="12.8" cy="12.8" r="0.8" fill="white">
+    <animate attributeName="ry" values="0.8;0.8;0.8;0.05;0.8" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Right pupil — blinks in sync with left -->
+  <circle cx="22" cy="13.5" r="2.5" fill="#1B5E20">
+    <animate attributeName="ry" values="2.5;2.5;2.5;0.2;2.5" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="22.8" cy="12.8" r="0.8" fill="white">
+    <animate attributeName="ry" values="0.8;0.8;0.8;0.05;0.8" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Eyelid bars — drop briefly during the blink window -->
+  <rect x="6" y="14" width="10" height="0" fill="#2E7D32">
+    <animate attributeName="height" values="0;0;0;5;0" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="16" y="14" width="10" height="0" fill="#2E7D32">
+    <animate attributeName="height" values="0;0;0;5;0" keyTimes="0;0.8;0.9;0.95;1" dur="5s" repeatCount="indefinite"/>
+  </rect>
   <!-- Beak -->
   <polygon points="16,17 14,20 18,20" fill="#FF7043"/>
   <!-- Ear tufts -->
