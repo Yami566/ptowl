@@ -1,3 +1,11 @@
+# Hashed asset bundles — vite emits content-hashed filenames in /assets/
+# (e.g. index-u8b1TWpL.js), so they're effectively immutable. Tell the
+# browser to cache them for a year and skip revalidation. Major win for
+# repeat-visit perf without any cache-invalidation risk.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Everything else — security headers + default revalidating cache.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
