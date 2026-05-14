@@ -84,6 +84,7 @@ unless noted. None should ever appear in committed files.
 | `TURNSTILE_SECRET_KEY`  | API — verifies Turnstile challenges       | Regenerate in CF dashboard → Turnstile → `wrangler secret put TURNSTILE_SECRET_KEY --env production`.                                                     | Public site key is in frontend; this is the server-side.      |
 | `CLOUDFLARE_API_TOKEN`  | GitHub Actions deploy                     | CF dashboard → My Profile → API Tokens → recreate → GH repo settings → Secrets.                                                                           | Scope: Workers Edit + D1 Edit + R2 Edit on the ptowl account. |
 | `CLOUDFLARE_ACCOUNT_ID` | GitHub Actions deploy                     | CF dashboard → right sidebar → Account ID → GH repo settings.                                                                                             | Not secret, but kept out of the workflow file for clarity.    |
+| `CLERK_SECRET_KEY`      | GitHub Actions — launch-finalize workflow | Clerk dashboard → API keys → Secret keys → Regenerate → GH repo settings → Secrets.                                                                       | Used by `scripts/finalize-launch.mjs` to PATCH Clerk paths.   |
 
 There is no Stripe / LemonSqueezy secret yet because paid tiers are
 gated past 50 active clinics (see VISION.md).
@@ -299,6 +300,110 @@ D1 Time Travel (5 min, 30-day window).
 
 ---
 
+## Recent change history (2026-05-13 launch finalization)
+
+A burst of 13 PRs landed in one day to take PTOwl from "almost launch-ready" to "live and instrumented." Captured here because git log alone doesn't tell the WHY.
+
+| PR            | Subject                                                                          | Why it mattered                                                                                                                                                                                                                                                          |
+| ------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| #45           | Launch UI polish (mobile responsive, dark-mode contrast, dashboard empty states) | Removed the rough edges visible to a real PT walking up to the site.                                                                                                                                                                                                     |
+| #46           | One-command launch-finalize automation script                                    | Built `scripts/finalize-launch.mjs` — programmatic CF Web Analytics + Clerk paths + MailChannels DNS.                                                                                                                                                                    |
+| #47           | Clerk Account Portal paths procedure in MASTER.md                                | Documented the dashboard radio-button recipe Clerk currently shows.                                                                                                                                                                                                      |
+| #48           | PTOwl rebrand + 10-animal greeting roster + Clerk path normalization             | Mixed-case "PTOwl" wordmark across all surfaces. Sign-in greeting rotates through 10 calming Doctor X names. Paths moved to `/accounts/signin` (no hyphen).                                                                                                              |
+| #49           | Vite manualChunks typing fix                                                     | Fixed `TS2769` that was blocking every Dependabot PR.                                                                                                                                                                                                                    |
+| #50           | ⭐ **Frontend-deploy silent-fail bug fix**                                       | Discovered that `continue-on-error: true` had been hiding broken frontend deploys for 3 prior deploys. PTOwl rebrand had merged but never reached production. Pinned `wrangler` in `apps/web/devDependencies` to fix the wrangler-action npm fallback. Removed the mask. |
+| #52           | Dependabot root dev-deps bump (11 updates)                                       | Patched the open vite + esbuild security alerts in one shot.                                                                                                                                                                                                             |
+| #53           | Loading overlay default copy refresh                                             | "Loading…" → "Just a moment…"                                                                                                                                                                                                                                            |
+| #54           | One-click `launch-finalize` GitHub Actions workflow                              | Manual `workflow_dispatch` triggers the finalize script with secrets from GH Actions.                                                                                                                                                                                    |
+| #55           | CF Web Analytics token in `index.html`                                           | Replaced placeholder with real beacon token.                                                                                                                                                                                                                             |
+| #56           | Visible signed-in identity in dashboard + `docs/ADMIN-CHEATSHEET.md`             | Header menu now shows the signed-in user's email instead of generic "Profile". Added admin SQL recipes for user management via D1 console.                                                                                                                               |
+| #57           | Clearer landing sign-in button + blinking owl favicon                            | Removed misleading Google G icon. Added a 5-second SMIL blink to the favicon owl.                                                                                                                                                                                        |
+| #58 (this PR) | Health audit + MASTER.md session log + webmanifest fix + static robots.txt       | This file's "Recent change history" + new `docs/HEALTH-AUDIT.md` + small content bug fixes.                                                                                                                                                                              |
+
+### Lessons learned
+
+1. **`continue-on-error: true` is a footgun.** It masked a real recurring deploy failure for ~12 hours. Never use it on a deploy step unless the step is genuinely optional. Rule of thumb: if a step touches production state, it should fail loudly.
+2. **Clerk's URL validator strips hyphens.** `/accounts/sign-up` becomes `/accounts/signup` on save. If you set hyphenated paths in code, dashboard and code diverge silently.
+3. **CF Workers Builds (the dashboard-driven git integration) was disconnected** during this session. `deploy.yml` is now the sole authoritative deploy path. Re-enabling Workers Builds would create dual-deploy races.
+4. **pnpm `workspace:*` protocol breaks `npm install`** — the wrangler-action falls back to `npm i wrangler@4` if no local wrangler is found, which trips on the workspace protocol. Pin wrangler in every workspace that the action runs from.
+5. **Magic-button workflows can't auto-open PRs by default** — GitHub blocks Actions from creating PRs via `GITHUB_TOKEN` unless the repo setting "Allow GitHub Actions to create and approve pull requests" is enabled (Settings → Actions → General → Workflow permissions).
+
+### Magic button — how to use it
+
+After today, `.github/workflows/launch-finalize.yml` exists. To re-apply launch-side configuration any time:
+
+1. GitHub web UI → **Actions** tab → **"Launch Finalize"** → **"Run workflow"** → **main** branch → green button.
+2. Workflow uses `CLERK_SECRET_KEY`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` from GH Actions secrets.
+3. If `apps/web/index.html` gets patched (e.g., CF Web Analytics token replaces the placeholder), the workflow tries to open a PR. If your repo's auto-PR setting is OFF, the PR creation step fails — but the branch and commit ARE on the remote, so just `gh pr create` manually OR enable the auto-PR setting once.
+
+---
+
+## Resume from a clean machine
+
+If your PC dies, gets reset, or you sit down at a brand-new laptop and want to pick up PTOwl work:
+
+### 1. Clone + install (5 min)
+
+```sh
+git clone https://github.com/Yami566/ptowl.git
+cd ptowl
+
+# Install pnpm if you don't have it (Node should already be installed)
+npm install -g pnpm@9
+pnpm install --frozen-lockfile
+
+# Verify
+pnpm -r typecheck
+pnpm test:unit
+pnpm build
+```
+
+### 2. Authenticate the CLIs (~2 min)
+
+```sh
+# GitHub CLI
+gh auth login   # pick GitHub.com, HTTPS, browser auth
+
+# Cloudflare Workers CLI (for deploying / secrets)
+cd apps/api
+npx wrangler login
+
+# That's it — gh + wrangler share their state with the local OS keychain
+```
+
+### 3. Read these three files in order (10 min)
+
+1. [docs/VISION.md](docs/VISION.md) — **what & for whom**. Locked product decisions, audience, brand promise, pricing.
+2. **This file (`MASTER.md`)** — operational state, secrets inventory, recent change history, launch playbook.
+3. [docs/ADMIN-CHEATSHEET.md](docs/ADMIN-CHEATSHEET.md) — plain-language steps for admin tasks via Cloudflare dashboard.
+
+### 4. Sanity-check production is still healthy (1 min)
+
+```sh
+curl -sI https://ptowl.com/ -o /dev/null -w "homepage: %{http_code}\n"
+curl -sI https://ptowl.com/accounts/signin -o /dev/null -w "signin:   %{http_code}\n"
+curl -s https://ptowl.com/api/v1/health
+```
+
+All should be 200 / show `"status":"healthy"`.
+
+### 5. Where the dashboards live (bookmark these)
+
+- **Cloudflare** — https://dash.cloudflare.com — Workers, D1, R2, DNS, Web Analytics, WAF
+- **Clerk** — https://dashboard.clerk.com → PTowl app → Production
+- **MailChannels** — https://www.mailchannels.com — outbound email key + DNS
+- **GitHub** — https://github.com/Yami566/ptowl — PRs, Actions, Settings → Secrets
+- **PageSpeed Insights** (Lighthouse via web) — https://pagespeed.web.dev/
+
+### 6. If something broke and you need to investigate
+
+- **Production logs** → CF dashboard → Workers & Pages → `ptowl-api` → Logs
+- **Deploy logs** → https://github.com/Yami566/ptowl/actions/workflows/deploy.yml
+- **Rollback** → see [docs/ADMIN-CHEATSHEET.md §7](docs/ADMIN-CHEATSHEET.md#7-rollback-a-bad-deploy)
+- **Down? Confused?** → Open a fresh chat with Claude and paste this file path
+
+---
+
 ## Cross-references
 
 - **What & for whom** → [docs/VISION.md](docs/VISION.md).
@@ -306,6 +411,8 @@ D1 Time Travel (5 min, 30-day window).
 - **How we work** → [docs/OPERATING.md](docs/OPERATING.md).
 - **How we launch** → [docs/SHIP.md](docs/SHIP.md).
 - **How we run it** → [docs/RUN.md](docs/RUN.md).
+- **Admin actions via CF dashboard** → [docs/ADMIN-CHEATSHEET.md](docs/ADMIN-CHEATSHEET.md).
+- **Production health snapshot** → [docs/HEALTH-AUDIT.md](docs/HEALTH-AUDIT.md).
 - **Reusable recipe for other repos** → [STACK-TEMPLATE.md](STACK-TEMPLATE.md).
 
 If something in this file conflicts with a file in `docs/`, the file in

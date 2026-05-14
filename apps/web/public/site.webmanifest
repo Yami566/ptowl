@@ -1,8 +1,8 @@
 {
   "id": "/?source=pwa",
-  "name": "PTowl — Patience Trainer",
-  "short_name": "PTowl",
-  "description": "PTowl — your Patience Trainer. Stop scheduling, start treating. Create and print patient schedules in under 5 keypresses.",
+  "name": "PTOwl — Patience Trainer",
+  "short_name": "PTOwl",
+  "description": "PTOwl — your Patience Trainer. Stop scheduling, start treating. Create and print patient schedules in under 5 keypresses.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
