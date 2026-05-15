@@ -1,0 +1,72 @@
+name: Smoke — monthly production health check
+
+# Walks the 8 production endpoints from docs/QA-MATRIX.md §5 and asserts
+# each returns 200. Catches silent regressions between deploys that the
+# build-time CI can't see (e.g. CDN cache poisoning, DNS drift, R2 asset
+# disappearance, frontend deploy that succeeded structurally but serves
+# a broken bundle).
+#
+# Runs on:
+#   • cron — 1st of every month at 09:00 UTC (~04:00 Chicago)
+#   • manual workflow_dispatch — operator can fire ad-hoc after risky deploys
+#
+# Does NOT gate any deploy. If it goes red, it's surfacing a real production
+# issue — investigate in CF dashboard → Workers logs.
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe every public production endpoint
+        run: |
+          set -euo pipefail
+          fail=0
+          probe() {
+            local url=$1
+            local label=$2
+            local code
+            code=$(curl -sf -o /dev/null -w '%{http_code}' "$url" || echo "fail")
+            if [ "$code" = "200" ]; then
+              echo "  ✓ $label  ($url) — $code"
+            else
+              echo "::error title=Health check failed::$label returned $code (expected 200) — $url"
+              fail=1
+            fi
+          }
+          echo "Probing 8 production endpoints (see docs/QA-MATRIX.md §5)…"
+          probe https://ptowl.com/                          homepage
+          probe https://ptowl.com/accounts/signin           signin
+          probe https://ptowl.com/api/v1/health             api-health
+          probe https://ptowl.com/sitemap.xml               sitemap
+          probe https://ptowl.com/robots.txt                robots
+          probe https://ptowl.com/favicon.svg               favicon
+          probe https://ptowl.com/site.webmanifest          manifest
+          probe https://ptowl.com/og-image.png              og-image
+          if [ $fail -eq 1 ]; then
+            echo "::error::One or more production endpoints unhealthy."
+            exit 1
+          fi
+          echo "All endpoints healthy."
+
+      - name: Assert API JSON shape
+        run: |
+          set -euo pipefail
+          body=$(curl -sf https://ptowl.com/api/v1/health)
+          echo "API health body: $body"
+          ok=$(echo "$body" | jq -r .ok)
+          status=$(echo "$body" | jq -r .data.status)
+          db_connected=$(echo "$body" | jq -r .data.db.connected)
+          if [ "$ok" != "true" ] || [ "$status" != "healthy" ] || [ "$db_connected" != "true" ]; then
+            echo "::error title=API health degraded::expected ok=true status=healthy db.connected=true, got ok=$ok status=$status db.connected=$db_connected"
+            exit 1
+          fi
+          echo "API JSON shape verified."

@@ -321,25 +321,25 @@ From the §49 big-picture sweep against the live codebase. Severity: Critical / 
 
 ### UI / a11y
 
-| #   | Severity | Item                                       | Status                                             |
-| --- | -------- | ------------------------------------------ | -------------------------------------------------- |
-| U1  | Critical | Delete-template button aria-label          | ✅ Already labeled (false positive)                |
-| U2  | Medium   | Schedule-not-found error state             | ✅ PR #62                                          |
-| U3  | Medium   | Decorative emojis aria-hidden              | ✅ PR #64                                          |
-| U4  | Medium   | Login/Signup `aria-busy`                   | ⏳ Ships with PR #60                               |
-| U5  | Medium   | Drag handle aria-label                     | ✅ Already labeled                                 |
-| U6  | Medium   | Status badges no longer color-only         | ✅ PR #62                                          |
-| U7  | Medium   | ProfilePage field-level validation errors  | ⏳ Deferred — needs server-side error routing      |
-| U8  | Medium   | Mobile 44px touch targets                  | ✅ PR #65                                          |
-| U9  | Polish   | Extract inline styles to CSS modules       | ⏳ Deferred — bigger refactor                      |
-| U10 | Polish   | Landmark `main-content` id on static pages | ✅ PR #63 (Landing + About; others already had it) |
+| #   | Severity | Item                                      | Status                                                           |
+| --- | -------- | ----------------------------------------- | ---------------------------------------------------------------- |
+| U1  | Critical | Delete-template button aria-label         | ✅ Already labeled (false positive)                              |
+| U2  | Medium   | Schedule-not-found error state            | ✅ PR #62                                                        |
+| U3  | Medium   | Decorative emojis aria-hidden             | ✅ PR #64                                                        |
+| U4  | Medium   | Login/Signup `aria-busy`                  | ⏳ Ships with PR #60                                             |
+| U5  | Medium   | Drag handle aria-label                    | ✅ Already labeled                                               |
+| U6  | Medium   | Status badges no longer color-only        | ✅ PR #62                                                        |
+| U7  | Medium   | ProfilePage field-level validation errors | ⏳ Deferred — needs server-side error routing                    |
+| U8  | Medium   | Mobile 44px touch targets                 | ✅ PR #65                                                        |
+| U9  | Polish   | Extract inline styles to CSS modules      | ⏳ Deferred — bigger refactor                                    |
+| U10 | Polish   | Landmark `main-content` id on all pages   | ✅ PR #63 + PR #69 (Landing/About/SignIn/SignUp/PatientSchedule) |
 
 ### DevOps
 
 | #   | Severity | Item                                       | Status                          |
 | --- | -------- | ------------------------------------------ | ------------------------------- |
 | O1  | SPF      | Clerk URL drift detection                  | ✅ PR #61 — daily smoke test    |
-| O2  | SPF      | CF API token D1 scope pre-deploy check     | ⏳ ~2 min to add                |
+| O2  | SPF      | CF API token D1 scope pre-deploy check     | ✅ PR #68                       |
 | O3  | SPF      | MailChannels rotation health endpoint      | ⏳ ~20 min                      |
 | O4  | Gap      | Cron failure visibility (Logpush)          | ⏳ User-side CF dashboard click |
 | O5  | Gap      | Status page (Upptime fork)                 | ⏳ User-side, ~15 min           |
