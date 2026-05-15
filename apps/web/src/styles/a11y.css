@@ -1,0 +1,286 @@
+/* ==========================================================================
+   PTOwl Accessibility Companion
+
+   Body-class-driven rules. The A11yContext (contexts/A11yContext.tsx) sets
+   one of these classes on <body>, and these rules cascade everywhere via
+   CSS custom properties + selector specificity.
+
+   Three independent dimensions:
+
+     • Text size:  body.ptowl-text-large    → 1.25× scale
+                   body.ptowl-text-huge     → 1.5×  scale
+
+     • Contrast:   body.ptowl-contrast-high → stronger borders, full-opacity
+                                                text, removed subtle bgs
+
+     • Motion:     body.ptowl-motion-reduced → animations and transitions off
+
+   None of these change the page layout in ways that break the existing
+   responsive.css rules — they only change scales and colors.
+   ========================================================================== */
+
+/* ── Text scaling ──────────────────────────────────────────────────────── */
+
+body.ptowl-text-large {
+  font-size: 112.5%;
+}
+body.ptowl-text-huge {
+  font-size: 125%;
+}
+
+/* Bump the minimum tap-target dimensions when text is enlarged so existing
+   buttons grow visually with the content rather than feeling lost in white
+   space. Pairs with responsive.css §≤768px ptowl-header-actions rules. */
+body.ptowl-text-large button,
+body.ptowl-text-large a[role='button'],
+body.ptowl-text-large .ptowl-header-actions button,
+body.ptowl-text-large .ptowl-header-actions a {
+  min-height: 48px !important;
+}
+body.ptowl-text-huge button,
+body.ptowl-text-huge a[role='button'],
+body.ptowl-text-huge .ptowl-header-actions button,
+body.ptowl-text-huge .ptowl-header-actions a {
+  min-height: 56px !important;
+}
+
+/* The 5-keypress dashboard's preset cards have a fixed visible glyph for
+   the hotkey number. Scale it too so a +50% reader can still see which
+   key to press without squinting. */
+body.ptowl-text-large .dash-tryit-key,
+body.ptowl-text-large .dash-presets-card-hotkey {
+  font-size: 1.2rem !important;
+}
+body.ptowl-text-huge .dash-tryit-key,
+body.ptowl-text-huge .dash-presets-card-hotkey {
+  font-size: 1.4rem !important;
+}
+
+/* ── High contrast ─────────────────────────────────────────────────────── */
+
+body.ptowl-contrast-high {
+  /* Override the soft brand palette with WCAG-AAA-friendly defaults. CSS
+     custom properties cascade into every inline-style use of var(--*)
+     across the React tree. */
+  --gray-text: #1c1c1c;
+  --gray-light: #767676;
+  --gray-mid: #404040;
+  --off-white: #ffffff;
+  --green-bg: #d8efd8;
+  --green-bg-footer: #cfeacf;
+  --green-light: #197b1e;
+  --green-mid: #146015;
+  --green-dark: #0d3f0e;
+  --orange-mid: #b34700;
+  --dark: #000000;
+}
+
+body.ptowl-contrast-high *,
+body.ptowl-contrast-high *::before,
+body.ptowl-contrast-high *::after {
+  /* Force any pre-existing transparent fills to opaque. Catches the
+     subtle drop-shadow borders that fail WCAG at 1.4:1. */
+  text-shadow: none !important;
+}
+
+body.ptowl-contrast-high button,
+body.ptowl-contrast-high input,
+body.ptowl-contrast-high textarea,
+body.ptowl-contrast-high select,
+body.ptowl-contrast-high a {
+  /* Stronger borders on every interactive element. */
+  outline-offset: 2px;
+}
+
+body.ptowl-contrast-high *:focus-visible {
+  outline: 3px solid var(--green-dark) !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+body.ptowl-motion-reduced *,
+body.ptowl-motion-reduced *::before,
+body.ptowl-motion-reduced *::after {
+  /* Wipe transitions + animations site-wide. The 0.01ms keeps display
+     property transitions firing correctly (some libs rely on the event)
+     while reducing perceived movement to zero. */
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* The favicon owl blinks every 5s via SMIL — that's fine in normal mode
+   but spammy in reduced-motion. The favicon SVG itself can't read body
+   class, but for the inline OwlCityScene and the confetti on
+   schedule-create we can. */
+body.ptowl-motion-reduced .ptowl-confetti,
+body.ptowl-motion-reduced [data-confetti] {
+  display: none !important;
+}
+
+/* ── Settings-panel-specific ───────────────────────────────────────────── */
+
+.ptowl-a11y-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 32, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.ptowl-a11y-card {
+  background: var(--white, #fff);
+  border-radius: var(--radius-lg, 1rem);
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--gray-light, #ddd);
+}
+
+.ptowl-a11y-card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.5rem;
+  color: var(--dark, #111);
+}
+
+.ptowl-a11y-card .ptowl-a11y-tagline {
+  font-size: 0.875rem;
+  color: var(--gray-text, #555);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.ptowl-a11y-group {
+  margin-bottom: 1.25rem;
+}
+
+.ptowl-a11y-group-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--dark, #111);
+  margin-bottom: 0.5rem;
+}
+
+.ptowl-a11y-os-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--green-dark, #1b5e20);
+  background: var(--green-bg, #e8f5e9);
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+}
+
+.ptowl-a11y-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.ptowl-a11y-option {
+  min-height: 44px;
+  padding: 0.625rem 0.75rem;
+  background: var(--white, #fff);
+  border: 1.5px solid var(--gray-light, #ccc);
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-text, #444);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.ptowl-a11y-option:hover {
+  border-color: var(--green-mid, #4caf50);
+  color: var(--dark, #111);
+}
+
+.ptowl-a11y-option.is-active {
+  background: var(--green-bg, #e8f5e9);
+  border-color: var(--green-mid, #4caf50);
+  color: var(--green-dark, #1b5e20);
+  font-weight: 700;
+}
+
+.ptowl-a11y-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gray-light, #eee);
+}
+
+.ptowl-a11y-action {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ptowl-a11y-action.ptowl-a11y-action-primary {
+  background: var(--green-mid, #4caf50);
+  color: white;
+  border: 1.5px solid var(--green-mid, #4caf50);
+}
+
+.ptowl-a11y-action.ptowl-a11y-action-secondary {
+  background: transparent;
+  color: var(--gray-text, #444);
+  border: 1.5px solid var(--gray-light, #ccc);
+}
+
+/* ── Read-aloud control on patient share view ─────────────────────────── */
+
+.ptowl-read-aloud {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  min-height: 44px;
+  background: var(--green-bg, #e8f5e9);
+  color: var(--green-dark, #1b5e20);
+  border: 1.5px solid var(--green-mid, #4caf50);
+  border-radius: var(--radius-md, 0.5rem);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ptowl-read-aloud:hover {
+  background: var(--green-mid, #4caf50);
+  color: white;
+}
+
+.ptowl-read-aloud[aria-pressed='true'] {
+  background: var(--orange-mid, #ff7043);
+  border-color: var(--orange-mid, #ff7043);
+  color: white;
+}
+
+.ptowl-read-aloud-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* When the user has reduced motion enabled, drop the wave animation on
+   the read-aloud button while it's playing. The button still works; just
+   no pulse. */
+body.ptowl-motion-reduced .ptowl-read-aloud[aria-pressed='true'] {
+  animation: none !important;
+}
