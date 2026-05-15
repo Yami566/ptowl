@@ -175,7 +175,8 @@ export function PatientSchedulePage() {
         <p style={styles.heroLabel}>Schedule for</p>
         <h1 style={styles.heroAlias}>{schedule.patient_alias || schedule.patient_initials}</h1>
         <p style={styles.aliasNote}>
-          🦉 Your owl-approved alias. Your real name is never stored on our servers.
+          <span aria-hidden="true">🦉 </span>Your owl-approved alias. Your real name is never stored
+          on our servers.
         </p>
         <p style={styles.heroMeta}>
           {schedule.sessions_per_week}× per week · {schedule.duration_weeks} weeks ·{' '}

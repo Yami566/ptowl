@@ -97,7 +97,9 @@ export function AboutPage() {
         {/* Features */}
         <section style={styles.features}>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>&#129668;</div>
+            <div style={styles.featureIcon} aria-hidden="true">
+              &#129668;
+            </div>
             <h3 style={styles.featureTitle}>You're the wizard here</h3>
             <p style={styles.featureDesc}>
               Make your own templates, use premade templates, switch your layout! Hotkeys,
@@ -105,7 +107,9 @@ export function AboutPage() {
             </p>
           </div>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>&#128029;</div>
+            <div style={styles.featureIcon} aria-hidden="true">
+              &#128029;
+            </div>
             <h3 style={styles.featureTitle}>Schedulize your life</h3>
             <p style={styles.featureDesc}>
               Because life is a bee.. buzzing from patient to patient, appointment to appointment.
@@ -113,7 +117,9 @@ export function AboutPage() {
             </p>
           </div>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>&#128274;</div>
+            <div style={styles.featureIcon} aria-hidden="true">
+              &#128274;
+            </div>
             <h3 style={styles.featureTitle}>Private by Design</h3>
             <p style={styles.featureDesc}>
               Real names never enter our system. Just initials, mapped to sports legends on screen
@@ -121,7 +127,9 @@ export function AboutPage() {
             </p>
           </div>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>&#128197;</div>
+            <div style={styles.featureIcon} aria-hidden="true">
+              &#128197;
+            </div>
             <h3 style={styles.featureTitle}>Calendar View</h3>
             <p style={styles.featureDesc}>
               See schedules as a full interactive calendar. Month, week, or day — drag appointments
@@ -129,7 +137,9 @@ export function AboutPage() {
             </p>
           </div>
           <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>&#128424;</div>
+            <div style={styles.featureIcon} aria-hidden="true">
+              &#128424;
+            </div>
             <h3 style={styles.featureTitle}>Share & Print</h3>
             <p style={styles.featureDesc}>
               QR codes, shareable links, and print-ready layouts with your clinic branding. Hand it
