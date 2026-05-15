@@ -1,7 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePageTitle } from '../hooks/usePageTitle.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
+
+/**
+ * Build a human-readable, screen-reader-friendly spoken summary of the
+ * schedule for the SpeechSynthesis API. Format:
+ *
+ *   "Hi Doctor Hoo. Your schedule has 12 sessions across 4 weeks.
+ *    Coming up gently: Wednesday September 11 at 10 in the morning,
+ *    Friday September 13 at 10 in the morning, …"
+ *
+ * Caps at the first 8 upcoming appointments to keep speech tractable
+ * (a 6-month plan is ~75 appointments; reading them all is a 4-minute
+ * monologue nobody asked for).
+ */
+function buildSpokenSummary(
+  patient: string,
+  upcoming: Array<{ appointment_date: string; appointment_time: string }>,
+  totalSessions: number,
+  durationWeeks: number,
+): string {
+  const intro = `Hi ${patient}. Your schedule has ${totalSessions} ${
+    totalSessions === 1 ? 'session' : 'sessions'
+  } across ${durationWeeks} ${durationWeeks === 1 ? 'week' : 'weeks'}.`;
+
+  if (upcoming.length === 0) {
+    return `${intro} No upcoming appointments — you're all done. Nice work.`;
+  }
+
+  const lead = upcoming.slice(0, 8).map((appt) => {
+    const [y, m, d] = appt.appointment_date.split('-').map(Number) as [number, number, number];
+    const date = new Date(Date.UTC(y, m - 1, d));
+    const longDate = date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+    const [hStr, mStr] = appt.appointment_time.split(':') as [string, string];
+    const hr = parseInt(hStr, 10);
+    const min = parseInt(mStr, 10);
+    const period = hr >= 12 ? 'in the afternoon' : 'in the morning';
+    const friendlyHr = hr === 0 ? 12 : hr > 12 ? hr - 12 : hr;
+    const minutePart = min === 0 ? '' : ` ${min < 10 ? 'oh ' : ''}${min}`;
+    return `${longDate} at ${friendlyHr}${minutePart} ${period}`;
+  });
+
+  const more =
+    upcoming.length > 8
+      ? ` And ${upcoming.length - 8} more after that — gentle pace, you've got this.`
+      : ' That is the lot.';
+
+  return `${intro} Coming up gently: ${lead.join('. ')}.${more}`;
+}
 
 interface Appointment {
   id: string;
@@ -84,6 +135,30 @@ export function PatientSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<PublicScheduleResponse['data'] | null>(null);
+  const [isReading, setIsReading] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+
+  useEffect(() => {
+    // SpeechSynthesis is browser-native but missing in some embedded
+    // webviews (older Android, certain accessibility-focused readers).
+    // Feature-detect once so we can hide the control gracefully where
+    // it would no-op.
+    setSpeechSupported(
+      typeof window !== 'undefined' &&
+        typeof window.speechSynthesis !== 'undefined' &&
+        typeof window.SpeechSynthesisUtterance !== 'undefined',
+    );
+  }, []);
+
+  // Cancel any in-flight speech on unmount so navigating away doesn't
+  // leave the synth narrating to an empty room.
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -125,7 +200,7 @@ export function PatientSchedulePage() {
       <main id="main-content" style={styles.page}>
         <div style={styles.center}>
           <OwlLogo size="md" />
-          <p style={styles.subtle}>Loading your schedule…</p>
+          <p style={styles.subtle}>Hoo… fetching your appointments. One moment.</p>
         </div>
       </main>
     );
@@ -149,6 +224,32 @@ export function PatientSchedulePage() {
   const today = new Date().toISOString().split('T')[0]!;
   const upcoming = appointments.filter((a) => a.appointment_date >= today);
   const past = appointments.filter((a) => a.appointment_date < today);
+  const patientName = schedule.patient_alias || schedule.patient_initials;
+
+  const handleReadAloud = () => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (isReading) {
+      window.speechSynthesis.cancel();
+      setIsReading(false);
+      return;
+    }
+    const summary = buildSpokenSummary(
+      patientName,
+      upcoming,
+      totalAppointments,
+      schedule.duration_weeks,
+    );
+    const utter = new window.SpeechSynthesisUtterance(summary);
+    // Slightly slower than default — calmer cadence for patients who
+    // may be tired, in pain, or processing at their own pace.
+    utter.rate = 0.92;
+    utter.pitch = 1.0;
+    utter.onend = () => setIsReading(false);
+    utter.onerror = () => setIsReading(false);
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+    setIsReading(true);
+  };
 
   // Three one-tap calendar subscribe targets, all derived from the
   // same per-schedule .ics feed:
@@ -207,12 +308,37 @@ export function PatientSchedulePage() {
             Download .ics (Outlook / other)
           </a>
         </div>
+        {/* Read-aloud companion — browser SpeechSynthesis reads the
+            schedule out in a calm cadence. Helpful for low-vision,
+            cognitive-disability, and reading-fatigue users, plus anyone
+            on the move who'd rather listen than read. Feature-detected
+            so it's hidden where the API isn't available. */}
+        {speechSupported && (
+          <div style={styles.readAloudWrap}>
+            <button
+              type="button"
+              className="ptowl-read-aloud"
+              onClick={handleReadAloud}
+              aria-pressed={isReading ? 'true' : 'false'}
+              aria-label={
+                isReading
+                  ? 'Stop reading the schedule aloud'
+                  : 'Read this schedule aloud in a calm voice'
+              }
+            >
+              <span className="ptowl-read-aloud-icon" aria-hidden="true">
+                {isReading ? '⏹' : '🔊'}
+              </span>
+              {isReading ? 'Stop reading' : 'Read this aloud'}
+            </button>
+          </div>
+        )}
       </section>
 
       {upcoming.length > 0 && (
         <section style={styles.section}>
           <h2 style={styles.sectionTitle}>
-            Upcoming · {upcoming.length} {upcoming.length === 1 ? 'session' : 'sessions'}
+            Coming up gently · {upcoming.length} {upcoming.length === 1 ? 'session' : 'sessions'}
           </h2>
           <ul style={styles.list}>
             {upcoming.map((appt) => {
@@ -237,7 +363,7 @@ export function PatientSchedulePage() {
       {past.length > 0 && (
         <section style={styles.section}>
           <h2 style={styles.sectionTitleMuted}>
-            Past · {past.length} {past.length === 1 ? 'session' : 'sessions'}
+            Already done · {past.length} {past.length === 1 ? 'session' : 'sessions'}
           </h2>
           <ul style={styles.listMuted}>
             {past.map((appt) => {
@@ -334,6 +460,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: '0.5rem',
     alignItems: 'stretch',
+  },
+  readAloudWrap: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '1rem',
   },
   ctaButton: {
     display: 'inline-flex',

@@ -75,6 +75,7 @@ describe('Data Leakage Prevention', () => {
     const SAFE_LOCALSTORAGE_FILES = [
       'usePrintSettings.ts', // print layout preferences
       'useTheme.ts', // dark/light mode toggle
+      'A11yContext.tsx', // accessibility companion settings (text scale, contrast, motion)
       'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
       // Phone number is the address (login identifier), not the credential.
       // Knowing the number alone gains no access; the OTP is the actual auth.
