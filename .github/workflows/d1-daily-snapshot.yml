@@ -1,0 +1,80 @@
+name: D1 daily snapshot to R2
+
+# Closes audit item O7 (docs/AUTH-LIFECYCLE.md §11 / docs/QA-MATRIX.md §6).
+#
+# Why this exists: D1 has 7-day Time Travel for point-in-time restore, but
+# that only covers the recent past. If the user wants to roll back farther
+# (a bad migration from 10 days ago) or rotate EMAIL_ENCRYPTION_KEY (which
+# requires re-encrypting every row, so they need a known-good snapshot to
+# diff against), Time Travel isn't enough. A nightly SQL export to R2
+# gives 90 days of cold-storage history.
+#
+# One-time setup the operator runs once (already in MASTER.md):
+#   wrangler r2 bucket create ptowl-backups
+#   wrangler r2 bucket lifecycle add ptowl-backups \
+#     --filter-prefix=d1/ --expire-days=90
+#
+# The workflow itself is idempotent and safe to re-run.
+
+on:
+  schedule:
+    # 03:00 UTC daily = ~22:00 Chicago (low traffic window).
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install (apps/api only)
+        run: pnpm install --frozen-lockfile --filter @ptowl/api
+
+      - name: Compute snapshot path
+        id: path
+        run: |
+          set -euo pipefail
+          DATE=$(date -u +"%Y/%m/%d")
+          STAMP=$(date -u +"%Y%m%dT%H%M%SZ")
+          echo "key=d1/${DATE}/ptowl-db-${STAMP}.sql" >> "$GITHUB_OUTPUT"
+          echo "file=ptowl-db-${STAMP}.sql" >> "$GITHUB_OUTPUT"
+
+      - name: Export D1 to local SQL file
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          command: d1 export ptowl-db --remote --output ${{ steps.path.outputs.file }}
+
+      - name: Upload to R2 (ptowl-backups bucket)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          # wrangler r2 object put expects bucket/key as the first positional
+          # argument and --file as a flag. The bucket must exist; create it
+          # once via `wrangler r2 bucket create ptowl-backups` (see header).
+          command: r2 object put ptowl-backups/${{ steps.path.outputs.key }} --file ${{ steps.path.outputs.file }}
+
+      - name: Summary
+        run: |
+          echo "::notice title=Snapshot uploaded::r2://ptowl-backups/${{ steps.path.outputs.key }}"
