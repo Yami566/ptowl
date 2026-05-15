@@ -201,7 +201,36 @@ export function SchedulePage() {
   };
 
   if (loading) return <LoadingOverlay message="Loading schedule..." />;
-  if (!schedule) return <div style={styles.loading}>Schedule not found</div>;
+  if (!schedule) {
+    return (
+      <PageLayout>
+        <main id="main-content" style={styles.notFoundPage}>
+          <div style={styles.notFoundCard} role="alert">
+            <h1 style={styles.notFoundTitle}>Schedule not found</h1>
+            <p style={styles.notFoundBody}>
+              This schedule may have been deleted, or the link is wrong.
+            </p>
+            <div style={styles.notFoundActions}>
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                style={styles.notFoundPrimary}
+              >
+                Back to dashboard
+              </button>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                style={styles.notFoundSecondary}
+              >
+                Try again
+              </button>
+            </div>
+          </div>
+        </main>
+      </PageLayout>
+    );
+  }
 
   // Pre-compute week groupings for table view
   const weekGroups: Array<{ week: number; appts: Array<{ appt: Appointment; index: number }> }> =
@@ -431,7 +460,10 @@ export function SchedulePage() {
                           <td style={styles.td}>{formatTime(appt.appointment_time)}</td>
                           <td style={styles.td}>{appt.provider_name || '\u2014'}</td>
                           <td style={styles.td}>
-                            <span style={statusStyles[status]}>{statusLabels[status]}</span>
+                            <span style={statusStyles[status]}>
+                              <span aria-hidden="true">{statusGlyphs[status]}</span>{' '}
+                              {statusLabels[status]}
+                            </span>
                           </td>
                           <td style={styles.td}>
                             <button
@@ -562,6 +594,12 @@ const statusLabels: Record<string, string> = {
   upcoming: 'Upcoming',
 };
 
+const statusGlyphs: Record<string, string> = {
+  completed: '✓',
+  today: '●',
+  upcoming: '○',
+};
+
 const statusStyles: Record<string, React.CSSProperties> = {
   completed: { color: 'var(--gray-text)', fontSize: '0.8rem', fontWeight: 500 },
   today: { color: 'var(--green-mid)', fontSize: '0.8rem', fontWeight: 700 },
@@ -625,6 +663,65 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     minHeight: '100vh',
     color: 'var(--gray-text)',
+  },
+  notFoundPage: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2rem 1rem',
+    background: 'var(--off-white)',
+  },
+  notFoundCard: {
+    width: '100%',
+    maxWidth: '420px',
+    background: 'var(--white)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '2rem 1.5rem',
+    boxShadow: '0 8px 32px rgba(15, 32, 39, 0.08)',
+    border: '1px solid var(--gray-light)',
+    textAlign: 'center' as const,
+  },
+  notFoundTitle: {
+    fontSize: '1.25rem',
+    fontWeight: 600,
+    color: 'var(--dark)',
+    margin: 0,
+    marginBottom: '0.5rem',
+  },
+  notFoundBody: {
+    fontSize: '0.9rem',
+    color: 'var(--gray-text)',
+    margin: 0,
+    marginBottom: '1.5rem',
+    lineHeight: 1.5,
+  },
+  notFoundActions: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.75rem',
+  },
+  notFoundPrimary: {
+    padding: '0.75rem 1.25rem',
+    minHeight: '44px',
+    background: 'var(--orange-mid)',
+    color: 'var(--white)',
+    border: 'none',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '0.95rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  notFoundSecondary: {
+    padding: '0.75rem 1.25rem',
+    minHeight: '44px',
+    background: 'transparent',
+    color: 'var(--gray-text)',
+    border: '1px solid var(--gray-light)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '0.9rem',
+    fontWeight: 500,
+    cursor: 'pointer',
   },
   header: {
     display: 'flex',
