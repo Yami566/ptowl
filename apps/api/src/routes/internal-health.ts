@@ -92,12 +92,19 @@ internalHealthRoutes.post('/email', async (c) => {
       },
     });
   } catch (err) {
+    // Log diagnostic detail to Workers Logs (visible in CF dashboard).
+    // Response stays generic to match the route-wide INTERNAL_ERROR
+    // pattern enforced by security tests in src/security/.
+    console.error(
+      'Email health endpoint network failure:',
+      err instanceof Error ? err.message : 'unknown',
+    );
     return c.json(
       {
         ok: false,
         error: {
-          code: 'NETWORK_ERROR',
-          message: err instanceof Error ? err.message : 'Unknown network failure',
+          code: 'INTERNAL_ERROR',
+          message: 'Network or upstream failure (see Worker logs)',
         },
       },
       503,
