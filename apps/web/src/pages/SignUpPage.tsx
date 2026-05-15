@@ -21,9 +21,31 @@ export function SignUpPage() {
         fallbackRedirectUrl="/dashboard"
         appearance={clerkAppearance}
       />
+      {/* Cross-browser escape hatch — see SignInPage.tsx for the
+          rationale. Removed when PR #60 (custom signup form) lands. */}
+      <p style={fallbackStyles.note}>
+        Form not loading?{' '}
+        <a href="https://clerk.ptowl.com/sign-up" style={fallbackStyles.link} rel="noopener">
+          Sign up directly &rarr;
+        </a>
+      </p>
     </main>
   );
 }
+
+const fallbackStyles: Record<string, React.CSSProperties> = {
+  note: {
+    marginTop: '1.5rem',
+    fontSize: '0.85rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+  },
+  link: {
+    color: 'var(--green-dark)',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+};
 
 // Mirror of the appearance config in SignInPage.tsx so sign-up reads
 // as the same product. See that file for the rationale on colors.
