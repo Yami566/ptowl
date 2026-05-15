@@ -84,7 +84,7 @@ export function LandingPage() {
   if (user) return null;
 
   return (
-    <main style={styles.page}>
+    <main id="main-content" style={styles.page}>
       {/* Hero */}
       <section style={styles.hero} className="landing-fade-in landing-hero">
         {/* Combined logo + header: city scene with PTOWL wordmark
