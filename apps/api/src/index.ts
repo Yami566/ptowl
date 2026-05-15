@@ -12,6 +12,7 @@ import { aliasRoutes } from './routes/alias.js';
 import { calendarRoutes } from './routes/calendar.js';
 import { remindersRoutes } from './routes/reminders.js';
 import { onboardingRoutes } from './routes/onboarding.js';
+import { internalHealthRoutes } from './routes/internal-health.js';
 import {
   findAndSendDueReminders,
   processReminderMessage,
@@ -174,6 +175,7 @@ app.route('/api/v1/alias', aliasRoutes);
 app.route('/api/v1/cal', calendarRoutes);
 app.route('/api/v1/reminders', remindersRoutes);
 app.route('/api/v1/onboarding-survey', onboardingRoutes);
+app.route('/api/v1/internal/health', internalHealthRoutes);
 
 // 404 handler
 app.notFound((c) =>
