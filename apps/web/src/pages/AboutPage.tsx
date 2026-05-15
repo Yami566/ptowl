@@ -9,7 +9,7 @@ export function AboutPage() {
 
   return (
     <PageLayout>
-      <main style={styles.page}>
+      <main id="main-content" style={styles.page}>
         {/* Header */}
         <header style={styles.header}>
           <OwlLogo size="md" linkTo="/" />
