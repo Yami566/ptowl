@@ -289,7 +289,7 @@ D1 Time Travel (5 min, 30-day window).
 - SMS reminders (Twilio) — Phase 10+.
 - Multi-provider clinic admin / role-based access.
 - Patient login (deliberately no — magic link only).
-- Status page (Upptime fork) — ~10 minutes user-side.
+- Status page (Upptime fork) — recipe now in §Observability & resilience setup; ~15 minutes user-side.
 
 **Known low-priority TODOs in code:**
 
@@ -401,6 +401,69 @@ All should be 200 / show `"status":"healthy"`.
 - **Deploy logs** → https://github.com/Yami566/ptowl/actions/workflows/deploy.yml
 - **Rollback** → see [docs/ADMIN-CHEATSHEET.md §7](docs/ADMIN-CHEATSHEET.md#7-rollback-a-bad-deploy)
 - **Down? Confused?** → Open a fresh chat with Claude and paste this file path
+
+---
+
+## Observability & resilience setup
+
+Closes the audit gaps identified in `~/.claude/plans/use-the-ptowl-file-snuggly-mist.md` §49.4. Each item below is a user-side click-op the founder runs once. After that, the safety net is automatic.
+
+### Clerk URL drift detection (automated — already wired)
+
+The PTOwl auth outage in May 2026 was caused by Clerk's dashboard URLs silently diverging from the routes in code (Clerk strips hyphens, normalizes paths on save). The drift was invisible until a real user couldn't sign in.
+
+`.github/workflows/smoke-clerk-urls.yml` now polls `clerk.ptowl.com/v1/environment` daily (and on every push to main) and fails if `sign_in_url` / `sign_up_url` don't match what the code expects. When red, the workflow output names the divergent field — fix it in the Clerk dashboard → Paths and re-run the workflow.
+
+Update the `EXPECTED_SIGN_IN` / `EXPECTED_SIGN_UP` env vars in that workflow whenever the routes change.
+
+### Workers Logpush — make cron failures visible (5 min, user-side)
+
+Today: if the reminders cron silently fails (bad migration, missing binding, MailChannels rotated), nothing alerts the founder. Patient reminders stop with no error surface.
+
+Fix:
+
+1. Cloudflare dashboard → **Workers & Pages → ptowl-api → Logs → Logpush**
+2. **Create Logpush job** → destination: R2 bucket `ptowl-logs` (create if missing)
+3. Filter: `outcome != "ok"` to keep volume low; expand to all if storage isn't a concern
+4. Save. Logs land in R2 within 5 minutes of any error.
+
+Alternative if R2 setup feels heavy: Cloudflare dashboard → **Notifications → Add → Workers Errors** with destination `nurelimusabay@gmail.com`. One click. Emails on every error.
+
+### Status page (15 min, user-side, one-time)
+
+Today: `https://status.ptowl.com` is referenced in the footer but the DNS record points nowhere. Down incidents → users have no visibility.
+
+Recipe:
+
+1. Fork https://github.com/upptime/upptime into `Yami566/ptowl-status`
+2. Edit `.upptimerc.yml` → set `sites:` to:
+   ```yaml
+   sites:
+     - name: Homepage
+       url: https://ptowl.com
+     - name: API
+       url: https://ptowl.com/api/v1/health
+     - name: Clerk auth
+       url: https://clerk.ptowl.com/v1/environment
+   ```
+3. Enable GitHub Pages on the fork → custom domain `status.ptowl.com`
+4. Cloudflare DNS → add CNAME `status` → `yami566.github.io` (gray cloud — DNS only)
+
+Upptime hits each URL every 5 minutes, writes a markdown changelog of incidents, and posts a green/red badge. Free, repo-driven, zero servers.
+
+### Local dev env template (already in place)
+
+`apps/web/.env.example` documents `VITE_CLERK_PUBLISHABLE_KEY` with the production fallback. A new contributor — or you on a fresh machine — copies it to `.env.local` and is unblocked. The production publishable key is non-secret by design (`pk_*` is browser-safe per Clerk).
+
+### What's still on the user-side TODO
+
+Three remaining items from §49.4 are not automated yet:
+
+1. **CF API token scope validation** — add a pre-deploy step in `deploy.yml` that runs `wrangler d1 migrations list ptowl-db --remote`. If the token loses `D1 Edit` scope, this fails fast instead of a partial deploy. ~2 min to add.
+2. **Email rotation health endpoint** — add `POST /api/v1/internal/health/email` (auth-gated to `ADMIN_EMAIL`) that sends a test email. Run monthly post-MailChannels rotation. ~20 min.
+3. **D1 monthly snapshot** — `wrangler d1 export ptowl-db --remote` on a CF cron, write to R2. Documented rotation order in §Secrets before any `EMAIL_ENCRYPTION_KEY` rotation. ~15 min.
+
+These ship as small follow-ups when the user has 30 idle minutes.
 
 ---
 
