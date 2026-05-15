@@ -62,6 +62,22 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Token scope check — fails the deploy fast if the
+      # CLOUDFLARE_API_TOKEN has lost its D1 Edit permission (e.g. on
+      # rotation). Without this guard, the migration step below would
+      # error out but the API deploy could still partial-succeed,
+      # producing a Worker with schema that's a migration behind. The
+      # `migrations list` subcommand is read-only against D1, so it
+      # has no side effects on a healthy token; it only surfaces a
+      # broken token before the destructive step runs.
+      - name: Pre-deploy — verify D1 token scope
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/api
+          command: d1 migrations list ptowl-db --remote
+
       # Apply any pending D1 migrations BEFORE the new Worker code goes
       # live. wrangler skips migrations that are already applied, so this
       # is idempotent on every deploy. Without this step, schema changes
