@@ -96,21 +96,26 @@ Every live `<Route>` in [apps/web/src/App.tsx](../apps/web/src/App.tsx) plus the
 | `/customize/print`     | `PrintSettingsPage.tsx`  | Toggle language → preview reflects                    | ✅ lazy | ✅                                      | ✅       | Live   |
 | `/profile`             | `ProfilePage.tsx`        | Update clinic name → save → reflected in print header | ✅ lazy | ✅ toast on bad input                   | ✅       | Live   |
 
+### Recently shipped routes (PR #74)
+
+| URL                  | Component                  | Critical-path test                                                                                                    | Loading | Error                                   | Landmark | Status                               |
+| -------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------- | -------- | ------------------------------------ |
+| `/awaiting-approval` | `AwaitingApprovalPage.tsx` | After PR B activation: new signup lands here; "Check status" re-fetches `/auth/me`; "Sign out" destroys Clerk session | ✅      | n/a (no fetch on load)                  | ✅       | Live (inactive until provision flip) |
+| `/admin/decide`      | `AdminDecidePage.tsx`      | Click magic-link in founder email → page POSTs `/api/v1/admin/decide` → confirmation card renders                     | ✅      | ✅ token expired / invalid → error card | ✅       | Live                                 |
+
 ### Planned routes — not yet wired
 
-| URL                                | Stage (AUTH-LIFECYCLE §4)      | Blocking PR | Critical-path when ready                                           |
-| ---------------------------------- | ------------------------------ | ----------- | ------------------------------------------------------------------ |
-| `/login` (new)                     | H, replaces `/accounts/signin` | PR #60      | Same as current signin                                             |
-| `/signup` (new)                    | D, replaces `/accounts/signup` | PR #60      | Same as current signup                                             |
-| `/awaiting-approval`               | F                              | PR B        | New signup lands here; "Check status" button re-fetches `/auth/me` |
-| `/admin/decide?token=…&decision=…` | G                              | PR B        | Founder magic-link → page confirms approve/deny                    |
-| `/welcome/practice-type`           | I.1                            | PR G        | Dropdown → submit seeds templates                                  |
-| `/welcome`                         | I                              | PR G        | Clinic name + tz + phone → dashboard                               |
-| `/signup/picker`                   | C2                             | PR D        | "I'm a clinic" vs "I'm a patient"                                  |
-| `/signup/patient`                  | D2                             | PR D        | Patient self-signup                                                |
-| `/patient/dashboard`               | J.2                            | PR E        | Patient sees schedules across clinics                              |
-| `/displaced`                       | L                              | Phase 4     | Single-device kick page                                            |
-| `/forgot-password` + 2 sub-screens | M-N                            | Phase 4     | Email code reset flow                                              |
+| URL                                | Stage (AUTH-LIFECYCLE §4)      | Blocking PR | Critical-path when ready              |
+| ---------------------------------- | ------------------------------ | ----------- | ------------------------------------- |
+| `/login` (new)                     | H, replaces `/accounts/signin` | PR #60      | Same as current signin                |
+| `/signup` (new)                    | D, replaces `/accounts/signup` | PR #60      | Same as current signup                |
+| `/welcome/practice-type`           | I.1                            | PR G        | Dropdown → submit seeds templates     |
+| `/welcome`                         | I                              | PR G        | Clinic name + tz + phone → dashboard  |
+| `/signup/picker`                   | C2                             | PR D        | "I'm a clinic" vs "I'm a patient"     |
+| `/signup/patient`                  | D2                             | PR D        | Patient self-signup                   |
+| `/patient/dashboard`               | J.2                            | PR E        | Patient sees schedules across clinics |
+| `/displaced`                       | L                              | Phase 4     | Single-device kick page               |
+| `/forgot-password` + 2 sub-screens | M-N                            | Phase 4     | Email code reset flow                 |
 
 ---
 
@@ -166,25 +171,29 @@ Audit from 2026-05-15. Ranked by where the work belongs.
 - [x] D1 migrations on every deploy (deploy.yml)
 - [x] Workers + Frontend deploys on push to main (deploy.yml)
 - [x] Dependabot lockfile auto-merge (lockfile-update.yml)
-- [x] Monthly production health check (PR #70)
+- [x] Monthly production health check (smoke-monthly-health.yml, PR #70)
+- [x] D1 daily snapshot to R2 (d1-daily-snapshot.yml, PR #72)
+- [x] Email rotation health endpoint (`POST /api/v1/internal/health/email`, PR #71)
+- [x] Magic-link admin approval endpoint (`POST /api/v1/admin/decide`, PR #74)
+- [x] Secrets inventory audit (`pnpm audit:secrets`, PR #73)
 
-### Shipping this sprint
+### User-side only (cannot automate from repo)
 
-- [x] Monthly production health check workflow — this PR
-- [x] QA matrix doc — this PR
-- [ ] Email rotation health endpoint (PR #71)
+| Step                         | Why it can't be in CI                                                  | Effort           | Recipe                                             |
+| ---------------------------- | ---------------------------------------------------------------------- | ---------------- | -------------------------------------------------- |
+| Logpush cron-error alerts    | CF dashboard click — Notifications → Workers Errors                    | ~2 min           | MASTER.md §Observability                           |
+| Upptime status page fork     | External repo + GitHub Pages config + DNS CNAME                        | ~15 min one-time | MASTER.md §Observability                           |
+| Clerk dashboard URL update   | Clerk's API doesn't expose path-config writes via token scopes we have | One click        | When PR #60 merges, update Sign-in / Sign-up paths |
+| Cross-browser test of PR #60 | Manual human verification                                              | ~5 min           | Per QA-MATRIX §4 persona checklist                 |
 
-### Queue for next sprints
+### Queue for follow-up sprints
 
-| #   | Manual step                 | Automation                                                   | Effort                    |
-| --- | --------------------------- | ------------------------------------------------------------ | ------------------------- |
-| 1   | Approve new clinic signups  | Deploy magic-link `/admin/decide` endpoint                   | Medium (PR B)             |
-| 2   | D1 daily snapshot           | Scheduled GitHub Action that runs `wrangler d1 export` to R2 | Low (~15 min)             |
-| 3   | DKIM record validation      | Add MailChannels DKIM check to launch-finalize.yml           | Low (~30 min)             |
-| 4   | Status page deployment      | Fork Upptime → CNAME `status.ptowl.com` → wire 3 endpoints   | Medium (~15 min one-time) |
-| 5   | Cron failure alerts         | CF dashboard → Notifications → Workers Errors → email        | Trivial user-side click   |
-| 6   | User ban/disable endpoint   | `POST /api/v1/internal/admin/users/:id/disable`              | Low (~15 min)             |
-| 7   | Turnstile rotation API call | Add to launch-finalize.yml                                   | Low                       |
+| #   | Item                                                                                   | Effort        |
+| --- | -------------------------------------------------------------------------------------- | ------------- |
+| 1   | DKIM record validation in launch-finalize.yml                                          | Low (~30 min) |
+| 2   | User ban/disable endpoint (`POST /api/v1/internal/admin/users/:id/disable`)            | Low (~15 min) |
+| 3   | Turnstile rotation via launch-finalize.yml                                             | Low (~30 min) |
+| 4   | 1-line provision-default flip ('approved' → 'pending') — activates admin approval gate | Trivial       |
 
 ### Intentionally manual (do not automate)
 
@@ -199,13 +208,17 @@ Audit from 2026-05-15. Ranked by where the work belongs.
 
 Track PRs against the audit so the next sprint can pick up where we left off.
 
-### QA sprint of 2026-05-15
+### "Resistance is futile" sprint of 2026-05-15
 
-| PR  | Summary                                                        | Closes audit item |
-| --- | -------------------------------------------------------------- | ----------------- |
-| #69 | Landmark id on SignIn / SignUp / PatientSchedule (3 instances) | A11y critical 1   |
-| #70 | This QA matrix + monthly health check workflow                 | Automation #17    |
-| #71 | Email rotation health endpoint                                 | Automation #2     |
+| PR  | Summary                                                        | Closes audit item        |
+| --- | -------------------------------------------------------------- | ------------------------ |
+| #69 | Landmark id on SignIn / SignUp / PatientSchedule (3 instances) | A11y critical 1          |
+| #70 | This QA matrix + monthly health check workflow                 | Automation #17           |
+| #71 | Email rotation health endpoint                                 | O3, Automation #2        |
+| #72 | D1 daily snapshot to R2                                        | O7                       |
+| #73 | `scripts/audit-secrets.mjs`                                    | O8                       |
+| #74 | Admin approval foundation (magic-link + awaiting-approval)     | Auth surface (Stage F/G) |
+| #75 | Doc refresh (this commit) closing all sprint statuses          | Docs                     |
 
 ### Previous session of 2026-05-15
 

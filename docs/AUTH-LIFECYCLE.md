@@ -340,26 +340,26 @@ From the §49 big-picture sweep against the live codebase. Severity: Critical / 
 | --- | -------- | ------------------------------------------ | ------------------------------- |
 | O1  | SPF      | Clerk URL drift detection                  | ✅ PR #61 — daily smoke test    |
 | O2  | SPF      | CF API token D1 scope pre-deploy check     | ✅ PR #68                       |
-| O3  | SPF      | MailChannels rotation health endpoint      | ⏳ ~20 min                      |
+| O3  | SPF      | MailChannels rotation health endpoint      | ✅ PR #71                       |
 | O4  | Gap      | Cron failure visibility (Logpush)          | ⏳ User-side CF dashboard click |
 | O5  | Gap      | Status page (Upptime fork)                 | ⏳ User-side, ~15 min           |
 | O6  | Gap      | `.env.example` for new contributors        | ✅ PR #61                       |
-| O7  | Gap      | D1 monthly snapshot before secret rotation | ⏳ ~15 min                      |
-| O8  | Gap      | Secrets inventory audit script             | ⏳ ~5 min                       |
+| O7  | Gap      | D1 monthly snapshot before secret rotation | ✅ PR #72                       |
+| O8  | Gap      | Secrets inventory audit script             | ✅ PR #73                       |
 
 ### Auth surface
 
-| Item                                                          | Status                                         |
-| ------------------------------------------------------------- | ---------------------------------------------- |
-| Broken-browser escape hatch on `/accounts/signin` + `/signup` | ✅ PR #66                                      |
-| Custom email + password forms (`useSignIn` / `useSignUp`)     | 🟡 PR #60 — awaiting Clerk dashboard click-ops |
-| Admin approval gate + magic-link emails                       | ⏳ PR B                                        |
-| Awaiting-approval page                                        | ⏳ PR B                                        |
-| Patient signup fork picker                                    | ⏳ PR D                                        |
-| Patient dashboard (multi-clinic schedule view)                | ⏳ PR E                                        |
-| Onboarding questionnaire                                      | ⏳ PR G                                        |
-| Schedule edit/cancel + patient cancellation email             | ⏳ PR I                                        |
-| Auto-print + auto-email schedule                              | ⏳ PR H                                        |
+| Item                                                          | Status                                           |
+| ------------------------------------------------------------- | ------------------------------------------------ |
+| Broken-browser escape hatch on `/accounts/signin` + `/signup` | ✅ PR #66                                        |
+| Custom email + password forms (`useSignIn` / `useSignUp`)     | 🟡 PR #60 — awaiting Clerk dashboard click-ops   |
+| Admin approval gate + magic-link emails                       | ✅ PR #74 (foundation; activate via 1-line flip) |
+| Awaiting-approval page                                        | ✅ PR #74                                        |
+| Patient signup fork picker                                    | ⏳ PR D                                          |
+| Patient dashboard (multi-clinic schedule view)                | ⏳ PR E                                          |
+| Onboarding questionnaire                                      | ⏳ PR G                                          |
+| Schedule edit/cancel + patient cancellation email             | ⏳ PR I                                          |
+| Auto-print + auto-email schedule                              | ⏳ PR H                                          |
 
 ---
 
@@ -367,20 +367,26 @@ From the §49 big-picture sweep against the live codebase. Severity: Critical / 
 
 Reordered by risk × leverage, not feature dependency. Items lower in the list are deferred to Phase 4+.
 
-1. ✅ **PR #61** — Observability foundation (smoke test, env example, runbook)
-2. ✅ **PR #62** — Schedule a11y (error state, status glyphs)
-3. ✅ **PR #63** — Landmark wrappers on Landing + About
-4. ✅ **PR #64** — Decorative emoji aria-hidden
-5. ✅ **PR #65** — Mobile 44px touch targets
-6. ✅ **PR #66** — Broken-browser escape hatch on signin/signup
-7. ✅ **PR #67** — This plan archive
-8. 🟡 **PR #60** — Custom login/signup forms (in flight, gated on Clerk click-ops)
-9. ⏳ **PR B** — Admin approval gate + magic-link emails
-10. ⏳ **PR D + E** — Patient portal (signup fork + dashboard)
-11. ⏳ **PR F** — ADA accessibility cross-cut (large-text, high-contrast toggles)
-12. ⏳ **PR G** — Onboarding questionnaire
-13. ⏳ **PR H** — Auto-print + auto-email pipeline
-14. ⏳ **PR I** — Schedule lifecycle (edit/cancel + retry queue + timezone)
+1.  ✅ **PR #61** — Observability foundation (smoke test, env example, runbook)
+2.  ✅ **PR #62** — Schedule a11y (error state, status glyphs)
+3.  ✅ **PR #63** — Landmark wrappers on Landing + About
+4.  ✅ **PR #64** — Decorative emoji aria-hidden
+5.  ✅ **PR #65** — Mobile 44px touch targets
+6.  ✅ **PR #66** — Broken-browser escape hatch on signin/signup
+7.  ✅ **PR #67** — This plan archive
+8.  ✅ **PR #68** — Pre-deploy D1 token scope check
+9.  ✅ **PR #69** — Landmark id on remaining pages
+10. ✅ **PR #70** — QA-MATRIX.md + monthly production health smoke
+11. ✅ **PR #71** — Email rotation health endpoint
+12. ✅ **PR #72** — D1 daily snapshot to R2
+13. ✅ **PR #73** — `scripts/audit-secrets.mjs`
+14. ✅ **PR #74** — Admin approval foundation (magic-link + awaiting-approval page; activate via 1-line provision flip)
+15. 🟡 **PR #60** — Custom login/signup forms (in flight, gated on Clerk click-ops)
+16. ⏳ **PR D + E** — Patient portal (signup fork + dashboard)
+17. ⏳ **PR F** — ADA accessibility cross-cut (large-text, high-contrast toggles)
+18. ⏳ **PR G** — Onboarding questionnaire
+19. ⏳ **PR H** — Auto-print + auto-email pipeline
+20. ⏳ **PR I** — Schedule lifecycle (edit/cancel + retry queue + timezone)
 
 ### Deferred to Phase 4+
 
