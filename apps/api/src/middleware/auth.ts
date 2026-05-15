@@ -41,7 +41,10 @@ export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variable
     }
 
     const ip = c.req.header('cf-connecting-ip') || '';
-    const user = await resolveOrProvisionUser(c.env, claims, ip);
+    // Pass the Worker's ExecutionContext so provision.ts can background
+    // the founder-notification email via ctx.waitUntil — keeps /auth/me
+    // fast on first request from a fresh signup.
+    const user = await resolveOrProvisionUser(c.env, claims, ip, c.executionCtx);
     if (!user) {
       return c.json(
         { ok: false, error: { code: 'INTERNAL_ERROR', message: 'Could not resolve user' } },
