@@ -36,6 +36,11 @@
   .ptowl-header-actions a {
     font-size: 0.8rem !important;
     padding: 0.5rem 0.75rem !important;
+    /* WCAG AAA target size — 44px so a thumb can reliably hit
+       header actions on mobile without mis-taps. */
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
   }
 
   /* Main content */
@@ -155,6 +160,7 @@
 
   .admin-actions button {
     flex: 1 !important;
+    min-height: 44px !important;
   }
 
   /* ── ProfilePage ── */
@@ -202,6 +208,7 @@
 
   .print-settings-actions button {
     width: 100% !important;
+    min-height: 44px !important;
   }
 
   /* Landing specific */
@@ -225,17 +232,29 @@
 
 /* ── Large screens (≥1200px) ── */
 @media (min-width: 1200px) {
-  .ptowl-main { max-width: clamp(960px, 85vw, 1400px) !important; }
-  .ptowl-page-title { font-size: clamp(1.5rem, 2.5vw, 2rem) !important; }
+  .ptowl-main {
+    max-width: clamp(960px, 85vw, 1400px) !important;
+  }
+  .ptowl-page-title {
+    font-size: clamp(1.5rem, 2.5vw, 2rem) !important;
+  }
 }
 
 /* ── Extra-large screens (≥1600px) ── */
 @media (min-width: 1600px) {
-  .ptowl-main { max-width: clamp(1200px, 80vw, 1600px) !important; }
-  .ptowl-page-title { font-size: clamp(1.75rem, 2.5vw, 2.25rem) !important; }
+  .ptowl-main {
+    max-width: clamp(1200px, 80vw, 1600px) !important;
+  }
+  .ptowl-page-title {
+    font-size: clamp(1.75rem, 2.5vw, 2.25rem) !important;
+  }
 
-  .dash-presets-grid { gap: 0.875rem !important; }
-  .schedule-table-wrap table { font-size: 0.95rem !important; }
+  .dash-presets-grid {
+    gap: 0.875rem !important;
+  }
+  .schedule-table-wrap table {
+    font-size: 0.95rem !important;
+  }
 }
 
 /* ── Safe area for mobile notch/gesture bar ── */
