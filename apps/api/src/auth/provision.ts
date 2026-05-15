@@ -56,6 +56,7 @@ export async function resolveOrProvisionUser(
   env: Env,
   claims: AuthClaims,
   ip: string,
+  ctx?: { waitUntil: (promise: Promise<unknown>) => void },
 ): Promise<AuthUser | null> {
   // 1. Steady-state lookup
   const byUid = await env.DB.prepare(
@@ -159,11 +160,21 @@ export async function resolveOrProvisionUser(
   // flips the default to 'pending', the same code path becomes the
   // operator's one-click approval workflow without further changes.
   //
-  // Best-effort: a MailChannels outage doesn't block the signup. The
-  // notification service env-gates on ENVIRONMENT so dev / staging
-  // never spray real email.
+  // CRITICAL: this send is BACKGROUNDED via ctx.waitUntil — we never
+  // await it from the request-response path. A slow MailChannels
+  // response was previously stalling /auth/me on the *very first*
+  // request from a freshly-signed-up user. The frontend timed out at
+  // 8s, AuthContext left user=null, and the user bounced back to the
+  // landing page with the sign-in widget visible — the exact symptom
+  // the founder reported on 2026-05-15.
+  //
+  // If no ctx is passed (callers that don't have a Worker request
+  // context), we still fire-and-forget; the Workers runtime keeps
+  // promises alive briefly after the response, and if it doesn't,
+  // the notification gets dropped with a logged error — which is
+  // better than blocking signup.
   if (realEmail) {
-    await sendFounderApprovalPending(env, {
+    const sendPromise = sendFounderApprovalPending(env, {
       newUserId: userId,
       clinicEmail: realEmail,
       clinicName: teamAlias,
@@ -173,6 +184,9 @@ export async function resolveOrProvisionUser(
         err instanceof Error ? err.message : 'unknown',
       ),
     );
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(sendPromise);
+    }
   }
 
   return {
