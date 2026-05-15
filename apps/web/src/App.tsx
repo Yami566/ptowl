@@ -55,6 +55,12 @@ const SignInPage = lazy(() =>
 const SignUpPage = lazy(() =>
   import('./pages/SignUpPage.js').then((m) => ({ default: m.SignUpPage })),
 );
+const AwaitingApprovalPage = lazy(() =>
+  import('./pages/AwaitingApprovalPage.js').then((m) => ({ default: m.AwaitingApprovalPage })),
+);
+const AdminDecidePage = lazy(() =>
+  import('./pages/AdminDecidePage.js').then((m) => ({ default: m.AdminDecidePage })),
+);
 
 export function App() {
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -124,6 +130,14 @@ export function App() {
                     email, etc.) resolves under the same mount path. */}
                 <Route path="/accounts/signin/*" element={<SignInPage />} />
                 <Route path="/accounts/signup/*" element={<SignUpPage />} />
+                {/* Awaiting-approval landing. Auth-aware but accessible
+                    to users whose D1 status is 'pending' (AuthContext
+                    routes them here on PENDING_APPROVAL). Treated as
+                    public-ish so the auth guard doesn't bounce them. */}
+                <Route path="/awaiting-approval" element={<AwaitingApprovalPage />} />
+                {/* Magic-link approval target for the founder. JWT in
+                    the URL is the auth — no Clerk session needed. */}
+                <Route path="/admin/decide" element={<AdminDecidePage />} />
 
                 {/* Protected routes — require authenticated user */}
                 <Route
