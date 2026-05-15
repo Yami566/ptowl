@@ -56,6 +56,20 @@ export const requireAuth = createMiddleware<{ Bindings: Env; Variables: Variable
       );
     }
 
+    // Distinct error code for accounts awaiting founder approval.
+    // Frontend (AuthContext) routes these users to /awaiting-approval
+    // instead of bouncing to the landing page, so they understand
+    // why they cannot reach the dashboard yet.
+    if (user.status === 'pending') {
+      return c.json(
+        {
+          ok: false,
+          error: { code: 'PENDING_APPROVAL', message: 'Account awaiting approval' },
+        },
+        403,
+      );
+    }
+
     c.set('user', user);
     await next();
   },

@@ -21,6 +21,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
+  pendingApproval: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -28,7 +29,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const PUBLIC_PATHS = ['/', '/about', '/privacy', '/terms', '/security'];
+const PUBLIC_PATHS = [
+  '/',
+  '/about',
+  '/privacy',
+  '/terms',
+  '/security',
+  '/awaiting-approval',
+  '/admin/decide',
+];
 
 // Patient-facing routes share a /p/ prefix. They never require a Clerk
 // session (the URL token is the credential). AuthContext skips the
@@ -43,6 +52,7 @@ function isPublicPath(pathname: string): boolean {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pendingApproval, setPendingApproval] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,8 +69,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await apiRequest<AuthUser>('/auth/me');
     if (result.ok && result.data) {
       setUser(result.data);
+      setPendingApproval(false);
+    } else if (result.error?.code === 'PENDING_APPROVAL') {
+      // Clerk session is valid; D1 row exists but founder hasn't
+      // approved yet. Track this distinctly from "signed out" so
+      // ClinicRoute can route to /awaiting-approval instead of /.
+      setUser(null);
+      setPendingApproval(true);
     } else {
       setUser(null);
+      setPendingApproval(false);
     }
   }, []);
 
@@ -109,12 +127,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
     const isPublic = isPublicPath(location.pathname);
-    if (!user && !isPublic) {
+    // PENDING_APPROVAL takes precedence over the not-signed-in
+    // bounce so users post-signup land on /awaiting-approval instead
+    // of being thrown back to the landing page (which would look
+    // like the signup failed).
+    if (pendingApproval && location.pathname !== '/awaiting-approval') {
+      navigate('/awaiting-approval', { replace: true });
+    } else if (!user && !pendingApproval && !isPublic) {
       navigate('/', { replace: true });
     } else if (user && location.pathname === '/') {
       navigate('/dashboard', { replace: true });
     }
-  }, [user, loading, location.pathname, navigate]);
+  }, [user, pendingApproval, loading, location.pathname, navigate]);
 
   // Called by the auth UI after successful Clerk verification (used in
   // the rare case where we need to force a /auth/me roundtrip without
@@ -126,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await clerk.signOut().catch(() => {});
     setUser(null);
+    setPendingApproval(false);
     navigate('/', { replace: true });
   }, [clerk, navigate]);
 
@@ -135,14 +160,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isPublic = isPublicPath(location.pathname);
   if (loading && !isPublic) {
     return (
-      <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+      <AuthContext.Provider value={{ user, loading, pendingApproval, login, logout, refreshUser }}>
         <LoadingOverlay message="Verifying session..." />
       </AuthContext.Provider>
     );
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, pendingApproval, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

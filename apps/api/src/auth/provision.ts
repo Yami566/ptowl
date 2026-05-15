@@ -1,6 +1,7 @@
 import type { JWTPayload } from 'jose';
 import type { Env } from '../types/env.js';
 import { DEFAULT_TEMPLATES, getTeamAliasName } from '@ptowl/shared';
+import { sendFounderApprovalPending } from '../services/notifications.js';
 
 /**
  * Identity-provider-agnostic claims shape consumed by
@@ -151,6 +152,28 @@ export async function resolveOrProvisionUser(
   )
     .bind(crypto.randomUUID().replace(/-/g, ''), userId, 'signup_firebase', phone || claims.sub, ip)
     .run();
+
+  // Fire the founder's "new clinic awaiting approval" magic-link email.
+  // While status defaults to 'approved' (per the line above), this is a
+  // heads-up only — the founder doesn't need to act. Once a future PR
+  // flips the default to 'pending', the same code path becomes the
+  // operator's one-click approval workflow without further changes.
+  //
+  // Best-effort: a MailChannels outage doesn't block the signup. The
+  // notification service env-gates on ENVIRONMENT so dev / staging
+  // never spray real email.
+  if (realEmail) {
+    await sendFounderApprovalPending(env, {
+      newUserId: userId,
+      clinicEmail: realEmail,
+      clinicName: teamAlias,
+    }).catch((err) =>
+      console.error(
+        'provision: founder notification failed:',
+        err instanceof Error ? err.message : 'unknown',
+      ),
+    );
+  }
 
   return {
     id: userId,
