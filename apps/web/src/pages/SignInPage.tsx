@@ -40,9 +40,35 @@ export function SignInPage() {
         fallbackRedirectUrl="/dashboard"
         appearance={clerkAppearance}
       />
+      {/* Cross-browser escape hatch. The embedded <SignIn> widget
+          above renders empty on Safari / Firefox / Edge in some
+          configurations (Clerk SDK initialises but the form never
+          paints). This direct link to Clerk's hosted account portal
+          keeps those users unblocked until the custom-form rebuild
+          (PR #60) lands in production. */}
+      <p style={fallbackStyles.note}>
+        Form not loading?{' '}
+        <a href="https://clerk.ptowl.com/sign-in" style={fallbackStyles.link} rel="noopener">
+          Sign in directly &rarr;
+        </a>
+      </p>
     </main>
   );
 }
+
+const fallbackStyles: Record<string, React.CSSProperties> = {
+  note: {
+    marginTop: '1.5rem',
+    fontSize: '0.85rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+  },
+  link: {
+    color: 'var(--green-dark)',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+};
 
 // Match the embedded Clerk form to PTOwl's brand tokens so the
 // sign-in screen looks first-party instead of using Clerk's default
