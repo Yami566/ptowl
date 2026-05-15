@@ -122,7 +122,7 @@ export function PatientSchedulePage() {
 
   if (loading) {
     return (
-      <main style={styles.page}>
+      <main id="main-content" style={styles.page}>
         <div style={styles.center}>
           <OwlLogo size="md" />
           <p style={styles.subtle}>Loading your schedule…</p>
@@ -133,7 +133,7 @@ export function PatientSchedulePage() {
 
   if (error || !data) {
     return (
-      <main style={styles.page}>
+      <main id="main-content" style={styles.page}>
         <div style={styles.center}>
           <OwlLogo size="md" />
           <h1 style={styles.errorTitle}>Schedule not found</h1>

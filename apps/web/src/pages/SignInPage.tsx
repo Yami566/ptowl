@@ -32,7 +32,7 @@ export function SignInPage() {
   if (user) return null;
 
   return (
-    <main style={pageStyles}>
+    <main id="main-content" style={pageStyles}>
       <SignIn
         path="/accounts/signin"
         routing="path"

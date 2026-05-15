@@ -13,7 +13,7 @@ export function SignUpPage() {
   if (user) return null;
 
   return (
-    <main style={pageStyles}>
+    <main id="main-content" style={pageStyles}>
       <SignUp
         path="/accounts/signup"
         routing="path"
