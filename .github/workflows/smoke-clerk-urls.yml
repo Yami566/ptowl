@@ -1,0 +1,70 @@
+name: Smoke — Clerk URL alignment
+
+# Catches the exact failure mode that caused PTOwl's 3-day blank-page auth
+# outage: Clerk's dashboard sign_in_url / sign_up_url silently diverged from
+# the paths wired into the React router. Clerk strips hyphens, normalizes
+# trailing slashes, and otherwise mutates URLs on save — there's no
+# server-side validation that what you typed matches what got persisted.
+#
+# This workflow asks Clerk's own public /v1/environment endpoint what it
+# thinks the URLs are, and fails loudly if they don't match what the code
+# expects. Runs daily on cron + on every push to main.
+#
+# This is informational — it does not gate deploys. If it goes red, the
+# user clicks one link in the Clerk dashboard to re-align the URL, then
+# re-runs this workflow to confirm green.
+
+on:
+  schedule:
+    # 09:00 UTC daily = ~04:00 Chicago. Picks up overnight Clerk console edits.
+    - cron: '0 9 * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-clerk-urls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fetch Clerk environment
+        id: fetch
+        run: |
+          set -euo pipefail
+          curl -sf "https://clerk.ptowl.com/v1/environment" \
+            -H "User-Agent: ptowl-smoke-test" \
+            -o clerk.json
+          echo "sign_in_url=$(jq -r .display_config.sign_in_url clerk.json)" >> "$GITHUB_OUTPUT"
+          echo "sign_up_url=$(jq -r .display_config.sign_up_url clerk.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Assert sign_in_url matches code
+        env:
+          # Expected paths must match what apps/web/src/main.tsx passes to
+          # <ClerkProvider signInUrl=... signUpUrl=... />. Today's main expects
+          # /accounts/signin + /accounts/signup. When PR #60 (auth rebuild)
+          # merges, flip these to /login + /signup in the same commit and
+          # update Clerk dashboard → Paths to match. Then this workflow stays
+          # green ongoing.
+          EXPECTED_SIGN_IN: 'https://ptowl.com/accounts/signin'
+          EXPECTED_SIGN_UP: 'https://ptowl.com/accounts/signup'
+          ACTUAL_SIGN_IN: ${{ steps.fetch.outputs.sign_in_url }}
+          ACTUAL_SIGN_UP: ${{ steps.fetch.outputs.sign_up_url }}
+        run: |
+          set -euo pipefail
+          echo "Clerk says sign_in_url = $ACTUAL_SIGN_IN"
+          echo "Code expects          = $EXPECTED_SIGN_IN"
+          echo "Clerk says sign_up_url = $ACTUAL_SIGN_UP"
+          echo "Code expects           = $EXPECTED_SIGN_UP"
+          mismatch=0
+          if [ "$ACTUAL_SIGN_IN" != "$EXPECTED_SIGN_IN" ]; then
+            echo "::error title=Clerk sign_in_url drift::Clerk reports $ACTUAL_SIGN_IN but code expects $EXPECTED_SIGN_IN. Fix in Clerk dashboard → Paths."
+            mismatch=1
+          fi
+          if [ "$ACTUAL_SIGN_UP" != "$EXPECTED_SIGN_UP" ]; then
+            echo "::error title=Clerk sign_up_url drift::Clerk reports $ACTUAL_SIGN_UP but code expects $EXPECTED_SIGN_UP. Fix in Clerk dashboard → Paths."
+            mismatch=1
+          fi
+          exit $mismatch
