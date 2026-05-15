@@ -1,5 +1,5 @@
 import { Suspense, lazy, useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, ClinicRoute } from './contexts/AuthContext.js';
@@ -49,8 +49,8 @@ const NotFoundPage = lazy(() =>
 const PatientSchedulePage = lazy(() =>
   import('./pages/PatientSchedulePage.js').then((m) => ({ default: m.PatientSchedulePage })),
 );
-const SignInPage = lazy(() =>
-  import('./pages/SignInPage.js').then((m) => ({ default: m.SignInPage })),
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage.js').then((m) => ({ default: m.LoginPage })),
 );
 const SignUpPage = lazy(() =>
   import('./pages/SignUpPage.js').then((m) => ({ default: m.SignUpPage })),
@@ -122,8 +122,11 @@ export function App() {
                     URL bar stays on ptowl.com. Wildcard suffix is required
                     so Clerk's internal step routing (factor-one, verify-
                     email, etc.) resolves under the same mount path. */}
-                <Route path="/accounts/signin/*" element={<SignInPage />} />
-                <Route path="/accounts/signup/*" element={<SignUpPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                {/* Legacy redirects so old bookmarks don't 404. */}
+                <Route path="/accounts/signin" element={<Navigate to="/login" replace />} />
+                <Route path="/accounts/signup" element={<Navigate to="/signup" replace />} />
 
                 {/* Protected routes — require authenticated user */}
                 <Route

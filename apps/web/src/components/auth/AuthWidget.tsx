@@ -1,102 +1,78 @@
 /**
- * Auth widget rendered on the landing page.
+ * AuthWidget — two CTAs on the landing page, modeled on betraiders.net.
  *
- * Same-origin anchor tags pointing at /accounts/signin and
- * /accounts/signup, which mount Clerk's full <SignIn> / <SignUp>
- * components inline (see apps/web/src/pages/SignInPage.tsx). The URL
- * bar stays on ptowl.com end-to-end; no third-party domain hop.
+ * Orange primary "Log In" → /login (returning users, common path).
+ * Dark secondary "Sign Up" → /signup (new clinics, less common path).
  *
- * Why same-origin embedded Clerk (not subdomain redirect, not
- * <SignInButton>):
- *   1. Trust: visitors never leave ptowl.com during auth, which reads
- *      cleaner for a SaaS launch and avoids the "huh, what's
- *      clerk.ptowl.com?" question.
- *   2. Reliability: <SignIn> / <SignUp> are real form components,
- *      not click-handler wrappers. They render inline; ad-blockers
- *      that previously clobbered <SignInButton> have no surface here.
- *   3. Anchors-not-buttons: plain <a href> still works pre-hydration
- *      and survives ad-blockers that touch click handlers.
- *
- * Configuration owned upstream:
- *   - apps/web/src/main.tsx — ClerkProvider with signInUrl/signUpUrl
- *     pinned to /accounts/signin and /accounts/signup so signed-out
- *     redirects land on these paths.
- *   - apps/web/src/App.tsx — wildcard routes /accounts/signin/*
- *     and /accounts/signup/* so Clerk's internal step routing
- *     (factor-one, verify-email) resolves under the mount path.
- *   - Clerk dashboard — Sign-in URL / Sign-up URL / After sign-in URL
- *     must be updated to ptowl.com/accounts/signin etc. once this
- *     ships (one-time user-side task).
+ * Both lead to PTOwl-rendered custom forms backed by Clerk's `useSignIn` /
+ * `useSignUp` hooks (apps/web/src/pages/LoginPage.tsx + SignUpPage.tsx).
+ * No vendor-widget cross-browser surface; same code path that works on
+ * betraiders.
  */
 export function AuthWidget() {
   return (
-    <div
-      role="region"
-      aria-label="Sign-in"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        alignItems: 'stretch',
-        width: '100%',
-        maxWidth: '320px',
-        margin: '0 auto',
-      }}
-    >
-      <a href="/accounts/signin" style={primaryStyles}>
-        <span>Sign in</span>
+    <div role="region" aria-label="Sign-in" style={styles.row}>
+      <a href="/login" style={styles.primary}>
+        Log In
       </a>
-      <a href="/accounts/signup" style={secondaryStyles}>
-        Create an account
+      <a href="/signup" style={styles.secondary}>
+        Sign Up
       </a>
-      <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>
+      <p style={styles.trust}>Free during beta · No credit card · No PHI stored</p>
     </div>
   );
 }
 
-const primaryStyles: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '0.625rem',
-  padding: '0.875rem 1.5rem',
-  background: 'var(--green-mid)',
-  color: 'white',
-  border: 'none',
-  borderRadius: 'var(--radius)',
-  fontSize: '1rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  width: '100%',
-  fontFamily: 'inherit',
-  textDecoration: 'none',
-  textAlign: 'center',
-  boxSizing: 'border-box',
-};
-
-const secondaryStyles: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: '0.875rem 1.5rem',
-  background: 'var(--white)',
-  color: 'var(--green-dark)',
-  border: '1.5px solid var(--green-mid)',
-  borderRadius: 'var(--radius)',
-  fontSize: '1rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  width: '100%',
-  fontFamily: 'inherit',
-  textDecoration: 'none',
-  textAlign: 'center',
-  boxSizing: 'border-box',
-};
-
-const trustNoteStyles: React.CSSProperties = {
-  fontSize: '0.75rem',
-  color: 'var(--gray-text)',
-  textAlign: 'center',
-  marginTop: '0.5rem',
-  lineHeight: 1.5,
+const styles: Record<string, React.CSSProperties> = {
+  row: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.75rem',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: '320px',
+    margin: '0 auto',
+  },
+  primary: {
+    flex: '1 1 140px',
+    padding: '0.875rem 1.5rem',
+    background: 'var(--orange-mid)',
+    color: 'var(--white)',
+    border: 'none',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    textDecoration: 'none',
+    textAlign: 'center' as const,
+    minHeight: '48px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondary: {
+    flex: '1 1 140px',
+    padding: '0.875rem 1.5rem',
+    background: 'var(--white)',
+    color: 'var(--green-dark)',
+    border: '1.5px solid var(--green-mid)',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    textDecoration: 'none',
+    textAlign: 'center' as const,
+    minHeight: '48px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trust: {
+    flexBasis: '100%',
+    fontSize: '0.75rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+    marginTop: '0.25rem',
+    lineHeight: 1.5,
+  },
 };
