@@ -200,18 +200,46 @@ async function runAgainstBrowser(browserName, ticket) {
     }
   }
 
+  // Capture console logs and JS errors throughout the flow for diagnostics
+  page.on('console', (msg) => {
+    if (msg.type() === 'error' || msg.type() === 'warning') {
+      const text = msg.text();
+      if (
+        !/Refused to execute inline script/i.test(text) &&
+        !/net::ERR_FAILED/i.test(text) &&
+        !/cloudflareinsights/i.test(text) &&
+        !/clerk-telemetry/i.test(text)
+      ) {
+        console.log(`  ⚠ ${msg.type()}: ${text.slice(0, 200)}`);
+      }
+    }
+  });
+
   try {
-    // Hit the ticket URL — Clerk SDK consumes ?__clerk_ticket and signs the user in
-    // via signIn.create({ strategy: 'ticket', ticket }). The fallback redirect
-    // sends them to /dashboard.
-    const ticketUrl = `${BASE}/?__clerk_ticket=${encodeURIComponent(ticket)}`;
+    // Hit /accounts/signin?__clerk_ticket=<token> — the embedded
+    // <SignIn> widget is what consumes the ticket via
+    // signIn.create({ strategy: 'ticket', ticket }). Mounting at the
+    // landing page alone doesn't trigger consumption; the widget has
+    // to be in the DOM.
+    const ticketUrl = `${BASE}/accounts/signin?__clerk_ticket=${encodeURIComponent(ticket)}&redirect_url=${encodeURIComponent('/dashboard')}`;
+    console.log(`  → navigate ${ticketUrl.slice(0, 80)}…`);
     await page.goto(ticketUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    // Wait for Clerk to process the ticket + AuthContext to settle.
-    // The ticket grants a session; AuthContext fetches /auth/me which
-    // provisions a D1 row; redirect to /dashboard fires from the
-    // existing "user on / → /dashboard" branch.
-    await page.waitForURL(/\/(dashboard|awaiting-approval)$/, { timeout: 30000 });
+    // Wait for AuthContext + Clerk to settle and redirect to /dashboard or
+    // /awaiting-approval. Fallback: wait for either URL or visible dashboard
+    // content, whichever comes first.
+    try {
+      await page.waitForURL(/\/(dashboard|awaiting-approval)$/, { timeout: 30000 });
+    } catch {
+      // Diagnostic: where did we actually end up?
+      const finalUrl = page.url();
+      const visibleH1 = await page.locator('h1').first().textContent().catch(() => '(none)');
+      const bodyText = await page.locator('body').textContent().catch(() => '');
+      throw new Error(
+        `Ticket consumption never completed. final URL=${finalUrl} ` +
+          `visible h1="${visibleH1?.slice(0, 80)}" body-preview="${bodyText.slice(0, 200)}"`,
+      );
+    }
 
     const landedAt = new URL(page.url()).pathname;
 
