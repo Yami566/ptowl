@@ -19,6 +19,7 @@
     "launch:finalize": "node scripts/finalize-launch.mjs",
     "audit:secrets": "node scripts/audit-secrets.mjs",
     "clerk:user": "node scripts/clerk-user.mjs",
+    "test:e2e": "node scripts/e2e-live.mjs",
     "prepare": "husky"
   },
   "engines": {
@@ -42,6 +43,7 @@
     "@playwright/test": "^1.60.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.4",
+    "playwright": "1.49.0",
     "prettier": "^3.4.2"
   }
 }

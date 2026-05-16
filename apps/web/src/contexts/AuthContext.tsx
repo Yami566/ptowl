@@ -158,17 +158,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clerkLoaded, isSignedIn, refreshUser, navigate]);
 
   // Redirect logic runs AFTER loading completes.
+  //
+  // What this handles:
+  //   1. PENDING_APPROVAL → /awaiting-approval (must beat any other rule)
+  //   2. Signed-in user landing on / → /dashboard (one-step entry)
+  //
+  // What this DOES NOT do (anymore — was a bug fixed 2026-05-16 after
+  // browser-level e2e testing surfaced it):
+  //   • Redirect unsigned users away from non-public paths. ClinicRoute
+  //     already does that via <Navigate to="/" /> for every protected
+  //     route, and NotFoundPage at path="*" needs to render for
+  //     unmatched URLs. The previous blanket redirect was clobbering
+  //     /accounts/signin, /accounts/signup, /this-bad-url, and any
+  //     future routes that aren't in PUBLIC_PATHS — making Clerk's
+  //     embedded sign-in widget unreachable directly and the 404 page
+  //     dead. See scripts/e2e-live.mjs for the regression test.
   useEffect(() => {
     if (loading) return;
-    const isPublic = isPublicPath(location.pathname);
-    // PENDING_APPROVAL takes precedence over the not-signed-in
-    // bounce so users post-signup land on /awaiting-approval instead
-    // of being thrown back to the landing page (which would look
-    // like the signup failed).
     if (pendingApproval && location.pathname !== '/awaiting-approval') {
       navigate('/awaiting-approval', { replace: true });
-    } else if (!user && !pendingApproval && !isPublic) {
-      navigate('/', { replace: true });
     } else if (user && location.pathname === '/') {
       navigate('/dashboard', { replace: true });
     }
