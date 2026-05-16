@@ -280,11 +280,14 @@ async function runAgainstBrowser(browserName, ticket) {
         }
       });
       await check('/dashboard renders the preset templates carousel', async () => {
-        // The dashboard shows a "Try it" hotkeys row with the 5 preset numbers
-        const has =
-          (await page.locator('.dash-tryit-key, .dash-presets-grid, .dash-preset-card').count()) >
-          0;
-        if (!has) throw new Error('preset carousel missing');
+        // Templates are fetched via /api/v1/templates AFTER AuthContext
+        // resolves. Provision creates default templates synchronously
+        // during /auth/me, but the dashboard's fetch can still take
+        // a few seconds on cold paths. waitForSelector with explicit
+        // timeout instead of an immediate count check.
+        await page.waitForSelector('.dash-preset-card, .dash-presets-grid', {
+          timeout: 15000,
+        });
       });
       await check('/dashboard has main#main-content landmark', async () => {
         const has = await page.locator('main#main-content').count();
@@ -304,11 +307,12 @@ async function runAgainstBrowser(browserName, ticket) {
       // save" + a 5th key would add the print dialog which is fiddly
       // in headless mode — leaving Save & Print as a manual step.)
       await check('5-keypress: dashboard has preset template cards visible', async () => {
-        const has =
-          (await page
-            .locator('.dash-preset-card, .dash-presets-card, .dash-tryit-key')
-            .count()) > 0;
-        if (!has) throw new Error('no preset template cards visible');
+        // Re-use the same waitForSelector pattern — by this point the
+        // earlier `/dashboard renders the preset templates carousel`
+        // check has already waited up to 15s, so this should be instant.
+        // But explicit count > 0 catches the edge case where the
+        // section exists but has zero children.
+        await page.waitForSelector('.dash-preset-card', { timeout: 5000 });
       });
 
       await check('5-keypress: pressing "2" opens patient-initials modal', async () => {
