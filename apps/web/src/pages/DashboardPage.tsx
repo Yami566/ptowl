@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { UserButton } from '@clerk/clerk-react';
 import { useAuth } from '../contexts/AuthContext.js';
 import { apiRequest } from '../api/client.js';
 import { OwlLogo } from '../components/layout/OwlLogo.js';
@@ -456,6 +457,13 @@ export function DashboardPage() {
                 </button>
               </div>
             </details>
+            {/* Wave 1.5 of docs/CLERK-INTEGRATION.md — Clerk's prebuilt
+                user menu sits to the right of the app-nav chip. Gives
+                users password change, active-session list, and (when
+                we enable Pro+) MFA enrollment / passkeys for free.
+                The app-nav menu above stays for PTOwl-specific
+                navigation (templates, print settings). */}
+            <UserButton afterSignOutUrl="/" />
           </div>
         </header>
 
