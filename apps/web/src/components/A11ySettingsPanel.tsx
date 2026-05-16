@@ -1,5 +1,28 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useA11y } from '../contexts/A11yContext.js';
+
+/**
+ * Language preference reads / writes localStorage `ptowl-language`.
+ * On change, we reload the page so Clerk's <ClerkProvider> picks up
+ * the new localization at startup (see apps/web/src/main.tsx). Brief
+ * flash but reliable — Clerk's localization prop isn't reactive to
+ * mid-session changes.
+ */
+type Language = 'en' | 'es';
+const LANG_STORAGE_KEY = 'ptowl-language';
+
+function readCurrentLanguage(): Language {
+  if (typeof window === 'undefined' || !window.localStorage) return 'en';
+  const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+  if (stored === 'es') return 'es';
+  if (stored === 'en') return 'en';
+  // No saved choice — derive from navigator.language (same precedence
+  // chain main.tsx uses, so first-visit users see consistent state).
+  if (typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('es')) {
+    return 'es';
+  }
+  return 'en';
+}
 
 /**
  * A11ySettingsPanel — modal overlay for the accessibility companion.
@@ -31,6 +54,26 @@ export function A11ySettingsPanel({ open, onClose }: A11ySettingsPanelProps) {
 
   const firstFocusableRef = useRef<HTMLButtonElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const [language, setLanguageState] = useState<Language>(() => readCurrentLanguage());
+
+  const setLanguage = (next: Language) => {
+    if (next === language) return;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(LANG_STORAGE_KEY, next);
+      }
+    } catch {
+      // localStorage may be unavailable in private mode; silently
+      // skip persistence — the page reload below still picks up the
+      // browser default.
+    }
+    setLanguageState(next);
+    // ClerkProvider's localization prop isn't reactive — reload to
+    // re-render the root with the new locale bundle.
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
 
   // Remember which element opened the panel so we can return focus on close.
   useEffect(() => {
@@ -174,6 +217,32 @@ export function A11ySettingsPanel({ open, onClose }: A11ySettingsPanelProps) {
               onClick={() => setMotion('reduced')}
             >
               Reduced
+            </button>
+          </div>
+        </div>
+
+        <div className="ptowl-a11y-group" role="radiogroup" aria-labelledby="ptowl-a11y-lang-label">
+          <div id="ptowl-a11y-lang-label" className="ptowl-a11y-group-label">
+            Language / Idioma
+          </div>
+          <div className="ptowl-a11y-options">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={language === 'en'}
+              className={`ptowl-a11y-option${language === 'en' ? ' is-active' : ''}`}
+              onClick={() => setLanguage('en')}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={language === 'es'}
+              className={`ptowl-a11y-option${language === 'es' ? ' is-active' : ''}`}
+              onClick={() => setLanguage('es')}
+            >
+              Español
             </button>
           </div>
         </div>
