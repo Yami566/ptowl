@@ -21,6 +21,12 @@ export interface Env {
   EMAIL_API_KEY: string;
   EMAIL_ENCRYPTION_KEY: string; // base64-encoded 32 bytes for AES-GCM
   TURNSTILE_SECRET_KEY: string;
+  // Clerk webhook signing secret. Svix's `whsec_...` value from Clerk
+  // dashboard → Webhooks → Endpoint → Signing Secret. Optional — the
+  // /api/v1/webhooks/clerk route gracefully no-ops with a 503 when this
+  // is missing, so deploys succeed even before the operator has set up
+  // the webhook endpoint in the Clerk dashboard.
+  CLERK_WEBHOOK_SECRET?: string;
   // Clerk frontend API URL, e.g. `https://ethical-dingo-48.clerk.accounts.dev`
   // for development instances or `https://clerk.ptowl.com` for production.
   // Used by the Worker to verify Clerk session JWTs against the

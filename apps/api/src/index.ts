@@ -14,6 +14,7 @@ import { remindersRoutes } from './routes/reminders.js';
 import { onboardingRoutes } from './routes/onboarding.js';
 import { internalHealthRoutes } from './routes/internal-health.js';
 import { adminRoutes } from './routes/admin.js';
+import { clerkWebhookRoutes } from './routes/webhooks-clerk.js';
 import {
   findAndSendDueReminders,
   processReminderMessage,
@@ -71,7 +72,13 @@ app.use('*', async (c, next) => {
 // CSRF: hono/csrf rejects state-changing requests whose Origin doesn't match.
 // Replaces the custom signed-token middleware — modern browsers always send
 // Origin on POST/PUT/PATCH/DELETE, so this is the recommended approach.
+//
+// Webhooks at /api/v1/webhooks/* are exempt: they are server-to-server
+// callbacks from Clerk (via Svix) and don't carry an Origin header. The
+// Svix HMAC signature in the request headers is the auth — verified inside
+// the route handler itself.
 app.use('*', async (c, next) => {
+  if (c.req.path.startsWith('/api/v1/webhooks/')) return next();
   const origins = getAllowedOrigins(c.env);
   if (!origins) return next(); // CORS middleware above already handles missing config
   const csrfMiddleware = csrf({ origin: origins });
@@ -178,6 +185,7 @@ app.route('/api/v1/reminders', remindersRoutes);
 app.route('/api/v1/onboarding-survey', onboardingRoutes);
 app.route('/api/v1/internal/health', internalHealthRoutes);
 app.route('/api/v1/admin', adminRoutes);
+app.route('/api/v1/webhooks/clerk', clerkWebhookRoutes);
 
 // 404 handler
 app.notFound((c) =>
