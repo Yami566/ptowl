@@ -475,6 +475,7 @@ These ship as small follow-ups when the user has 30 idle minutes.
 - **How we launch** → [docs/SHIP.md](docs/SHIP.md).
 - **How we run it** → [docs/RUN.md](docs/RUN.md).
 - **Auth lifecycle plan** → [docs/AUTH-LIFECYCLE.md](docs/AUTH-LIFECYCLE.md) — A-Z stages, wireframes, email policy, timezone strategy, lean PR roadmap.
+- **Clerk integration roadmap** → [docs/CLERK-INTEGRATION.md](docs/CLERK-INTEGRATION.md) — Clerk capability map, ADA + healthcare benchmark, gap analysis, 3-wave roadmap to eliminate dashboard clicks.
 - **Admin actions via CF dashboard** → [docs/ADMIN-CHEATSHEET.md](docs/ADMIN-CHEATSHEET.md).
 - **Production health snapshot** → [docs/HEALTH-AUDIT.md](docs/HEALTH-AUDIT.md).
 - **Reusable recipe for other repos** → [STACK-TEMPLATE.md](STACK-TEMPLATE.md).

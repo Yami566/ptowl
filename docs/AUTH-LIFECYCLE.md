@@ -9,6 +9,7 @@
 > - [VISION.md](VISION.md) — what & for whom (locked product decisions)
 > - [BUILD.md](BUILD.md) — code layout
 > - [RUN.md](RUN.md) — ops runbook
+> - [CLERK-INTEGRATION.md](CLERK-INTEGRATION.md) — Clerk capability map + ADA benchmark + automation roadmap
 > - [../MASTER.md](../MASTER.md) — operational state + secrets + resume playbook
 
 ---
