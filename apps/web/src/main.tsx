@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { esES } from '@clerk/localizations';
 import { App } from './App.js';
 import clerkStringsJson from './locale/clerk-strings.json';
 import './styles/globals.css';
@@ -74,6 +75,31 @@ const ptowlClerkLocalization = JSON.parse(
   JSON.stringify(clerkStrings).replaceAll('{animal}', animal),
 );
 
+// Language selection for Clerk's auth widgets. Two inputs, in priority order:
+//
+//   1. `ptowl-language` in localStorage — explicit user choice (a future
+//      language toggle in the dashboard header will write here).
+//   2. `navigator.language` — Spanish if the browser is set to es-*,
+//      English otherwise.
+//
+// English uses our custom owl-themed strings (Doctor Hoo greeting, etc.).
+// Spanish uses Clerk's stock esES bundle. A future PR will translate the
+// owl theme to Spanish for parity; for now, Spanish users get a clear,
+// idiomatic Clerk experience instead of broken-mixed-language strings.
+function pickLocalization() {
+  const stored =
+    typeof window !== 'undefined' && window.localStorage
+      ? window.localStorage.getItem('ptowl-language')
+      : null;
+  const browserLang =
+    typeof navigator !== 'undefined' && typeof navigator.language === 'string'
+      ? navigator.language
+      : 'en';
+  const language = stored || browserLang.toLowerCase().split('-')[0] || 'en';
+  if (language === 'es') return esES;
+  return ptowlClerkLocalization;
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     {CLERK_PUBLISHABLE_KEY ? (
@@ -84,7 +110,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         signUpUrl="/accounts/signup"
         signInFallbackRedirectUrl="/dashboard"
         signUpFallbackRedirectUrl="/dashboard"
-        localization={ptowlClerkLocalization}
+        localization={pickLocalization()}
       >
         <App />
       </ClerkProvider>
