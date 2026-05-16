@@ -307,12 +307,26 @@ async function runAgainstBrowser(browserName, ticket) {
       // save" + a 5th key would add the print dialog which is fiddly
       // in headless mode — leaving Save & Print as a manual step.)
       await check('5-keypress: dashboard has preset template cards visible', async () => {
-        // Re-use the same waitForSelector pattern — by this point the
-        // earlier `/dashboard renders the preset templates carousel`
-        // check has already waited up to 15s, so this should be instant.
-        // But explicit count > 0 catches the edge case where the
-        // section exists but has zero children.
         await page.waitForSelector('.dash-preset-card', { timeout: 5000 });
+      });
+
+      await check('5-keypress: dismiss OnboardingSurveyModal if it appears', async () => {
+        // New users see the onboarding survey on first dashboard visit.
+        // It's a modal overlay that blocks all underlying clicks. The
+        // "Skip for now" button dismisses it. Idempotent: if the modal
+        // never showed (existing user, returning visit), no action taken.
+        const skip = page.locator('button:has-text("Skip for now")');
+        try {
+          await skip.waitFor({ timeout: 3000 });
+          await skip.click();
+          // Wait for the overlay to actually unmount
+          await page.waitForSelector('[aria-labelledby="onboarding-title"]', {
+            state: 'hidden',
+            timeout: 5000,
+          });
+        } catch {
+          // Survey not present for this user, fine.
+        }
       });
 
       await check('5-keypress: clicking a preset card opens patient-initials modal', async () => {
