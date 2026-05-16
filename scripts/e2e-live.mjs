@@ -62,7 +62,11 @@ function startTracking(page, url) {
         /clerkjs\.dev/i.test(text) ||
         /Refused to execute inline script/i.test(text) ||
         /net::ERR_FAILED/i.test(text) ||
-        /Failed to load resource: the server responded with a status of 40\d/i.test(text)
+        /Failed to load resource: the server responded with a status of 40\d/i.test(text) ||
+        // cloudflareinsights.com/cdn-cgi/rum is CF Web Analytics; their
+        // own CDN's CORS for the rum endpoint is inconsistent and we
+        // can't control it from our origin. Telemetry-only.
+        /cloudflareinsights\.com.*CORS/i.test(text)
       ) {
         return;
       }
@@ -103,8 +107,11 @@ async function testPage(label, path, assertions) {
       const has = await page.evaluate(() => !!document.querySelector('#root > *'));
       if (!has) throw new Error('#root empty after hydration');
     });
-    // Give React a tick to settle a11y attrs etc.
-    await page.waitForTimeout(400);
+    // Give React + Clerk's iframe time to fully paint. 400ms wasn't enough
+    // for routes that mount <SignIn> or <SignUp> — Clerk's iframe loads
+    // asynchronously and the parent's React tree finishes hydration in
+    // a separate frame. 2000ms is safe for production network conditions.
+    await page.waitForTimeout(2000);
     await assertions(page);
     // Console errors snapshot
     const errors = consoleErrorsByPage.get(path) || [];
