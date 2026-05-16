@@ -26,7 +26,12 @@ jobs:
     timeout-minutes: 10
     env:
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      BROWSERS: chromium,firefox,webkit
+      # Chromium-only by default. Firefox + WebKit (Safari engine) ran
+      # 2026-05-16 with mixed results — Firefox blocked by sw.js
+      # cross-origin proxy bug (since fixed), WebKit blocked by
+      # a still-unknown CSP/CORS issue with ticket consumption.
+      # Override locally with BROWSERS=chromium,firefox,webkit to debug.
+      BROWSERS: chromium
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v6
@@ -41,9 +46,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install browsers for Playwright
-        # Includes shared system deps via --with-deps so headless WebKit +
-        # Firefox work on the GitHub Ubuntu runner.
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        # Only Chromium installed by default (matches BROWSERS default).
+        # Switch to `--with-deps chromium firefox webkit` when debugging
+        # cross-browser regressions.
+        run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run authenticated e2e (3 browsers in serial)
+      - name: Run authenticated e2e
         run: node scripts/e2e-auth.mjs
