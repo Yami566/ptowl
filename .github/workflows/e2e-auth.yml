@@ -13,9 +13,32 @@ name: E2E — authenticated flow (cross-browser)
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'scripts/e2e-*.mjs'
+      - '.github/workflows/e2e-auth.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
   pull_request:
     branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'scripts/e2e-*.mjs'
+      - '.github/workflows/e2e-auth.yml'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
   workflow_dispatch:
+
+# Cancel an in-flight e2e run on the same PR/branch when a new commit
+# lands. Pre-fix, iterating on a flaky test produced one workflow run
+# (and one failure email) per push; the previous runs would keep
+# burning CI minutes for no value. Concurrency keys on PR # for PR
+# runs and branch name for push runs.
+concurrency:
+  group: e2e-auth-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -52,4 +75,20 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run authenticated e2e
+        env:
+          E2E_ARTIFACTS_DIR: ${{ github.workspace }}/e2e-artifacts
         run: node scripts/e2e-auth.mjs
+
+      - name: Upload failure snapshot
+        # Only fires if the previous step failed. The script writes a
+        # full-page screenshot + page HTML to E2E_ARTIFACTS_DIR on the
+        # first failed check per browser, so the artifact is enough to
+        # diagnose without needing a push-debug-push iteration loop
+        # (which is what generated the 8-email storm on PR #89).
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-auth-failure-snapshot
+          path: ${{ github.workspace }}/e2e-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
