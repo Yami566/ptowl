@@ -316,6 +316,12 @@ async function runAgainstBrowser(browserName, ticket) {
       });
 
       await check('5-keypress: pressing "2" opens patient-initials modal', async () => {
+        // Click on the dashboard <main> first to ensure focus is on the
+        // body and not inside Clerk's <UserButton> iframe. Otherwise
+        // page.keyboard.press fires inside the iframe context, doesn't
+        // bubble to the window keydown handler, and the modal never
+        // opens. Confirmed via 2026-05-16 e2e run that focus matters here.
+        await page.locator('main#main-content').click({ position: { x: 10, y: 10 } });
         await page.keyboard.press('2');
         await page.waitForSelector('[role="dialog"][aria-label="Enter patient initials"]', {
           timeout: 8000,
