@@ -312,32 +312,44 @@ async function runAgainstBrowser(browserName, ticket) {
 
       await check('5-keypress: dismiss OnboardingSurveyModal if it appears', async () => {
         // New users see the onboarding survey on first dashboard visit.
-        // It's a modal overlay that blocks underlying clicks. The
-        // "Skip for now" button dismisses it.
+        // "Skip for now" POSTs /onboarding-survey then unmounts the
+        // overlay. Two-phase wait: (1) probe whether the modal showed
+        // at all (3s — quick, may not be there for returning users),
+        // (2) if it did, click skip and wait FOR REAL for detach (15s —
+        // generous, the API call can be slow on a cold worker). Failing
+        // loud on detach timeout is critical: the overlay intercepts
+        // pointer events and silently breaks the next click.
         const skip = page.locator('button:has-text("Skip for now")');
+        let surveyAppeared = false;
         try {
           await skip.waitFor({ timeout: 3000 });
+          surveyAppeared = true;
+        } catch {
+          /* No survey — returning user. */
+        }
+        if (surveyAppeared) {
           await skip.click();
-          // Wait for the overlay to fully detach (not just hidden — the
-          // overlay element gone from the DOM entirely so it can't
-          // intercept clicks).
           await page.waitForSelector('[aria-labelledby="onboarding-title"]', {
             state: 'detached',
-            timeout: 5000,
+            timeout: 15000,
           });
-        } catch {
-          // Survey not present for this user, fine.
         }
       });
 
       await check('5-keypress: clicking a preset card opens patient-initials modal', async () => {
-        // force: true bypasses the actionability check — necessary
-        // because the dashboard sometimes layers transient elements
-        // over the preset cards on first paint (avatar bubble
-        // animations, etc.) and Playwright's strict checks time out.
-        // The card itself is mounted and click handlers attached; we
-        // just need to fire the event past Playwright's caution.
-        await page.locator('.dash-preset-card').first().click({ force: true });
+        // Dispatch via element.click() in the page context rather than
+        // a coordinate-based Playwright click. Coordinate clicks pick
+        // the topmost element under the point; if any transient
+        // overlay (survey POST in flight, avatar bubble paint, etc.)
+        // is still mounted, the click lands on the overlay and the
+        // preset card's onClick never runs. element.click() fires the
+        // event directly on the button and React's delegated handler
+        // at the root catches it regardless of z-order.
+        await page.evaluate(() => {
+          const card = document.querySelector('.dash-preset-card');
+          if (!card) throw new Error('no .dash-preset-card found in DOM');
+          card.click();
+        });
         await page.waitForSelector('[role="dialog"][aria-label="Enter patient initials"]', {
           timeout: 8000,
         });
