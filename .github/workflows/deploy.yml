@@ -123,3 +123,14 @@ jobs:
           workingDirectory: apps/web
           wranglerVersion: '4'
           command: deploy
+
+      # Wave 1.2 of docs/CLERK-INTEGRATION.md — keep Clerk's instance
+      # path config in sync with the React routes automatically on
+      # every deploy. The script gracefully no-ops when
+      # CLERK_SECRET_KEY isn't set (e.g. on forks), so this step is
+      # safe to run unconditionally. The daily smoke-clerk-urls.yml
+      # workflow catches any drift the script missed.
+      - name: Sync Clerk instance paths (idempotent)
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        run: node scripts/sync-clerk-paths.mjs
