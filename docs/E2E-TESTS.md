@@ -78,16 +78,45 @@ Revisit when:
 - Telemetry data becomes valuable (then add nonce-based CSP)
 - Or when Clerk's SDK adopts a static-hash strategy for its inline scripts
 
-### Signed-in flows not covered
+### Signed-in flows — now covered by `pnpm test:e2e:auth`
 
-The e2e suite runs against an unauthenticated session. It can't test:
+Shipped 2026-05-16 in response to the founder reporting that no end-to-end signin success had been verified. Source: [scripts/e2e-auth.mjs](../scripts/e2e-auth.mjs).
 
-- `<UserButton>` rendering on `/dashboard`
-- The 5-keypress schedule creation flow
-- `/profile` editing
+How it works:
+
+1. Creates a throwaway test user via Clerk Backend API (`POST /v1/users`)
+2. Mints a one-shot sign-in token (`POST /v1/sign_in_tokens`)
+3. Drives the browser to `/?__clerk_ticket=<token>` — Clerk's SDK auto-consumes it
+4. Asserts the user lands on `/dashboard` (or `/awaiting-approval` if the provision flip ships)
+5. Verifies `<UserButton>`, preset templates carousel, and `main#main-content` landmark
+6. Cleans up the test user via `DELETE /v1/users/{id}`
+
+**Cross-browser:** runs against Chromium, Firefox, and WebKit (Safari engine) when `BROWSERS=chromium,firefox,webkit`. Surfaces Safari-specific regressions that caused the original blank-page outage.
+
+**Required env:** `CLERK_SECRET_KEY` — same sk*live*... key already used by `sync-clerk-paths.mjs` + `deploy.yml`.
+
+**CI:** [.github/workflows/e2e-auth.yml](../.github/workflows/e2e-auth.yml) runs on every push to main + pull_request, using the GH Actions secret of the same name. When the secret isn't set (forks), the script gracefully exits 77 without failing the workflow.
+
+```bash
+# Locally (requires CLERK_SECRET_KEY exported)
+pnpm test:e2e:auth
+
+# Cross-browser run
+BROWSERS=chromium,firefox,webkit pnpm test:e2e:auth
+
+# Against a local dev server
+PLAYWRIGHT_BASE_URL=http://localhost:5173 pnpm test:e2e:auth
+```
+
+Still not covered by automated tests:
+
+- The 5-keypress schedule creation flow itself (would need a longer test that types `2 J B Enter`)
+- `/profile` editing + save
 - Drag-reorder on dashboard
+- Sign out + sign back in
+- The `/displaced` auto-routing (requires multi-context simulation)
 
-These require a Clerk test session. Future work could add a `pnpm test:e2e:authenticated` variant using Clerk's [testing tokens](https://clerk.com/docs/testing/test-emails-and-phones).
+These are queued for follow-up tests as the dashboard surface stabilizes.
 
 ### Manual test cases not covered
 

@@ -356,7 +356,21 @@ pnpm install --frozen-lockfile
 pnpm -r typecheck
 pnpm test:unit
 pnpm build
+
+# Real-browser end-to-end validation against live production
+# (requires Chromium — `npx playwright install chromium` first time)
+pnpm test:e2e
 ```
+
+**Three layers of testing exist. Use the right one.** Hard-learned 2026-05-16: HTTP-level smokes alone are insufficient for a React SPA. Four real bugs (silent auth-route redirect, dead 404 catch-all, blocked Clerk icon font, dead fallback link) lived in production for days while every HTTP-level smoke stayed green.
+
+| Layer                                                | What it catches                                                                                        | Run it...                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm test:unit` (587 tests)                         | Pure functions, security regexes, route handlers in isolation                                          | Every commit, runs in CI                                                                                   |
+| `smoke-monthly-health.yml` + `smoke-clerk-urls.yml`  | HTTP-level status codes, Clerk dashboard drift                                                         | Daily on cron + on push to main                                                                            |
+| **`pnpm test:e2e`** (57 assertions across 11 routes) | **React hydration failures, route-guard misfires, A11y attribute regressions, JS errors at page load** | **Before any PR that touches auth, routing, or visible UI. Manually after every deploy that feels risky.** |
+
+Full e2e details + how to add new tests: [docs/E2E-TESTS.md](docs/E2E-TESTS.md).
 
 ### 2. Authenticate the CLIs (~2 min)
 

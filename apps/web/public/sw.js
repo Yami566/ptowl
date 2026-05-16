@@ -20,7 +20,7 @@
  *   - Background sync, periodic sync, or Notifications API integration.
  */
 
-const SW_VERSION = 'ptowl-v1-2026.04.25';
+const SW_VERSION = 'ptowl-v2-2026.05.16-same-origin-only';
 
 self.addEventListener('install', (event) => {
   // Activate immediately on install — no waiting period for the new SW.
@@ -33,8 +33,24 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pure passthrough. No cache, no offline shell, no fancy strategies.
-  // Cloudflare Pages handles caching at the edge already.
+  // Only intercept same-origin requests. Cross-origin requests
+  // (fonts.gstatic.com, cloudflareinsights.com, clerk.ptowl.com, etc.)
+  // pass through the browser's normal network stack untouched.
+  //
+  // Why this matters: Firefox in particular rejects when a
+  // ServiceWorker proxies a cross-origin fetch that the browser then
+  // can't resolve due to CORS interaction. Symptom surfaced by
+  // scripts/e2e-auth.mjs on 2026-05-16:
+  //   "A ServiceWorker passed a promise to FetchEvent.respondWith()
+  //    that rejected with TypeError: NetworkError when attempting to
+  //    fetch resource"
+  //
+  // The pre-fix all-paths handler broke Google Fonts loading on
+  // Firefox + WebKit. Scoping to same-origin preserves PWA
+  // installability (the registered fetch handler still exists) while
+  // letting the browser handle third-party assets natively.
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
   event.respondWith(fetch(event.request));
 });
 
