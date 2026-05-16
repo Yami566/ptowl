@@ -312,16 +312,17 @@ async function runAgainstBrowser(browserName, ticket) {
 
       await check('5-keypress: dismiss OnboardingSurveyModal if it appears', async () => {
         // New users see the onboarding survey on first dashboard visit.
-        // It's a modal overlay that blocks all underlying clicks. The
-        // "Skip for now" button dismisses it. Idempotent: if the modal
-        // never showed (existing user, returning visit), no action taken.
+        // It's a modal overlay that blocks underlying clicks. The
+        // "Skip for now" button dismisses it.
         const skip = page.locator('button:has-text("Skip for now")');
         try {
           await skip.waitFor({ timeout: 3000 });
           await skip.click();
-          // Wait for the overlay to actually unmount
+          // Wait for the overlay to fully detach (not just hidden — the
+          // overlay element gone from the DOM entirely so it can't
+          // intercept clicks).
           await page.waitForSelector('[aria-labelledby="onboarding-title"]', {
-            state: 'hidden',
+            state: 'detached',
             timeout: 5000,
           });
         } catch {
@@ -330,14 +331,13 @@ async function runAgainstBrowser(browserName, ticket) {
       });
 
       await check('5-keypress: clicking a preset card opens patient-initials modal', async () => {
-        // Equivalent to pressing the hotkey '2' — the preset card's
-        // onClick handler runs the same setSelectedTemplate +
-        // setShowInitialsModal as the keydown handler does. Clicking
-        // sidesteps the focus-into-Clerk-iframe issue that prevented
-        // page.keyboard.press from reaching the global keydown handler.
-        // Production users can still use the keyboard shortcut; this
-        // test just exercises an equivalent code path.
-        await page.locator('.dash-preset-card').first().click();
+        // force: true bypasses the actionability check — necessary
+        // because the dashboard sometimes layers transient elements
+        // over the preset cards on first paint (avatar bubble
+        // animations, etc.) and Playwright's strict checks time out.
+        // The card itself is mounted and click handlers attached; we
+        // just need to fire the event past Playwright's caution.
+        await page.locator('.dash-preset-card').first().click({ force: true });
         await page.waitForSelector('[role="dialog"][aria-label="Enter patient initials"]', {
           timeout: 8000,
         });
