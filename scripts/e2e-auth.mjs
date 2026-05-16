@@ -112,12 +112,13 @@ async function detectIdentifierStrategy() {
 }
 
 function buildSyntheticPhone() {
-  // E.164 format, +1 5555 5XX XXXX. Clerk validates format but doesn't
-  // dial the number — safe for BAPI-created test users we delete after.
-  // 7-digit randomness from the timestamp + a small random tail.
-  const tail = String(TS).slice(-7);
-  const noise = String(Math.floor(Math.random() * 100)).padStart(2, '0');
-  return `+1555${tail.slice(0, 3)}${tail.slice(3, 5)}${noise}`.slice(0, 12);
+  // NANP (North American Numbering Plan) reserves 555-0100 through
+  // 555-0199 for fiction/testing. Clerk accepts these as valid E.164
+  // but never dials them. Format: +1 555 555 01XX (11 digits + the +).
+  // 100 unique values, plus test users are deleted after each run so
+  // collision is bounded to concurrent runs only.
+  const xx = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+  return `+155555501${xx}`;
 }
 
 async function createTestUser() {
