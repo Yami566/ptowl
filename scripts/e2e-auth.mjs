@@ -88,17 +88,55 @@ async function clerkFetch(path, init = {}) {
   return res.json();
 }
 
+async function detectIdentifierStrategy() {
+  // Clerk's public /v1/environment endpoint reports which identifier
+  // types the instance accepts. We pick the strategy that matches so
+  // the BAPI POST /users call doesn't 422 on "email_address is not a
+  // valid parameter" (which is what happened on 2026-05-16 when the
+  // instance turned out to be configured for phone-only auth).
+  const url = `https://clerk.ptowl.com/v1/environment`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Could not GET ${url}: ${res.status}`);
+  }
+  const env = await res.json();
+  const strategies = env?.auth_config?.identification_strategies || [];
+  console.log(`e2e-auth: Clerk identification_strategies = ${JSON.stringify(strategies)}`);
+  if (strategies.includes('email_address')) return 'email';
+  if (strategies.includes('phone_number')) return 'phone';
+  throw new Error(
+    `No supported identifier strategy. Got: ${strategies.join(', ') || '(empty)'}. ` +
+      `Enable email or phone in Clerk dashboard → User & Authentication → ` +
+      `Email, Phone, Username.`,
+  );
+}
+
+function buildSyntheticPhone() {
+  // E.164 format, +1 5555 5XX XXXX. Clerk validates format but doesn't
+  // dial the number — safe for BAPI-created test users we delete after.
+  // 7-digit randomness from the timestamp + a small random tail.
+  const tail = String(TS).slice(-7);
+  const noise = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+  return `+1555${tail.slice(0, 3)}${tail.slice(3, 5)}${noise}`.slice(0, 12);
+}
+
 async function createTestUser() {
   console.log('e2e-auth: creating test user via Clerk BAPI…');
+  const strategy = await detectIdentifierStrategy();
+  const base = {
+    password: TEST_PASSWORD,
+    first_name: 'E2E',
+    last_name: `Test ${TS}`,
+    skip_password_checks: true, // BAPI-only — allows our test password
+  };
+  const params =
+    strategy === 'email'
+      ? { ...base, email_address: [TEST_EMAIL] }
+      : { ...base, phone_number: [buildSyntheticPhone()] };
+  console.log(`e2e-auth:   using strategy="${strategy}"`);
   const user = await clerkFetch('/users', {
     method: 'POST',
-    body: JSON.stringify({
-      email_address: [TEST_EMAIL],
-      password: TEST_PASSWORD,
-      first_name: 'E2E',
-      last_name: `Test ${TS}`,
-      skip_password_checks: true, // BAPI-only — allows our test password
-    }),
+    body: JSON.stringify(params),
   });
   console.log(`e2e-auth:   created user_id=${user.id}`);
   return user;
