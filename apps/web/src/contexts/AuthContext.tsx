@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth as useClerkAuth, useClerk } from '@clerk/clerk-react';
 import { apiRequest } from '../api/client.js';
@@ -37,6 +45,7 @@ const PUBLIC_PATHS = [
   '/security',
   '/awaiting-approval',
   '/admin/decide',
+  '/displaced',
 ];
 
 // Patient-facing routes share a /p/ prefix. They never require a Clerk
@@ -55,6 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pendingApproval, setPendingApproval] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  // Stage L (single-device kick) signals. previousIsSignedInRef tracks the
+  // previous Clerk session state so we can detect when isSignedIn flipped
+  // true → false. wasExplicitLogoutRef is set true inside logout() so
+  // intentional sign-outs don't get routed to /displaced.
+  const previousIsSignedInRef = useRef(false);
+  const wasExplicitLogoutRef = useRef(false);
 
   // Clerk hooks. `isLoaded` flips true once Clerk's session has been
   // checked; `isSignedIn` reflects whether the user has a valid session.
@@ -106,6 +121,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     }
 
+    // Stage L (docs/AUTH-LIFECYCLE.md §23) — detect Clerk's single-session-
+    // mode kick OR a regular token expiry. Both look the same from here:
+    // isSignedIn flipped true → false WITHOUT an explicit logout call.
+    // We route to /displaced so the user gets a friendly explanation
+    // instead of the bare landing page bounce.
+    const wasSignedIn = previousIsSignedInRef.current;
+    previousIsSignedInRef.current = isSignedIn;
+    if (wasSignedIn && !isSignedIn && !wasExplicitLogoutRef.current) {
+      setUser(null);
+      setPendingApproval(false);
+      if (!cancelled) setLoading(false);
+      navigate('/displaced', { replace: true });
+      return () => {
+        cancelled = true;
+        clearTimeout(timeoutId);
+      };
+    }
+    wasExplicitLogoutRef.current = false;
+
     (async () => {
       if (isSignedIn) {
         await refreshUser();
@@ -121,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       clearTimeout(timeoutId);
     };
-  }, [clerkLoaded, isSignedIn, refreshUser]);
+  }, [clerkLoaded, isSignedIn, refreshUser, navigate]);
 
   // Redirect logic runs AFTER loading completes.
   useEffect(() => {
@@ -148,6 +182,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   const logout = useCallback(async () => {
+    // Flag so the Clerk-state-change effect doesn't misinterpret this as
+    // a single-device kick and route to /displaced.
+    wasExplicitLogoutRef.current = true;
     await clerk.signOut().catch(() => {});
     setUser(null);
     setPendingApproval(false);

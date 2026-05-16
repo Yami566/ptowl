@@ -64,6 +64,9 @@ const AwaitingApprovalPage = lazy(() =>
 const AdminDecidePage = lazy(() =>
   import('./pages/AdminDecidePage.js').then((m) => ({ default: m.AdminDecidePage })),
 );
+const DisplacedPage = lazy(() =>
+  import('./pages/DisplacedPage.js').then((m) => ({ default: m.DisplacedPage })),
+);
 
 export function App() {
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -156,6 +159,11 @@ export function App() {
                   {/* Magic-link approval target for the founder. JWT in
                     the URL is the auth — no Clerk session needed. */}
                   <Route path="/admin/decide" element={<AdminDecidePage />} />
+                  {/* Stage L — single-device kick page. AuthContext routes
+                      here when Clerk's single_session_mode invalidates
+                      this device's session (user signed in elsewhere)
+                      or when the session naturally expires. */}
+                  <Route path="/displaced" element={<DisplacedPage />} />
 
                   {/* Protected routes — require authenticated user */}
                   <Route
