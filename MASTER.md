@@ -404,6 +404,22 @@ All should be 200 / show `"status":"healthy"`.
 
 ---
 
+## The 5 irreducible one-time Clerk dashboard clicks
+
+Per [docs/CLERK-INTEGRATION.md](docs/CLERK-INTEGRATION.md), almost every recurring Clerk dashboard step is now automated via Backend API (`scripts/sync-clerk-paths.mjs` runs on every deploy). Five one-time setups remain that Clerk's API genuinely does not expose. These are listed here so future-Claude or a new contributor never wonders what's unavoidable:
+
+| #   | What                                                                                                                                                                                                                                                                    | Where                                                       | When                                       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------ |
+| 1   | **Webhook endpoint registration.** Add `POST https://ptowl.com/api/v1/webhooks/clerk` in Clerk dashboard → Webhooks. Copy the signing secret, then `cd apps/api && wrangler secret put CLERK_WEBHOOK_SECRET`.                                                           | Clerk dashboard → Webhooks → Add endpoint                   | Once Wave 1.1 ships (the webhook listener) |
+| 2   | **OAuth provider credentials.** If you wire Google/Apple/Microsoft sign-in (Wave 2.2), create the OAuth client in Google Cloud Console / Apple Developer / Azure AD, paste client_id + client_secret into Clerk dashboard → User & Authentication → Social Connections. | Provider console + Clerk dashboard                          | Only when adding OAuth                     |
+| 3   | **Email template content.** Pro+ feature. PTOwl uses its own MailChannels-backed templates (see [docs/AUTH-LIFECYCLE.md §5](docs/AUTH-LIFECYCLE.md#5-email-surface--5-templates-thats-it)) so we skip this.                                                             | Clerk dashboard → Customization → Email templates           | n/a — not used                             |
+| 4   | **Attack-protection toggles** (account lockout thresholds, bot protection).                                                                                                                                                                                             | Clerk dashboard → User & Authentication → Attack Protection | Once, on initial setup                     |
+| 5   | **JWT template authoring.** Only needed if we ever require custom claims in the session token. PTOwl doesn't today.                                                                                                                                                     | Clerk dashboard → Sessions → Customize session token        | Only if needed                             |
+
+After these are set, **recurring Clerk dashboard work for PTOwl is zero**. Every other setting is either code-side (`<ClerkProvider appearance={…}>`, `localization`) or BAPI-side (`scripts/sync-clerk-paths.mjs`, the upcoming webhook listener, the upcoming `pnpm clerk:user` CLI).
+
+---
+
 ## Observability & resilience setup
 
 Closes the audit gaps identified in `~/.claude/plans/use-the-ptowl-file-snuggly-mist.md` §49.4. Each item below is a user-side click-op the founder runs once. After that, the safety net is automatic.
