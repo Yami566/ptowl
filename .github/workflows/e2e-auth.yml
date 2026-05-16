@@ -1,0 +1,49 @@
+name: E2E — authenticated flow (cross-browser)
+
+# Programmatically signs into ptowl.com via a Clerk sign-in token,
+# verifies the clinic-admin dashboard renders correctly across
+# Chromium / Firefox / WebKit (Safari engine). Surfaces auth-flow
+# regressions that the unauthenticated suite + HTTP smokes miss.
+#
+# Requires the GH Actions repo secret CLERK_SECRET_KEY (the same
+# sk_live_... key the sync-clerk-paths deploy step uses). When that
+# secret is missing on a fork, the script exits 77 and the workflow
+# step is marked successful — forks aren't blocked.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      BROWSERS: chromium,firefox,webkit
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 9
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install root deps (includes playwright)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers for Playwright
+        # Includes shared system deps via --with-deps so headless WebKit +
+        # Firefox work on the GitHub Ubuntu runner.
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+
+      - name: Run authenticated e2e (3 browsers in serial)
+        run: node scripts/e2e-auth.mjs

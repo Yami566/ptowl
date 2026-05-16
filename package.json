@@ -20,6 +20,7 @@
     "audit:secrets": "node scripts/audit-secrets.mjs",
     "clerk:user": "node scripts/clerk-user.mjs",
     "test:e2e": "node scripts/e2e-live.mjs",
+    "test:e2e:auth": "node scripts/e2e-auth.mjs",
     "prepare": "husky"
   },
   "engines": {
