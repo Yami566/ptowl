@@ -76,6 +76,7 @@ describe('Data Leakage Prevention', () => {
       'usePrintSettings.ts', // print layout preferences
       'useTheme.ts', // dark/light mode toggle
       'A11yContext.tsx', // accessibility companion settings (text scale, contrast, motion)
+      'A11ySettingsPanel.tsx', // language preference toggle (en/es) — writes to ptowl-language
       'DashboardPage.tsx', // streak counter + schedule order (localStorage-based)
       // Phone number is the address (login identifier), not the credential.
       // Knowing the number alone gains no access; the OTP is the actual auth.
