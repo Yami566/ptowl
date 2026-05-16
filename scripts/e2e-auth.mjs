@@ -296,6 +296,53 @@ async function runAgainstBrowser(browserName, ticket) {
           throw new Error(`redirected away: ${page.url()}`);
         }
       });
+
+      // ── 5-keypress schedule creation flow ────────────────────────────
+      // Proves the core promise of PTOwl: a clinic admin can create a
+      // schedule in 5 keystrokes. The test types 3 keys (2 + J + B) and
+      // verifies the schedule editor opens. (The actual "press Enter to
+      // save" + a 5th key would add the print dialog which is fiddly
+      // in headless mode — leaving Save & Print as a manual step.)
+      await check('5-keypress: dashboard has preset template cards visible', async () => {
+        const has =
+          (await page
+            .locator('.dash-preset-card, .dash-presets-card, .dash-tryit-key')
+            .count()) > 0;
+        if (!has) throw new Error('no preset template cards visible');
+      });
+
+      await check('5-keypress: pressing "2" opens patient-initials modal', async () => {
+        await page.keyboard.press('2');
+        await page.waitForSelector('[role="dialog"][aria-label="Enter patient initials"]', {
+          timeout: 8000,
+        });
+      });
+
+      await check(
+        '5-keypress: typing "JB" closes the modal and opens the schedule editor (Save & Print visible)',
+        async () => {
+          await page.keyboard.type('JB');
+          // Modal auto-closes when 2 chars typed; handleInitialsChange
+          // then awaits the /alias API call + generates rrule schedule
+          // + mounts ScheduleEditor which has a "Save & Print" button.
+          await page.waitForSelector('button:has-text("Save & Print")', {
+            timeout: 15000,
+          });
+        },
+      );
+
+      await check(
+        '5-keypress: closing the editor cleanly returns to dashboard',
+        async () => {
+          // Click Cancel to back out without saving (no API write needed
+          // for the test — user is deleted at end anyway).
+          await page.click('button:has-text("Cancel")');
+          // Verify we're back at the dashboard preset carousel
+          await page.waitForSelector('.dash-preset-card, .dash-presets-card', {
+            timeout: 5000,
+          });
+        },
+      );
     }
 
     await check(`no page errors during full ${browserName} flow`, async () => {
