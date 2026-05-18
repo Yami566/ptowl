@@ -106,8 +106,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ClerkProvider
         publishableKey={CLERK_PUBLISHABLE_KEY}
         afterSignOutUrl="/"
-        signInUrl="/accounts/signin"
-        signUpUrl="/accounts/signup"
+        signInUrl="/login"
+        signUpUrl="/signup"
         signInFallbackRedirectUrl="/dashboard"
         signUpFallbackRedirectUrl="/dashboard"
         localization={pickLocalization()}
