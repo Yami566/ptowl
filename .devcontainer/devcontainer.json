@@ -1,0 +1,34 @@
+{
+  "// purpose": "GitHub Codespaces config — opening this repo in a Codespace provisions a ready-to-run PTOwl dev env in ~30s (Node 22 + pnpm 9 + recommended VS Code extensions + dependencies installed). No custom Dockerfile; uses Microsoft's published TypeScript+Node 22 image with the official pnpm feature.",
+  "name": "PTOwl dev container",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers-contrib/features/pnpm:2": {
+      "version": "9"
+    }
+  },
+  "forwardPorts": [5173, 8787],
+  "portsAttributes": {
+    "5173": {
+      "label": "PTOwl web (Vite)",
+      "onAutoForward": "openBrowser"
+    },
+    "8787": {
+      "label": "PTOwl API (wrangler dev)",
+      "onAutoForward": "ignore"
+    }
+  },
+  "postCreateCommand": "pnpm install --frozen-lockfile",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "streetsidesoftware.code-spell-checker",
+        "davidanson.vscode-markdownlint",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-playwright.playwright",
+        "humao.rest-client"
+      ]
+    }
+  }
+}

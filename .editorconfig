@@ -1,0 +1,21 @@
+# EditorConfig — cross-editor formatting consistency for PTOwl
+# https://editorconfig.org
+#
+# Mirrors the same baseline as .vscode/settings.json + .prettierrc so
+# anyone editing the repo in a different editor (vim, IntelliJ, nano,
+# etc.) gets the same line endings, indent, and whitespace rules.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown intentionally preserves trailing whitespace because two
+# trailing spaces is the GFM line-break convention.
+[*.md]
+trim_trailing_whitespace = false

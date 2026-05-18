@@ -228,6 +228,15 @@ async function sendReminderEmail(
     </div>
   `;
 
+  // TODO(queue-migration): apps/api/wrangler.jsonc now declares
+  // EMAIL_QUEUE (producer binding). When the consumer Worker ships,
+  // replace this inline fetch with `await env.EMAIL_QUEUE.send({...})`
+  // and create a separate apps/api-queue-consumer/ Worker that drains
+  // the queue, retries with backoff, and dead-letters terminal
+  // failures. Until then this remains the canonical send path —
+  // transient MailChannels 5xx errors are logged and the reminder is
+  // lost (the next 15-min cron tick won't retry because the
+  // reminder_*_sent_at marker isn't atomically gated on success).
   try {
     const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
       method: 'POST',

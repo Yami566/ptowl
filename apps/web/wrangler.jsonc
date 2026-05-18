@@ -21,7 +21,11 @@
   //     after first deploy, NOT here. Wrangler Builds doesn't auto-add
   //     domain routes; that step stays manual to avoid clobbering DNS.
   "name": "ptowl",
-  "compatibility_date": "2026-04-29",
+  // Bumped 2026-05-18 in lockstep with apps/api/wrangler.jsonc so both
+  // Workers run on the same runtime baseline. Static-asset Workers
+  // don't take advantage of placement (they live at every POP) so no
+  // placement block is needed here.
+  "compatibility_date": "2026-05-18",
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"

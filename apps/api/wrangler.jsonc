@@ -1,10 +1,39 @@
 {
   "name": "ptowl-api",
   "main": "src/index.ts",
-  "compatibility_date": "2024-12-01",
+  // Bumped 2026-05-18 — enables current Workers runtime features. Was
+  // 2024-12-01; the new date includes V8 v13+ and the latest set of
+  // standards-tracking APIs (Streams, Crypto, structured clone).
+  "compatibility_date": "2026-05-18",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
+  },
+  // Smart Placement: Cloudflare auto-locates the Worker close to the
+  // primary D1 region instead of running it at the edge POP nearest
+  // the user. For read-heavy or multi-round-trip handlers (auth/me,
+  // schedules list, /p/<token> JSON) the latency drop is 30-50%
+  // because D1 round trips no longer cross continents. Free; no
+  // tradeoffs for our workload (we don't have a static-heavy edge
+  // path that would prefer per-POP placement).
+  "placement": {
+    "mode": "smart"
+  },
+  // Cloudflare Queues — producer-side binding for the upcoming
+  // MailChannels retry queue. The type was already declared in
+  // src/types/env.ts (EMAIL_QUEUE?: Queue<any>) but unmapped, so the
+  // type-system was lying. Adding the binding here makes it honest.
+  // The consumer Worker that drains the queue with retry/backoff/DLQ
+  // is intentionally deferred to a follow-up PR — see the TODO in
+  // src/services/reminders.ts. Until the consumer ships, no code
+  // produces to this queue.
+  "queues": {
+    "producers": [
+      {
+        "queue": "ptowl-reminders",
+        "binding": "EMAIL_QUEUE"
+      }
+    ]
   },
   "triggers": {
     // 15-minute granularity to drive 24h + 1h reminder windows.
@@ -88,7 +117,21 @@
       },
       // Override routes to empty — staging uses *.workers.dev URL only
       "routes": [],
-      "workers_dev": true
+      "workers_dev": true,
+      // Mirror production's Smart Placement + queue binding so staging
+      // is a faithful test bed for the production wiring. Without these,
+      // staging behaviour would diverge from production silently.
+      "placement": {
+        "mode": "smart"
+      },
+      "queues": {
+        "producers": [
+          {
+            "queue": "ptowl-reminders-staging",
+            "binding": "EMAIL_QUEUE"
+          }
+        ]
+      }
       // Secrets must be set separately: wrangler secret put JWT_SECRET --env staging
     }
   }

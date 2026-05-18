@@ -1,0 +1,42 @@
+# PTOwl API — manual test calls via the VS Code REST Client extension
+# (humao.rest-client, recommended in .vscode/extensions.json).
+#
+# Usage:
+#   1. Open this file in VS Code with the REST Client extension installed.
+#   2. Click "Send Request" above any `###` block.
+#   3. Response opens in a side pane with status, headers, and body.
+#
+# Switch between prod and local by commenting/uncommenting @base below.
+
+@base = https://ptowl.com
+# @base = http://localhost:8787
+
+### Health check — no auth required, useful for smoke tests
+GET {{base}}/api/v1/health
+
+### Clerk environment fingerprint — confirms ClerkProvider URLs + auth strategies
+# Useful for debugging when the dashboard says one thing and code says another.
+GET https://clerk.ptowl.com/v1/environment
+
+### Auth me — requires a real Clerk session cookie
+# To get one: sign in via the browser, open DevTools > Application >
+# Cookies > ptowl.com, copy the __session value.
+GET {{base}}/api/v1/auth/me
+Cookie: __session=<paste-session-jwt-here>
+
+### List my schedules
+GET {{base}}/api/v1/schedules
+Cookie: __session=<paste-session-jwt-here>
+
+### List my templates
+GET {{base}}/api/v1/templates
+Cookie: __session=<paste-session-jwt-here>
+
+### Admin decide (magic-link target — JWT in URL, no cookie needed)
+# The token comes from the founder's approval email. Use ?decision=approve
+# or ?decision=deny. After-image: GET /api/v1/auth/me as that user to
+# confirm the status flip.
+GET {{base}}/admin/decide?token=<paste-jwt>&decision=approve
+
+### Patient share view (public, no auth) — replace token with a real one
+GET {{base}}/p/0000000000000000000000000000ffff
