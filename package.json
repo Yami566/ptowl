@@ -23,6 +23,7 @@
     "test:e2e:auth": "node scripts/e2e-auth.mjs",
     "validate:wireframe": "python scripts/validate-wireframe.py",
     "diagnose:ide": "python scripts/diagnose-ide-problems.py",
+    "audit:phi": "python scripts/audit-phi.py",
     "prepare": "husky"
   },
   "engines": {
