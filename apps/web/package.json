@@ -31,16 +31,16 @@
     "sonner": "^2.0.7"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.100.10",
+    "@tanstack/react-query": "^5.100.11",
     "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.1",
+    "@vitejs/plugin-react": "^6.0.2",
     "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
     "use-local-storage-state": "^19.5.0",
-    "vite": "^8.0.12",
+    "vite": "^8.0.13",
     "vitest": "^4.1.6",
-    "wrangler": "^4.90.1"
+    "wrangler": "^4.92.0"
   }
 }

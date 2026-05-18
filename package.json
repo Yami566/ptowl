@@ -49,8 +49,8 @@
     "@commitlint/config-conventional": "^21.0.1",
     "@playwright/test": "^1.60.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.4",
-    "playwright": "1.55.1",
+    "lint-staged": "^17.0.5",
+    "playwright": "1.60.0",
     "prettier": "^3.4.2"
   }
 }
