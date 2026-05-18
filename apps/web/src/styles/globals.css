@@ -1992,3 +1992,32 @@ textarea,
     transform: none;
   }
 }
+
+/* AuthWidget landing CTAs — subtle hover/focus lift so the two
+   primary buttons feel tactile without being noisy. Pure CSS so it
+   works pre-hydration; transition is GPU-cheap. Respects
+   prefers-reduced-motion below for users who opt out of animation. */
+.ptowl-auth-cta {
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
+}
+.ptowl-auth-cta:hover,
+.ptowl-auth-cta:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(15, 32, 39, 0.12);
+}
+.ptowl-auth-cta:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(15, 32, 39, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ptowl-auth-cta,
+  .ptowl-auth-cta:hover,
+  .ptowl-auth-cta:focus-visible,
+  .ptowl-auth-cta:active {
+    transform: none;
+    transition: background 80ms ease;
+  }
+}

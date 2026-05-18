@@ -295,21 +295,44 @@ async function runAgainstBrowser(browserName, ticket) {
         if (has === 0) throw new Error('missing sign out button');
       });
     } else {
-      // /dashboard path
-      await page.waitForTimeout(2500); // let Clerk's <UserButton> mount
+      // /dashboard path. Pre-fix (2026-05-18) this used
+      // page.waitForTimeout(2500) — a fixed 2.5s wait — which flaked
+      // on slow CI runs where Clerk's <UserButton> iframe took longer
+      // to mount (the user reported "all e2e runs failed" via email
+      // notifications). The fixed wait was either unnecessary latency
+      // on fast runs OR insufficient on slow ones. Replaced with
+      // waitForSelector(..., {timeout: 10000}) so the test proceeds
+      // as soon as UserButton actually mounts and only fails after a
+      // generous deadline. Same pattern below for the identity chip.
 
       await check('/dashboard has UserButton in header (avatar circle)', async () => {
-        const has = await page
-          .locator('.cl-userButtonTrigger, .cl-userButtonBox, [data-clerk-component="UserButton"]')
-          .count();
-        if (has === 0) throw new Error('UserButton not rendered');
+        try {
+          await page.waitForSelector(
+            '.cl-userButtonTrigger, .cl-userButtonBox, [data-clerk-component="UserButton"]',
+            { timeout: 10000 },
+          );
+        } catch {
+          throw new Error('UserButton not rendered within 10s — Clerk iframe load issue?');
+        }
       });
       await check('/dashboard has visible user identity chip', async () => {
-        const text = await page.locator('body').textContent();
-        if (!text?.toLowerCase().includes(TEST_EMAIL.toLowerCase().split('@')[0])) {
-          // Not all email prefixes will appear visibly; relax to: just any signed-in chrome
-          const userMenu = await page.locator('details summary, .ptowl-menu').count();
-          if (userMenu === 0) throw new Error('no app-nav menu in header');
+        // Either the test email's local-part appears anywhere on the
+        // page, OR there's a recognizable app-nav menu element. Wait
+        // up to 8s for either signal — same flake-tolerance pattern.
+        try {
+          await page.waitForFunction(
+            (emailLocal) => {
+              const bodyText = document.body.innerText.toLowerCase();
+              if (bodyText.includes(emailLocal)) return true;
+              return document.querySelector('details summary, .ptowl-menu') !== null;
+            },
+            TEST_EMAIL.toLowerCase().split('@')[0],
+            { timeout: 8000 },
+          );
+        } catch {
+          throw new Error(
+            'no identity chip + no app-nav menu in header after 8s — header did not finish hydrating',
+          );
         }
       });
       await check('/dashboard renders the preset templates carousel', async () => {
