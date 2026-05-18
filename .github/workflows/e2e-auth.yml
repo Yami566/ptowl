@@ -6,9 +6,16 @@ name: E2E — authenticated flow (cross-browser)
 # regressions that the unauthenticated suite + HTTP smokes miss.
 #
 # Requires the GH Actions repo secret CLERK_SECRET_KEY (the same
-# sk_live_... key the sync-clerk-paths deploy step uses). When that
-# secret is missing on a fork, the script exits 77 and the workflow
-# step is marked successful — forks aren't blocked.
+# sk_live_... key the sync-clerk-paths deploy step uses).
+#
+# When the secret is missing — which happens on Dependabot PRs and
+# on forks (GH Actions doesn't pass secrets to bot/external runs) —
+# the "Run authenticated e2e" step short-circuits with a notice and
+# exits 0, so the workflow stays green. Pre-fix (2026-05-18) the
+# script exited 77 in this case and GH Actions treated that as a
+# failure, producing 8 ❌ statuses across recently-opened Dependabot
+# PRs and email-noise per push. The shell guard below produces a
+# clean ✓ with a yellow "skipped" notice instead.
 
 on:
   push:
@@ -77,7 +84,16 @@ jobs:
       - name: Run authenticated e2e
         env:
           E2E_ARTIFACTS_DIR: ${{ github.workspace }}/e2e-artifacts
-        run: node scripts/e2e-auth.mjs
+        # Shell-level guard so Dependabot PRs (no secrets) + fork PRs
+        # produce a clean ✓ with a yellow notice instead of ❌ exit 77.
+        # When the secret IS present (every non-bot push / PR), the
+        # script runs normally and any failure surfaces as expected.
+        run: |
+          if [ -z "$CLERK_SECRET_KEY" ]; then
+            echo "::notice::CLERK_SECRET_KEY not set on this runner (likely a Dependabot PR or fork). Skipping authenticated e2e — the unauth e2e-live + wireframe validator + audit-phi gates still ran."
+            exit 0
+          fi
+          node scripts/e2e-auth.mjs
 
       - name: Upload failure snapshot
         # Only fires if the previous step failed. The script writes a
