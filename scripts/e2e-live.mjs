@@ -118,6 +118,23 @@ async function testPage(label, path, assertions) {
     await check(`${path} no JS errors during load`, async () => {
       if (errors.length > 0) throw new Error(errors.join('\n      '));
     });
+    // Universal Chernobyl-class canary: the rendered HTML of EVERY
+    // public page must NEVER contain the literal string
+    // 'dashboard.clerk.com'. That was the 2026-05-18 user-screenshot
+    // bug — Clerk's raw config error leaked the dashboard URL into
+    // the inline form error. The defense in PR #99 catches the known
+    // failure mode; this canary catches any FUTURE failure where some
+    // other Clerk error path surfaces the URL on any page.
+    await check(`${path} does not leak dashboard.clerk.com URL`, async () => {
+      const html = await page.content();
+      if (/dashboard\.clerk\.com/i.test(html)) {
+        const matches = html.match(/.{0,40}dashboard\.clerk\.com.{0,40}/i) || [];
+        throw new Error(
+          `Found 'dashboard.clerk.com' in rendered HTML — Clerk error leaking? ` +
+            `Sample: ${matches[0] || '(context unavailable)'}`,
+        );
+      }
+    });
   } finally {
     await page.close();
   }
@@ -205,47 +222,105 @@ await testPage('Sign up', '/accounts/signup', async (page) => {
 // A regression where /login renders blank or shows the wrong copy
 // fails here, even if curl reports 200 OK.
 
+// Mode detection: the betraiders-pattern pages (/login, /signup) can
+// render in one of two valid states depending on Clerk's auth_config
+// (PR #99 added the defensive probe in apps/web/src/lib/clerk-strategy.ts):
+//   - FORM mode      — Clerk has email_address enabled; the actual form
+//                       renders (email + password + submit + footer link)
+//   - MAINTENANCE    — Clerk has email_address disabled; a friendly
+//                       AuthCard renders with help@ptowl.com mailto +
+//                       cross-link to the other auth page, hiding Clerk's
+//                       raw dashboard URL from end-users
+// Either mode is a healthy state. The unhealthy state is when neither
+// renders, OR when Clerk's raw dashboard URL leaks (caught by the
+// universal canary in testPage()). isMaintenanceMode() detects mode by
+// presence of the mailto:help@ptowl.com link — only the maintenance
+// card includes it.
+async function isMaintenanceMode(page) {
+  return (await page.locator('a[href="mailto:help@ptowl.com"]').count()) > 0;
+}
+
 await testPage('Login (wireframe §4.2)', '/login', async (page) => {
-  await check('/login renders the email field', async () => {
-    const has = await page.locator('input[type="email"]').count();
-    if (has === 0) throw new Error('email input missing — LoginPage did not render');
-  });
-  await check('/login renders the password field', async () => {
-    const has = await page.locator('input[type="password"]').count();
-    if (has === 0) throw new Error('password input missing — LoginPage did not render');
-  });
-  await check('/login has primary "Log In" submit button', async () => {
-    const has = await page.locator('button[type="submit"]:has-text("Log In")').count();
-    if (has === 0) throw new Error('Log In submit button missing');
-  });
-  await check('/login footer links to /signup', async () => {
-    const has = await page.locator('a[href="/signup"]').count();
-    if (has === 0) throw new Error('footer link to /signup missing');
-  });
+  const maint = await isMaintenanceMode(page);
+  if (maint) {
+    await check('/login maintenance card has "Sign-in is being set up" heading', async () => {
+      const has = await page.getByText(/sign-in is being set up/i).count();
+      if (has === 0) throw new Error('maintenance heading missing');
+    });
+    await check('/login maintenance card has help@ptowl.com mailto', async () => {
+      const has = await page.locator('a[href="mailto:help@ptowl.com"]').count();
+      if (has === 0) throw new Error('mailto link missing');
+    });
+    await check('/login maintenance card cross-links to /signup', async () => {
+      const has = await page.locator('a[href="/signup"]').count();
+      if (has === 0) throw new Error('cross-link to /signup missing');
+    });
+    await check('/login maintenance card has main#main-content landmark', async () => {
+      const has = await page.locator('main#main-content').count();
+      if (has === 0) throw new Error('main landmark missing on maintenance card');
+    });
+  } else {
+    await check('/login renders the email field', async () => {
+      const has = await page.locator('input[type="email"]').count();
+      if (has === 0) throw new Error('email input missing — LoginPage did not render');
+    });
+    await check('/login renders the password field', async () => {
+      const has = await page.locator('input[type="password"]').count();
+      if (has === 0) throw new Error('password input missing — LoginPage did not render');
+    });
+    await check('/login has primary "Log In" submit button', async () => {
+      const has = await page.locator('button[type="submit"]:has-text("Log In")').count();
+      if (has === 0) throw new Error('Log In submit button missing');
+    });
+    await check('/login footer links to /signup', async () => {
+      const has = await page.locator('a[href="/signup"]').count();
+      if (has === 0) throw new Error('footer link to /signup missing');
+    });
+  }
 });
 
 await testPage('Sign up (wireframe §4.3)', '/signup', async (page) => {
-  await check('/signup renders the clinic name field', async () => {
-    // ClinicNameField is a labeled text input. Match by accessible label.
-    const has = await page.getByLabel(/clinic name/i).count();
-    if (has === 0) throw new Error('clinic name field missing — SignUpFormPage did not render');
-  });
-  await check('/signup renders the email field', async () => {
-    const has = await page.locator('input[type="email"]').count();
-    if (has === 0) throw new Error('email input missing — SignUpFormPage did not render');
-  });
-  await check('/signup renders the password field', async () => {
-    const has = await page.locator('input[type="password"]').count();
-    if (has === 0) throw new Error('password input missing — SignUpFormPage did not render');
-  });
-  await check('/signup has primary "Sign Up" submit button', async () => {
-    const has = await page.locator('button[type="submit"]:has-text("Sign Up")').count();
-    if (has === 0) throw new Error('Sign Up submit button missing');
-  });
-  await check('/signup footer links to /login', async () => {
-    const has = await page.locator('a[href="/login"]').count();
-    if (has === 0) throw new Error('footer link to /login missing');
-  });
+  const maint = await isMaintenanceMode(page);
+  if (maint) {
+    await check('/signup maintenance card has "Sign-up is being set up" heading', async () => {
+      const has = await page.getByText(/sign-up is being set up/i).count();
+      if (has === 0) throw new Error('maintenance heading missing');
+    });
+    await check('/signup maintenance card has help@ptowl.com mailto', async () => {
+      const has = await page.locator('a[href="mailto:help@ptowl.com"]').count();
+      if (has === 0) throw new Error('mailto link missing');
+    });
+    await check('/signup maintenance card cross-links to /login', async () => {
+      const has = await page.locator('a[href="/login"]').count();
+      if (has === 0) throw new Error('cross-link to /login missing');
+    });
+    await check('/signup maintenance card has main#main-content landmark', async () => {
+      const has = await page.locator('main#main-content').count();
+      if (has === 0) throw new Error('main landmark missing on maintenance card');
+    });
+  } else {
+    await check('/signup renders the clinic name field', async () => {
+      // ClinicNameField is a labeled text input. Match by accessible label.
+      const has = await page.getByLabel(/clinic name/i).count();
+      if (has === 0) throw new Error('clinic name field missing — SignUpFormPage did not render');
+    });
+    await check('/signup renders the email field', async () => {
+      const has = await page.locator('input[type="email"]').count();
+      if (has === 0) throw new Error('email input missing — SignUpFormPage did not render');
+    });
+    await check('/signup renders the password field', async () => {
+      const has = await page.locator('input[type="password"]').count();
+      if (has === 0) throw new Error('password input missing — SignUpFormPage did not render');
+    });
+    await check('/signup has primary "Sign Up" submit button', async () => {
+      const has = await page.locator('button[type="submit"]:has-text("Sign Up")').count();
+      if (has === 0) throw new Error('Sign Up submit button missing');
+    });
+    await check('/signup footer links to /login', async () => {
+      const has = await page.locator('a[href="/login"]').count();
+      if (has === 0) throw new Error('footer link to /login missing');
+    });
+  }
 });
 
 await testPage('Awaiting approval', '/awaiting-approval', async (page) => {
