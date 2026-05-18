@@ -1,0 +1,52 @@
+name: Validate wireframe — code/test/production in sync
+
+# Cross-layer Chernobyl gate. The companion e2e-live.mjs proves the
+# live site renders the right content; this workflow proves that the
+# wireframe spec, the App.tsx routes, the component files, the e2e
+# test labels, and the production HTTP all agree on the same set of
+# routes. Any half-shipped wireframe change fails here loud.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/src/App.tsx'
+      - 'apps/web/src/pages/**'
+      - 'scripts/validate-wireframe.py'
+      - 'scripts/e2e-live.mjs'
+      - '.github/workflows/validate-wireframe.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/src/App.tsx'
+      - 'apps/web/src/pages/**'
+      - 'scripts/validate-wireframe.py'
+      - 'scripts/e2e-live.mjs'
+      - '.github/workflows/validate-wireframe.yml'
+  schedule:
+    # Hourly canary so the validator runs even when no PRs land —
+    # catches Cloudflare rollback drift or accidental main-branch
+    # force-pushes that bypass the PR gate.
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: validate-wireframe-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run validate-wireframe.py
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/validate-wireframe.py

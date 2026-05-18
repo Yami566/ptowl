@@ -21,6 +21,8 @@
     "clerk:user": "node scripts/clerk-user.mjs",
     "test:e2e": "node scripts/e2e-live.mjs",
     "test:e2e:auth": "node scripts/e2e-auth.mjs",
+    "validate:wireframe": "python scripts/validate-wireframe.py",
+    "diagnose:ide": "python scripts/diagnose-ide-problems.py",
     "prepare": "husky"
   },
   "engines": {
