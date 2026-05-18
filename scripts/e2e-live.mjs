@@ -237,18 +237,28 @@ await testPage('Sign up', '/accounts/signup', async (page) => {
 // presence of the mailto:help@ptowl.com link — only the maintenance
 // card includes it.
 async function isMaintenanceMode(page) {
-  return (await page.locator('a[href="mailto:help@ptowl.com"]').count()) > 0;
+  // Starts-with selector: the maintenance CTA's href now carries
+  // ?subject=...&body=... query params (PR #110 waitlist/recovery
+  // copy), so an exact-match selector misses it. Any anchor whose
+  // href begins with mailto:help@ptowl.com counts as the maintenance
+  // signal, regardless of trailing query string.
+  return (await page.locator('a[href^="mailto:help@ptowl.com"]').count()) > 0;
 }
 
 await testPage('Login (wireframe §4.2)', '/login', async (page) => {
   const maint = await isMaintenanceMode(page);
   if (maint) {
-    await check('/login maintenance card has "Sign-in is being set up" heading', async () => {
-      const has = await page.getByText(/sign-in is being set up/i).count();
+    await check('/login maintenance card has the recovery heading', async () => {
+      // Matches PR #110's v2 copy: "Sign-in temporarily by request".
+      // Also tolerates the prior "Sign-in is being set up" copy in
+      // case of edge cache lag.
+      const has = await page
+        .getByText(/sign-in (temporarily by request|is being set up)/i)
+        .count();
       if (has === 0) throw new Error('maintenance heading missing');
     });
     await check('/login maintenance card has help@ptowl.com mailto', async () => {
-      const has = await page.locator('a[href="mailto:help@ptowl.com"]').count();
+      const has = await page.locator('a[href^="mailto:help@ptowl.com"]').count();
       if (has === 0) throw new Error('mailto link missing');
     });
     await check('/login maintenance card cross-links to /signup', async () => {
@@ -282,12 +292,17 @@ await testPage('Login (wireframe §4.2)', '/login', async (page) => {
 await testPage('Sign up (wireframe §4.3)', '/signup', async (page) => {
   const maint = await isMaintenanceMode(page);
   if (maint) {
-    await check('/signup maintenance card has "Sign-up is being set up" heading', async () => {
-      const has = await page.getByText(/sign-up is being set up/i).count();
+    await check('/signup maintenance card has the waitlist heading', async () => {
+      // Matches PR #110's v2 copy: "We're growing carefully". Also
+      // tolerates the prior "Sign-up is being set up" copy in case
+      // of edge cache lag.
+      const has = await page
+        .getByText(/(we'?re growing carefully|sign-up is being set up)/i)
+        .count();
       if (has === 0) throw new Error('maintenance heading missing');
     });
     await check('/signup maintenance card has help@ptowl.com mailto', async () => {
-      const has = await page.locator('a[href="mailto:help@ptowl.com"]').count();
+      const has = await page.locator('a[href^="mailto:help@ptowl.com"]').count();
       if (has === 0) throw new Error('mailto link missing');
     });
     await check('/signup maintenance card cross-links to /login', async () => {
