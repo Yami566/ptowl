@@ -93,7 +93,14 @@ async function detectIdentifierStrategy() {
   // types the instance accepts. We pick the strategy that matches so
   // the BAPI POST /users call doesn't 422 on "email_address is not a
   // valid parameter" (which is what happened on 2026-05-16 when the
-  // instance turned out to be configured for phone-only auth).
+  // instance turned out to be configured for phone-only auth, and
+  // again on 2026-05-18 when the user-facing SignUpFormPage hit it).
+  //
+  // The same probe pattern exists in the browser at
+  // apps/web/src/lib/clerk-strategy.ts — that one powers the
+  // SignUpFormPage + LoginPage maintenance card, so end-users see a
+  // friendly "contact help@ptowl.com" message instead of Clerk's raw
+  // dashboard URL when this toggle is off in production.
   const url = `https://clerk.ptowl.com/v1/environment`;
   const res = await fetch(url);
   if (!res.ok) {

@@ -51,6 +51,18 @@ function mapClerkError(err: unknown): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyErr = err as any;
   const first = anyErr?.errors?.[0];
+  // Same defense as useSignup.mapClerkError — when Clerk's dashboard
+  // has email auth disabled, signIn.create rejects with a message
+  // containing the raw dashboard URL. Map to friendly copy so the
+  // URL never reaches end-users. See useSignup.ts for full rationale.
+  const msg: string = first?.message || first?.longMessage || '';
+  if (
+    first?.code === 'form_param_unknown' ||
+    /dashboard\.clerk\.com/i.test(msg) ||
+    /is not a valid parameter/i.test(msg)
+  ) {
+    return "Sign-in isn't accepting email accounts right now. Contact help@ptowl.com for assistance.";
+  }
   if (first?.longMessage) return first.longMessage;
   if (first?.message) return first.message;
   if (anyErr?.message) return anyErr.message;
