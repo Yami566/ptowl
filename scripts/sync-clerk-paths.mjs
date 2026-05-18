@@ -15,11 +15,17 @@
  *                       Stored as a GitHub Actions secret.
  *
  * Optional env:
- *   PTOWL_DESIRED_SIGN_IN_URL    (default: https://ptowl.com/accounts/signin)
- *   PTOWL_DESIRED_SIGN_UP_URL    (default: https://ptowl.com/accounts/signup)
+ *   PTOWL_DESIRED_SIGN_IN_URL    (default: https://ptowl.com/login)
+ *   PTOWL_DESIRED_SIGN_UP_URL    (default: https://ptowl.com/signup)
  *   PTOWL_DESIRED_AFTER_SIGN_IN  (default: https://ptowl.com/dashboard)
  *   PTOWL_DESIRED_AFTER_SIGN_UP  (default: https://ptowl.com/dashboard)
  *   PTOWL_DESIRED_HOME_URL       (default: https://ptowl.com)
+ *
+ * Defaults updated 2026-05-18 in lockstep with PR #91 (wireframe
+ * §4.2/§4.3 custom forms). The legacy /accounts/signin and
+ * /accounts/signup routes still mount Clerk's embedded widget for
+ * ticket-consumption flows but are no longer the canonical user-
+ * facing entry points.
  *
  * Exit codes:
  *   0  — paths synced OR script gracefully skipped (no CLERK_SECRET_KEY)
@@ -43,8 +49,8 @@ if (!SECRET) {
 }
 
 const desired = {
-  sign_in_url: process.env.PTOWL_DESIRED_SIGN_IN_URL || 'https://ptowl.com/accounts/signin',
-  sign_up_url: process.env.PTOWL_DESIRED_SIGN_UP_URL || 'https://ptowl.com/accounts/signup',
+  sign_in_url: process.env.PTOWL_DESIRED_SIGN_IN_URL || 'https://ptowl.com/login',
+  sign_up_url: process.env.PTOWL_DESIRED_SIGN_UP_URL || 'https://ptowl.com/signup',
   after_sign_in_url: process.env.PTOWL_DESIRED_AFTER_SIGN_IN || 'https://ptowl.com/dashboard',
   after_sign_up_url: process.env.PTOWL_DESIRED_AFTER_SIGN_UP || 'https://ptowl.com/dashboard',
   home_url: process.env.PTOWL_DESIRED_HOME_URL || 'https://ptowl.com',
