@@ -43,13 +43,15 @@ jobs:
       - name: Assert sign_in_url matches code
         env:
           # Expected paths must match what apps/web/src/main.tsx passes to
-          # <ClerkProvider signInUrl=... signUpUrl=... />. Today's main expects
-          # /accounts/signin + /accounts/signup. When PR #60 (auth rebuild)
-          # merges, flip these to /login + /signup in the same commit and
-          # update Clerk dashboard → Paths to match. Then this workflow stays
-          # green ongoing.
-          EXPECTED_SIGN_IN: 'https://ptowl.com/accounts/signin'
-          EXPECTED_SIGN_UP: 'https://ptowl.com/accounts/signup'
+          # <ClerkProvider signInUrl=... signUpUrl=... /> AND what
+          # scripts/sync-clerk-paths.mjs writes to Clerk on every deploy.
+          # Updated 2026-05-18 in lockstep with PR #91 (wireframe rebuild)
+          # which moved the canonical paths from /accounts/signin/signup
+          # to /login/signup. The /accounts/* routes still exist in the
+          # SPA for embedded-widget ticket flows but are no longer where
+          # Clerk should send signed-out users by default.
+          EXPECTED_SIGN_IN: 'https://ptowl.com/login'
+          EXPECTED_SIGN_UP: 'https://ptowl.com/signup'
           ACTUAL_SIGN_IN: ${{ steps.fetch.outputs.sign_in_url }}
           ACTUAL_SIGN_UP: ${{ steps.fetch.outputs.sign_up_url }}
         run: |

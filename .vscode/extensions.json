@@ -1,0 +1,12 @@
+{
+  "//": "Repo-recommended extensions. VS Code prompts the user to install these when the workspace opens for the first time. Paired with .vscode/settings.json + .cspell.json + .markdownlint.json so everyone gets the same Problems-panel signal.",
+  "recommendations": [
+    "streetsidesoftware.code-spell-checker",
+    "davidanson.vscode-markdownlint",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-playwright.playwright"
+  ],
+  "unwantedRecommendations": []
+}
