@@ -24,6 +24,9 @@
     "validate:wireframe": "python scripts/validate-wireframe.py",
     "diagnose:ide": "python scripts/diagnose-ide-problems.py",
     "audit:phi": "python scripts/audit-phi.py",
+    "status": "python scripts/status.py",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test:unit && pnpm audit:phi && pnpm validate:wireframe",
+    "verify:prod": "pnpm test:e2e && pnpm test:e2e:auth",
     "prepare": "husky"
   },
   "engines": {
