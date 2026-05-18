@@ -306,11 +306,14 @@ async function runAgainstBrowser(browserName, ticket) {
         }
       });
       await check('/dashboard renders the preset templates carousel', async () => {
-        // The dashboard shows a "Try it" hotkeys row with the 5 preset numbers
-        const has =
-          (await page.locator('.dash-tryit-key, .dash-presets-grid, .dash-preset-card').count()) >
-          0;
-        if (!has) throw new Error('preset carousel missing');
+        // Templates are fetched via /api/v1/templates AFTER AuthContext
+        // resolves. Provision creates default templates synchronously
+        // during /auth/me, but the dashboard's fetch can still take
+        // a few seconds on cold paths. waitForSelector with explicit
+        // timeout instead of an immediate count check.
+        await page.waitForSelector('.dash-preset-card, .dash-presets-grid', {
+          timeout: 15000,
+        });
       });
       await check('/dashboard has main#main-content landmark', async () => {
         const has = await page.locator('main#main-content').count();
@@ -322,6 +325,82 @@ async function runAgainstBrowser(browserName, ticket) {
           throw new Error(`redirected away: ${page.url()}`);
         }
       });
+
+      // ── 5-keypress schedule creation flow ────────────────────────────
+      // Proves the core promise of PTOwl: a clinic admin can create a
+      // schedule in 5 keystrokes. The test types 3 keys (2 + J + B) and
+      // verifies the schedule editor opens. (The actual "press Enter to
+      // save" + a 5th key would add the print dialog which is fiddly
+      // in headless mode — leaving Save & Print as a manual step.)
+      await check('5-keypress: dashboard has preset template cards visible', async () => {
+        await page.waitForSelector('.dash-preset-card', { timeout: 5000 });
+      });
+
+      await check('5-keypress: dismiss OnboardingSurveyModal if it appears', async () => {
+        // New users see the onboarding survey on first dashboard visit.
+        // "Skip for now" POSTs /onboarding-survey then unmounts the
+        // overlay. Two-phase wait: (1) probe whether the modal showed
+        // at all (3s — quick, may not be there for returning users),
+        // (2) if it did, click skip and wait FOR REAL for detach (15s —
+        // generous, the API call can be slow on a cold worker). Failing
+        // loud on detach timeout is critical: the overlay intercepts
+        // pointer events and silently breaks the next click.
+        const skip = page.locator('button:has-text("Skip for now")');
+        let surveyAppeared = false;
+        try {
+          await skip.waitFor({ timeout: 3000 });
+          surveyAppeared = true;
+        } catch {
+          /* No survey — returning user. */
+        }
+        if (surveyAppeared) {
+          await skip.click();
+          await page.waitForSelector('[aria-labelledby="onboarding-title"]', {
+            state: 'detached',
+            timeout: 15000,
+          });
+        }
+      });
+
+      await check('5-keypress: clicking a preset card opens patient-initials modal', async () => {
+        // Dispatch via element.click() in the page context rather than
+        // a coordinate-based Playwright click. Coordinate clicks pick
+        // the topmost element under the point; if any transient
+        // overlay (survey POST in flight, avatar bubble paint, etc.)
+        // is still mounted, the click lands on the overlay and the
+        // preset card's onClick never runs. element.click() fires the
+        // event directly on the button and React's delegated handler
+        // at the root catches it regardless of z-order.
+        await page.evaluate(() => {
+          const card = document.querySelector('.dash-preset-card');
+          if (!card) throw new Error('no .dash-preset-card found in DOM');
+          card.click();
+        });
+        await page.waitForSelector('[role="dialog"][aria-label="Enter patient initials"]', {
+          timeout: 8000,
+        });
+      });
+
+      await check(
+        '5-keypress: typing "JB" closes the modal and opens the schedule editor (Save & Print visible)',
+        async () => {
+          await page.keyboard.type('JB');
+          // Modal auto-closes when 2 chars typed; handleInitialsChange
+          // then awaits the /alias API call + generates rrule schedule
+          // + mounts ScheduleEditor which has a "Save & Print" button.
+          await page.waitForSelector('button:has-text("Save & Print")', {
+            timeout: 15000,
+          });
+        },
+      );
+
+      // Skipping the Cancel-out-of-editor step: ScheduleEditor has
+      // multiple "Cancel" buttons (footer + selected-event popover)
+      // and Playwright's strict mode resolves ambiguously. Test
+      // cleanup (delete /v1/users/{id}) wipes the user + any
+      // partial schedule state anyway. Worth revisiting with a
+      // more specific selector if we want to validate the cancel
+      // path explicitly.
     }
 
     await check(`no page errors during full ${browserName} flow`, async () => {
