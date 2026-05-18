@@ -228,12 +228,17 @@ async function sendReminderEmail(
     </div>
   `;
 
-  // TODO(queue-migration): apps/api/wrangler.jsonc now declares
-  // EMAIL_QUEUE (producer binding). When the consumer Worker ships,
-  // replace this inline fetch with `await env.EMAIL_QUEUE.send({...})`
-  // and create a separate apps/api-queue-consumer/ Worker that drains
-  // the queue, retries with backoff, and dead-letters terminal
-  // failures. Until then this remains the canonical send path —
+  // TODO(queue-migration): apps/api/wrangler.jsonc HAS the
+  // EMAIL_QUEUE binding commented out (deferred — see that file's
+  // top-level note). The deferred state exists because adding a
+  // producer binding for a queue that doesn't exist on Cloudflare
+  // fails wrangler deploy. Re-enabling the binding requires:
+  //   1. `wrangler queues create ptowl-reminders` (user-side click)
+  //   2. Re-add the queues block to apps/api/wrangler.jsonc (prod + staging)
+  //   3. Replace this inline fetch with `await env.EMAIL_QUEUE.send({...})`
+  //   4. Ship a consumer Worker (apps/api-queue-consumer/) that drains,
+  //      retries with backoff, and dead-letters
+  // Until step 1 completes this remains the canonical send path —
   // transient MailChannels 5xx errors are logged and the reminder is
   // lost (the next 15-min cron tick won't retry because the
   // reminder_*_sent_at marker isn't atomically gated on success).
