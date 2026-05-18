@@ -49,10 +49,15 @@ export function AuthWidget() {
         /accounts/signin and /accounts/signup which still exist as
         the embedded-Clerk fallback path but are no longer the
         primary human entry. */}
-      <a href="/login" style={primaryStyles}>
+      {/* .ptowl-auth-cta class enables the subtle hover/focus lift
+        defined in apps/web/src/styles/globals.css. Inline styles
+        still drive the base look (matches the rest of the component);
+        the class only adds interactive states the CSS can express
+        but inline styles cannot. */}
+      <a href="/login" className="ptowl-auth-cta" style={primaryStyles}>
         <span>Log In</span>
       </a>
-      <a href="/signup" style={secondaryStyles}>
+      <a href="/signup" className="ptowl-auth-cta" style={secondaryStyles}>
         Sign Up
       </a>
       <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>

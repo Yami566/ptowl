@@ -43,17 +43,32 @@ export function LoginPage() {
   if (user) return null; // AuthContext will redirect to /dashboard
 
   // Maintenance state — Clerk dashboard has email auth disabled.
-  // Symmetric with SignUpFormPage's maintenance card.
+  // Symmetric with SignUpFormPage's maintenance card. Login's copy
+  // assumes the visitor already has an account that needs recovery,
+  // not a new signup; tone is reassuring + direct.
   if (emailSupported === false) {
+    const recoveryHref =
+      'mailto:help@ptowl.com' +
+      '?subject=' +
+      encodeURIComponent('PTOwl sign-in help') +
+      '&body=' +
+      encodeURIComponent(
+        "Hi PTOwl team,\n\nI'm trying to sign in but the form isn't available. " +
+          'My account email is:\n\n\nThanks!',
+      );
     return (
-      <AuthCard title="Sign-in is being set up" subtitle="We're configuring the welcome flow.">
+      <AuthCard
+        title="Sign-in temporarily by request"
+        subtitle="We'll get you back in within a few hours."
+      >
         <p style={formStyles.maintenanceBody}>
-          Sign-in isn&apos;t accepting email accounts right now. Please reach out to{' '}
-          <a href="mailto:help@ptowl.com" style={formStyles.maintenanceLink}>
-            help@ptowl.com
-          </a>
-          .
+          Email sign-in is paused while we polish a setup detail. If you have an account, drop us a
+          quick note and we&apos;ll send you a one-time link.
         </p>
+        <a href={recoveryHref} style={formStyles.maintenanceCTA}>
+          Email help@ptowl.com
+        </a>
+        <p style={formStyles.maintenanceFinePrint}>Typical response within a few hours.</p>
         <AuthFooterLink prefix="New here?" linkText="Sign Up" to="/signup" />
       </AuthCard>
     );
@@ -122,5 +137,28 @@ const formStyles: Record<string, React.CSSProperties> = {
     color: 'var(--green-mid)',
     fontWeight: 600,
     textDecoration: 'none',
+  },
+  maintenanceCTA: {
+    display: 'block',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    padding: '0.875rem 1.5rem',
+    background: 'var(--green-mid)',
+    color: 'white',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    textAlign: 'center' as const,
+    textDecoration: 'none',
+    fontFamily: 'inherit',
+    marginBottom: '0.75rem',
+  },
+  maintenanceFinePrint: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+    margin: 0,
+    marginBottom: '1rem',
+    lineHeight: 1.5,
   },
 };

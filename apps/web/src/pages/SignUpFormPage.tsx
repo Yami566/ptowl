@@ -49,18 +49,39 @@ export function SignUpFormPage() {
   if (user) return null; // AuthContext redirects signed-in users to /dashboard
 
   // Maintenance state: Clerk dashboard has email auth disabled. Shows
-  // a friendly card instead of the broken form, so Clerk's raw
-  // "email_address is not a valid parameter ... see dashboard at ..."
-  // error from the 2026-05-18 user screenshot never reaches end-users.
+  // a friendly waitlist card instead of the broken form, so Clerk's
+  // raw "email_address is not a valid parameter ... see dashboard
+  // at ..." error from the 2026-05-18 user screenshot never reaches
+  // end-users. v2 polish: empathetic copy + a real "join the waitlist"
+  // mailto link with prefilled subject/body so a visitor's interest
+  // actually goes somewhere instead of just being told to wait.
   if (emailSupported === false) {
+    const waitlistHref =
+      'mailto:help@ptowl.com' +
+      '?subject=' +
+      encodeURIComponent('PTOwl waitlist — please reach out when sign-ups open') +
+      '&body=' +
+      encodeURIComponent(
+        "Hi PTOwl team,\n\nI'd like to set up an account for my clinic when sign-ups open. " +
+          "Here's a bit about us:\n\n" +
+          'Clinic name:\nWhat we do (PT / OT / SLP / other):\nApproximate patients per week:\n\n' +
+          'Thanks!',
+      );
     return (
-      <AuthCard title="Sign-up is being set up" subtitle="We're configuring the welcome flow.">
+      <AuthCard title="We're growing carefully" subtitle="Sign-ups are invite-only this week.">
         <p style={formStyles.maintenanceBody}>
-          Sign-up isn&apos;t accepting new accounts right now. Please reach out to{' '}
+          PTOwl is in early access. We&apos;re onboarding clinics one at a time so we can help you
+          get set up well. Tell us about your practice and we&apos;ll reach out when a slot opens.
+        </p>
+        <a href={waitlistHref} style={formStyles.maintenanceCTA}>
+          Join the waitlist
+        </a>
+        <p style={formStyles.maintenanceFinePrint}>
+          Or email{' '}
           <a href="mailto:help@ptowl.com" style={formStyles.maintenanceLink}>
             help@ptowl.com
           </a>{' '}
-          and we&apos;ll create your clinic account directly.
+          directly. Typical response within 24h.
         </p>
         <AuthFooterLink prefix="Already have an account?" linkText="Log In" to="/login" />
       </AuthCard>
@@ -133,5 +154,28 @@ const formStyles: Record<string, React.CSSProperties> = {
     color: 'var(--green-mid)',
     fontWeight: 600,
     textDecoration: 'none',
+  },
+  maintenanceCTA: {
+    display: 'block',
+    width: '100%',
+    boxSizing: 'border-box' as const,
+    padding: '0.875rem 1.5rem',
+    background: 'var(--green-mid)',
+    color: 'white',
+    borderRadius: 'var(--radius)',
+    fontSize: '1rem',
+    fontWeight: 600,
+    textAlign: 'center' as const,
+    textDecoration: 'none',
+    fontFamily: 'inherit',
+    marginBottom: '0.75rem',
+  },
+  maintenanceFinePrint: {
+    fontSize: '0.8rem',
+    color: 'var(--gray-text)',
+    textAlign: 'center' as const,
+    margin: 0,
+    marginBottom: '1rem',
+    lineHeight: 1.5,
   },
 };
