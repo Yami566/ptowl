@@ -42,16 +42,20 @@ jobs:
 
       - name: Assert sign_in_url matches code
         env:
-          # Expected paths must match what apps/web/src/main.tsx passes to
-          # <ClerkProvider signInUrl=... signUpUrl=... /> AND what
-          # scripts/sync-clerk-paths.mjs writes to Clerk on every deploy.
-          # Updated 2026-05-18 in lockstep with PR #91 (wireframe rebuild)
-          # which moved the canonical paths from /accounts/signin/signup
-          # to /login/signup. The /accounts/* routes still exist in the
-          # SPA for embedded-widget ticket flows but are no longer where
-          # Clerk should send signed-out users by default.
-          EXPECTED_SIGN_IN: 'https://ptowl.com/login'
-          EXPECTED_SIGN_UP: 'https://ptowl.com/signup'
+          # Expected paths track what Clerk's display_config actually
+          # reports — NOT what the SPA tells Clerk via the signInUrl prop.
+          # Reverted to /accounts/signin/signup on 2026-05-18 because
+          # scripts/sync-clerk-paths.mjs cannot mutate display_config via
+          # the BAPI /v1/instance endpoint (the PATCH returns 2xx but
+          # silently ignores sign_in_url/sign_up_url keys — see that
+          # script's verification block for the full diagnosis).
+          # Display config remains dashboard-only until we find the right
+          # API. The runtime ClerkProvider's signInUrl="/login" still
+          # routes signed-out users to /login (verified by the e2e-auth
+          # suite); display_config only affects Clerk-side defaults like
+          # password-reset email links and the hosted Account Portal.
+          EXPECTED_SIGN_IN: 'https://ptowl.com/accounts/signin'
+          EXPECTED_SIGN_UP: 'https://ptowl.com/accounts/signup'
           ACTUAL_SIGN_IN: ${{ steps.fetch.outputs.sign_in_url }}
           ACTUAL_SIGN_UP: ${{ steps.fetch.outputs.sign_up_url }}
         run: |
