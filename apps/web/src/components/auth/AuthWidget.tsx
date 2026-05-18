@@ -43,11 +43,17 @@ export function AuthWidget() {
         margin: '0 auto',
       }}
     >
-      <a href="/accounts/signin" style={primaryStyles}>
-        <span>Sign in</span>
+      {/* Wireframe §4.1 — two-CTA betraiders pattern. Primary CTA
+        points at the custom LoginPage (/login), secondary at the
+        custom SignUpFormPage (/signup). Pre-PR #60 these pointed at
+        /accounts/signin and /accounts/signup which still exist as
+        the embedded-Clerk fallback path but are no longer the
+        primary human entry. */}
+      <a href="/login" style={primaryStyles}>
+        <span>Log In</span>
       </a>
-      <a href="/accounts/signup" style={secondaryStyles}>
-        Create an account
+      <a href="/signup" style={secondaryStyles}>
+        Sign Up
       </a>
       <p style={trustNoteStyles}>Free during beta · No credit card · No PHI stored</p>
     </div>

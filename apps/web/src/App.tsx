@@ -58,6 +58,17 @@ const SignInPage = lazy(() =>
 const SignUpPage = lazy(() =>
   import('./pages/SignUpPage.js').then((m) => ({ default: m.SignUpPage })),
 );
+// Betraiders-pattern custom forms (wireframe plan §4.2/§4.3). Primary
+// human-facing entry points. /accounts/signin/* still exists for the
+// embedded Clerk ticket-consumption flow (sign-in tokens, e2e tests,
+// magic-link callbacks) but /login + /signup are what AuthWidget
+// points at and what Clerk's dashboard sign-in URLs resolve to.
+const LoginPage = lazy(() =>
+  import('./pages/LoginPage.js').then((m) => ({ default: m.LoginPage })),
+);
+const SignUpFormPage = lazy(() =>
+  import('./pages/SignUpFormPage.js').then((m) => ({ default: m.SignUpFormPage })),
+);
 const AwaitingApprovalPage = lazy(() =>
   import('./pages/AwaitingApprovalPage.js').then((m) => ({ default: m.AwaitingApprovalPage })),
 );
@@ -151,6 +162,10 @@ export function App() {
                     email, etc.) resolves under the same mount path. */}
                   <Route path="/accounts/signin/*" element={<SignInPage />} />
                   <Route path="/accounts/signup/*" element={<SignUpPage />} />
+                  {/* Wireframe §4.2/§4.3 — custom email+password forms.
+                    Primary entry points from the landing CTAs. */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignUpFormPage />} />
                   {/* Awaiting-approval landing. Auth-aware but accessible
                     to users whose D1 status is 'pending' (AuthContext
                     routes them here on PENDING_APPROVAL). Treated as
