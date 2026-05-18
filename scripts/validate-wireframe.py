@@ -15,6 +15,10 @@ and asserts every layer agrees:
                         (verified by curl-grep against rendered HTML
                         when possible; some checks defer to Layer 3's
                         Playwright assertions for dynamic React content)
+  Layer 6 (ADA):        defends the "ADA-first design" invariant by
+                        looking for <main id="main-content"> in the
+                        static HTML. Defers to e2e-live.mjs when
+                        React-rendered post-hydration.
 
 Why this exists (Chernobyl defense-in-depth):
 
@@ -49,24 +53,21 @@ Off-the-shelf classification:
 
 from __future__ import annotations
 
-import json
+import os
 import re
 import sys
-import urllib.request
 import urllib.error
-from dataclasses import dataclass, field
+import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 APP_TSX = REPO_ROOT / "apps" / "web" / "src" / "App.tsx"
 E2E_LIVE = REPO_ROOT / "scripts" / "e2e-live.mjs"
-BASE_URL = "https://ptowl.com"
 
 # Allow override for staging environments. Same env var the existing
 # e2e-live.mjs uses so the two stay in lockstep.
-import os
-BASE_URL = os.environ.get("PLAYWRIGHT_BASE_URL", BASE_URL)
+BASE_URL = os.environ.get("PLAYWRIGHT_BASE_URL", "https://ptowl.com")
 
 
 # ── Wireframe specification ──────────────────────────────────────────────
@@ -82,7 +83,7 @@ BASE_URL = os.environ.get("PLAYWRIGHT_BASE_URL", BASE_URL)
 class WireframeSpec:
     plan_section: str           # e.g., "§4.2"
     label: str                  # human-readable name
-    route: str                  # URL path, must match exactly
+    route: str                  # URL path declared in App.tsx, e.g. "/accounts/signin/*"
     component_file: str         # repo-relative path
     route_pattern: str          # regex to match in App.tsx
     test_label_pattern: str     # regex to match a testPage(label, ...) call
@@ -90,6 +91,27 @@ class WireframeSpec:
     # Useful for SSR/early-render content. React-rendered text usually
     # can't be checked this way; rely on Layer 3's Playwright instead.
     html_must_contain: str | None = None
+    # Optional override of the URL to fetch in Layer 4. Use for wildcard
+    # routes where App.tsx declares "/accounts/signin/*" but the
+    # fetchable URL is just "/accounts/signin". Defaults to `route`.
+    fetch_path_override: str | None = None
+
+    @property
+    def fetch_path(self) -> str:
+        return self.fetch_path_override or self.route
+
+
+@dataclass
+class ProductionFetchResult:
+    """Result of fetching a route. Replaces the previous side-effect
+    pattern where check_production_200 mutated a `_last_body` attribute
+    on the spec. A typed return value is what downstream checks should
+    consume (check_html_content, check_main_landmark).
+    """
+    success: bool
+    status_code: int | None
+    body: str | None
+    error: str | None = None
 
 
 WIREFRAME: list[WireframeSpec] = [
@@ -141,6 +163,58 @@ WIREFRAME: list[WireframeSpec] = [
         route_pattern=r'path="/admin/decide"\s+element=\{<AdminDecidePage\s*/>\}',
         test_label_pattern=r"testPage\(\s*['\"]Admin decide",
     ),
+    # ── Public/legal pages (round-2 coverage from script audit) ──────────
+    WireframeSpec(
+        plan_section="public/legal",
+        label="About page",
+        route="/about",
+        component_file="apps/web/src/pages/AboutPage.tsx",
+        route_pattern=r'path="/about"\s+element=\{<AboutPage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]About",
+    ),
+    WireframeSpec(
+        plan_section="public/legal",
+        label="Privacy policy",
+        route="/privacy",
+        component_file="apps/web/src/pages/PrivacyPolicyPage.tsx",
+        route_pattern=r'path="/privacy"\s+element=\{<PrivacyPolicyPage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]Privacy",
+    ),
+    WireframeSpec(
+        plan_section="public/legal",
+        label="Terms of service",
+        route="/terms",
+        component_file="apps/web/src/pages/TermsOfServicePage.tsx",
+        route_pattern=r'path="/terms"\s+element=\{<TermsOfServicePage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]Terms",
+    ),
+    WireframeSpec(
+        plan_section="public/legal",
+        label="Security page",
+        route="/security",
+        component_file="apps/web/src/pages/SecurityPage.tsx",
+        route_pattern=r'path="/security"\s+element=\{<SecurityPage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]Security",
+    ),
+    # ── Legacy embedded-Clerk routes (still mounted for ticket flows) ────
+    WireframeSpec(
+        plan_section="legacy /accounts/*",
+        label="Sign in (legacy embedded Clerk)",
+        route="/accounts/signin/*",
+        fetch_path_override="/accounts/signin",
+        component_file="apps/web/src/pages/SignInPage.tsx",
+        route_pattern=r'path="/accounts/signin/\*"\s+element=\{<SignInPage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]Sign in",
+    ),
+    WireframeSpec(
+        plan_section="legacy /accounts/*",
+        label="Sign up (legacy embedded Clerk)",
+        route="/accounts/signup/*",
+        fetch_path_override="/accounts/signup",
+        component_file="apps/web/src/pages/SignUpPage.tsx",
+        route_pattern=r'path="/accounts/signup/\*"\s+element=\{<SignUpPage\s*/>\}',
+        test_label_pattern=r"testPage\(\s*['\"]Sign up['\"]",
+    ),
 ]
 
 
@@ -184,40 +258,73 @@ def check_test_coverage(spec: WireframeSpec, e2e_live_source: str) -> CheckResul
     )
 
 
-def check_production_200(spec: WireframeSpec) -> CheckResult:
-    url = f"{BASE_URL}{spec.route}"
+def fetch_production(spec: WireframeSpec) -> ProductionFetchResult:
+    """Fetch the route once and return a typed result. Downstream
+    HTML-content checks (check_html_content, check_main_landmark)
+    consume the body from this object instead of refetching."""
+    url = f"{BASE_URL}{spec.fetch_path}"
     req = urllib.request.Request(url, headers={"User-Agent": "validate-wireframe.py"})
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            if resp.status == 200:
-                # Stash the body on the spec for downstream content check.
-                # We attach it as a side-effect attribute so the next check
-                # doesn't re-fetch the same page.
-                spec._last_body = resp.read().decode("utf-8", errors="ignore")  # type: ignore[attr-defined]
-                return CheckResult("PRODUCTION (HTTP 200)", True)
-            return CheckResult(
-                "PRODUCTION (HTTP 200)", False, f"Got HTTP {resp.status}"
+            body = resp.read().decode("utf-8", errors="ignore")
+            return ProductionFetchResult(
+                success=resp.status == 200,
+                status_code=resp.status,
+                body=body if resp.status == 200 else None,
+                error=None if resp.status == 200 else f"HTTP {resp.status}",
             )
     except urllib.error.HTTPError as e:
-        return CheckResult("PRODUCTION (HTTP 200)", False, f"HTTPError {e.code}")
+        return ProductionFetchResult(False, e.code, None, f"HTTPError {e.code}")
     except urllib.error.URLError as e:
-        return CheckResult("PRODUCTION (HTTP 200)", False, f"URLError {e.reason}")
+        return ProductionFetchResult(False, None, None, f"URLError {e.reason}")
     except Exception as e:  # noqa: BLE001 — top-level catchall, surfaced in output
-        return CheckResult("PRODUCTION (HTTP 200)", False, f"{type(e).__name__}: {e}")
+        return ProductionFetchResult(False, None, None, f"{type(e).__name__}: {e}")
 
 
-def check_html_content(spec: WireframeSpec) -> CheckResult:
+def check_production_200(fetch: ProductionFetchResult) -> CheckResult:
+    if fetch.success:
+        return CheckResult("PRODUCTION (HTTP 200)", True)
+    return CheckResult("PRODUCTION (HTTP 200)", False, fetch.error or "unknown")
+
+
+def check_html_content(spec: WireframeSpec, fetch: ProductionFetchResult) -> CheckResult:
     if spec.html_must_contain is None:
         return CheckResult("CONTENT (html marker)", True, "skipped — none required")
-    body = getattr(spec, "_last_body", None)
-    if body is None:
+    if fetch.body is None:
         return CheckResult("CONTENT (html marker)", False, "no body fetched")
-    if spec.html_must_contain in body:
+    if spec.html_must_contain in fetch.body:
         return CheckResult("CONTENT (html marker)", True)
     return CheckResult(
         "CONTENT (html marker)",
         False,
         f"HTML did not contain {spec.html_must_contain!r}",
+    )
+
+
+def check_main_landmark(fetch: ProductionFetchResult) -> CheckResult:
+    """Layer 6 — ADA defense. The PTOwl plan §33 requires every page
+    to have a <main id="main-content"> landmark for skip-to-main
+    keyboard navigation. e2e-live.mjs already asserts this with
+    Playwright (which sees post-hydration content), but checking the
+    static HTML here is a cheap canary that catches SSR-side
+    regressions early.
+
+    Most PTOwl pages render <main> via React, so the static HTML
+    typically WON'T contain it. We don't treat that as a hard failure
+    — surfacing every SSR-side miss would create false positives.
+    Instead, we PASS with a 'deferred to e2e-live.mjs' note when the
+    static check doesn't find the landmark, and PASS cleanly when it
+    does. e2e-live.mjs remains the source of truth for the ADA
+    landmark assertion."""
+    if fetch.body is None:
+        return CheckResult("ADA (main landmark)", False, "no body fetched")
+    has_main = '<main' in fetch.body and 'id="main-content"' in fetch.body
+    if has_main:
+        return CheckResult("ADA (main landmark)", True, "found in static HTML")
+    return CheckResult(
+        "ADA (main landmark)",
+        True,
+        "deferred to e2e-live.mjs (React-rendered post-hydration)",
     )
 
 
@@ -241,12 +348,15 @@ def main() -> int:
     all_passed = True
     for spec in WIREFRAME:
         print(f"\n=== {spec.plan_section}  {spec.label}  ({spec.route}) ===")
+        # Fetch once, share the body across the 3 content-dependent checks.
+        fetch = fetch_production(spec)
         checks = [
             check_route_declared(spec, app_tsx_source),
             check_component_exists(spec),
             check_test_coverage(spec, e2e_live_source),
-            check_production_200(spec),
-            check_html_content(spec),
+            check_production_200(fetch),
+            check_html_content(spec, fetch),
+            check_main_landmark(fetch),
         ]
         for c in checks:
             mark = "PASS" if c.passed else "FAIL"

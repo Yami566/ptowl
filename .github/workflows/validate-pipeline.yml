@@ -1,0 +1,98 @@
+name: Validate pipeline — wireframe, PHI, IDE-noise
+
+# Unified Python-based defense-in-depth gate. Three jobs:
+#
+#   validate-wireframe (gate)  — cross-layer wireframe spec ↔ code ↔
+#                                tests ↔ production sync. Blocks merge.
+#   audit-phi          (gate)  — scans for PHI-suggestive identifiers
+#                                in production source. Defends PTOwl's
+#                                "no PHI stored" invariant. Blocks merge.
+#   diagnose-ide       (warn)  — estimates IDE Problems panel noise.
+#                                continue-on-error: true so it doesn't
+#                                gate merge — informational signal only.
+#
+# Previously named validate-wireframe.yml. Renamed when audit-phi and
+# diagnose-ide jobs were added — the file's scope outgrew its name.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'scripts/validate-wireframe.py'
+      - 'scripts/audit-phi.py'
+      - 'scripts/diagnose-ide-problems.py'
+      - 'scripts/e2e-live.mjs'
+      - '.cspell.json'
+      - '.markdownlint.json'
+      - '.github/workflows/validate-pipeline.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'scripts/validate-wireframe.py'
+      - 'scripts/audit-phi.py'
+      - 'scripts/diagnose-ide-problems.py'
+      - 'scripts/e2e-live.mjs'
+      - '.cspell.json'
+      - '.markdownlint.json'
+      - '.github/workflows/validate-pipeline.yml'
+  schedule:
+    # Hourly canary so the gates run even when no PRs land — catches
+    # Cloudflare rollback drift, accidental main-branch force-pushes,
+    # or a new commit that silently introduces a PHI-shaped field.
+    - cron: '15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: validate-pipeline-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-wireframe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run validate-wireframe.py
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/validate-wireframe.py
+
+  audit-phi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run audit-phi.py
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/audit-phi.py
+
+  diagnose-ide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    # Warn-only. This job exists to surface IDE-noise trends in PRs;
+    # the markdown gate already exits 1 if MD-warnings exceed budget,
+    # but we never want IDE-noise to block a code merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Run diagnose-ide-problems.py
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python scripts/diagnose-ide-problems.py
