@@ -1,0 +1,31 @@
+{
+  "// purpose": "F5 debugger configs for PTOwl. Pair with the Dev API / Dev Web tasks in tasks.json — start the dev server first, then attach the debugger via F5 or the Run & Debug panel.",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API (attach to wrangler)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "// note": "Wrangler dev opens an inspector on 9229 by default. Start it first with the 'Dev API (wrangler)' task or `pnpm dev:api`, then F5 here.",
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"],
+      "presentation": {
+        "group": "ptowl",
+        "order": 1
+      }
+    },
+    {
+      "name": "Debug Web (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/apps/web",
+      "// note": "Start the Vite dev server first via the 'Dev Web (Vite)' task or `pnpm dev:web`, then F5 launches Chrome attached to the React app with source maps wired up.",
+      "presentation": {
+        "group": "ptowl",
+        "order": 2
+      }
+    }
+  ]
+}

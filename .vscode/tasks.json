@@ -1,0 +1,75 @@
+{
+  "// purpose": "Repo-defined VS Code tasks so contributors can run the most-used pnpm scripts with Ctrl+Shift+B (Verify all) or Ctrl+Shift+P > Tasks: Run Task. Mirrors package.json scripts but exposes them in the Command Palette so they don't get lost.",
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Verify all",
+      "detail": "Run every gate before pushing: typecheck + unit tests + wireframe validator + PHI auditor + e2e-live",
+      "type": "shell",
+      "command": "pnpm typecheck && pnpm test:unit && pnpm validate:wireframe && pnpm audit:phi && pnpm test:e2e",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev API (wrangler)",
+      "detail": "Start the API Worker dev server on http://localhost:8787",
+      "type": "shell",
+      "command": "pnpm dev:api",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev Web (Vite)",
+      "detail": "Start the React dev server on http://localhost:5173",
+      "type": "shell",
+      "command": "pnpm dev:web",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Build all",
+      "detail": "pnpm -r build across all workspaces",
+      "type": "shell",
+      "command": "pnpm build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint",
+      "type": "shell",
+      "command": "pnpm lint",
+      "problemMatcher": []
+    },
+    {
+      "label": "Diagnose IDE noise",
+      "detail": "Run the Python diagnostic for VS Code Problems-panel signal",
+      "type": "shell",
+      "command": "pnpm diagnose:ide",
+      "problemMatcher": []
+    },
+    {
+      "label": "Audit PHI",
+      "detail": "Scan source for PHI-suggestive identifiers (no-PHI invariant)",
+      "type": "shell",
+      "command": "pnpm audit:phi",
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate wireframe",
+      "detail": "Cross-layer wireframe ↔ code ↔ tests ↔ production sync check",
+      "type": "shell",
+      "command": "pnpm validate:wireframe",
+      "problemMatcher": []
+    }
+  ]
+}
