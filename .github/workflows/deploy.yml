@@ -71,7 +71,7 @@ jobs:
       # has no side effects on a healthy token; it only surfaces a
       # broken token before the destructive step runs.
       - name: Pre-deploy — verify D1 token scope
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -83,7 +83,7 @@ jobs:
       # is idempotent on every deploy. Without this step, schema changes
       # ship without a corresponding DB update and the new Worker breaks.
       - name: Apply D1 migrations (production)
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -91,7 +91,7 @@ jobs:
           command: d1 migrations apply ptowl-db --remote
 
       - name: Deploy API to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -116,7 +116,7 @@ jobs:
       # Continue-on-error removed so future failures surface
       # immediately instead of silently dropping frontend changes.
       - name: Deploy Frontend to Cloudflare Workers (static assets)
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
