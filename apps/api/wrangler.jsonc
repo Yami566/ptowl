@@ -19,22 +19,24 @@
   "placement": {
     "mode": "smart"
   },
-  // Cloudflare Queues — producer-side binding for the upcoming
-  // MailChannels retry queue. The type was already declared in
-  // src/types/env.ts (EMAIL_QUEUE?: Queue<any>) but unmapped, so the
-  // type-system was lying. Adding the binding here makes it honest.
-  // The consumer Worker that drains the queue with retry/backoff/DLQ
-  // is intentionally deferred to a follow-up PR — see the TODO in
-  // src/services/reminders.ts. Until the consumer ships, no code
-  // produces to this queue.
-  "queues": {
-    "producers": [
-      {
-        "queue": "ptowl-reminders",
-        "binding": "EMAIL_QUEUE"
-      }
-    ]
-  },
+  // Cloudflare Queues binding — DEFERRED on 2026-05-18.
+  //
+  // Was added in PR #97, but wrangler deploy fails when a producer
+  // binding references a queue that doesn't exist on Cloudflare yet
+  // (error: 'Queue "ptowl-reminders" does not exist'). Creating the
+  // queue requires a user-side click-op or a `wrangler queues create
+  // ptowl-reminders` invocation with CLOUDFLARE_API_TOKEN — neither
+  // of which can happen inside this PR's commit.
+  //
+  // Re-enable order:
+  //   1. User runs: `cd apps/api && wrangler queues create ptowl-reminders`
+  //                 and `... wrangler queues create ptowl-reminders-staging`
+  //   2. Re-add the queues block below
+  //   3. Re-add the matching block under env.staging
+  //   4. Ship the consumer Worker in the same PR (drains, retries,
+  //      DLQ) so the binding has a purpose
+  //
+  // Until then, the env.ts EMAIL_QUEUE type stays declared-but-unmapped.
   "triggers": {
     // 15-minute granularity to drive 24h + 1h reminder windows.
     // The cron handler also runs the daily cleanup tasks once per day
@@ -118,19 +120,11 @@
       // Override routes to empty — staging uses *.workers.dev URL only
       "routes": [],
       "workers_dev": true,
-      // Mirror production's Smart Placement + queue binding so staging
-      // is a faithful test bed for the production wiring. Without these,
-      // staging behaviour would diverge from production silently.
+      // Mirror production's Smart Placement. Queue binding is deferred
+      // per the comment in the top-level config — re-add here in
+      // lockstep when the queue is created on Cloudflare.
       "placement": {
         "mode": "smart"
-      },
-      "queues": {
-        "producers": [
-          {
-            "queue": "ptowl-reminders-staging",
-            "binding": "EMAIL_QUEUE"
-          }
-        ]
       }
       // Secrets must be set separately: wrangler secret put JWT_SECRET --env staging
     }
