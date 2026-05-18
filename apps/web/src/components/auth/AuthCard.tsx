@@ -22,7 +22,12 @@ interface AuthCardProps {
 
 export function AuthCard({ title, subtitle, children }: AuthCardProps) {
   return (
-    <main style={styles.page}>
+    // id="main-content" pairs with the skip-to-main link in App.tsx so
+    // keyboard users can jump past the chrome to the form. Pre-this-fix
+    // the <main> was here but unaddressable — the skip link had no
+    // target on auth pages. Caught by e2e-live's mode-tolerant check
+    // on /login + /signup maintenance cards 2026-05-18.
+    <main id="main-content" style={styles.page}>
       <div style={styles.card}>
         <div style={styles.header}>
           <div style={styles.wordmark}>
