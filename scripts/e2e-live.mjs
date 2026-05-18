@@ -130,12 +130,18 @@ await testPage('Landing', '/', async (page) => {
     const has = await page.locator('text=/PTowl|PTOwl/i').first().isVisible();
     if (!has) throw new Error('wordmark missing');
   });
-  await check('/ has at least one sign-in or sign-up CTA', async () => {
-    const has =
-      (await page
-        .locator('a[href*="/accounts/signin"], a[href*="/accounts/signup"], button:has-text("Sign")')
-        .count()) > 0;
-    if (!has) throw new Error('no auth CTA on landing');
+  // Wireframe plan §4.1 — two CTAs pointing at the betraiders-pattern
+  // custom forms. Pre-#91 these pointed at /accounts/signin; this
+  // assertion is the Chernobyl-class canary that catches a regression
+  // where the landing reverts to the embedded-Clerk flow without us
+  // noticing (HTTP 200 on / is not sufficient — content must match).
+  await check('/ has Log In CTA pointing at /login', async () => {
+    const has = (await page.locator('a[href="/login"]').count()) > 0;
+    if (!has) throw new Error('no a[href="/login"] on landing — wireframe regression');
+  });
+  await check('/ has Sign Up CTA pointing at /signup', async () => {
+    const has = (await page.locator('a[href="/signup"]').count()) > 0;
+    if (!has) throw new Error('no a[href="/signup"] on landing — wireframe regression');
   });
 });
 
@@ -190,6 +196,55 @@ await testPage('Sign up', '/accounts/signup', async (page) => {
   await check('/accounts/signup has the broken-browser fallback link', async () => {
     const has = await page.getByText(/sign up directly/i).count();
     if (has === 0) throw new Error('fallback link not rendered');
+  });
+});
+
+// ── Wireframe-aligned routes (PR #91) ─────────────────────────────────────
+// Defense-in-depth: these tests prove the betraiders-pattern custom
+// forms actually render the right content, not just return HTTP 200.
+// A regression where /login renders blank or shows the wrong copy
+// fails here, even if curl reports 200 OK.
+
+await testPage('Login (wireframe §4.2)', '/login', async (page) => {
+  await check('/login renders the email field', async () => {
+    const has = await page.locator('input[type="email"]').count();
+    if (has === 0) throw new Error('email input missing — LoginPage did not render');
+  });
+  await check('/login renders the password field', async () => {
+    const has = await page.locator('input[type="password"]').count();
+    if (has === 0) throw new Error('password input missing — LoginPage did not render');
+  });
+  await check('/login has primary "Log In" submit button', async () => {
+    const has = await page.locator('button[type="submit"]:has-text("Log In")').count();
+    if (has === 0) throw new Error('Log In submit button missing');
+  });
+  await check('/login footer links to /signup', async () => {
+    const has = await page.locator('a[href="/signup"]').count();
+    if (has === 0) throw new Error('footer link to /signup missing');
+  });
+});
+
+await testPage('Sign up (wireframe §4.3)', '/signup', async (page) => {
+  await check('/signup renders the clinic name field', async () => {
+    // ClinicNameField is a labeled text input. Match by accessible label.
+    const has = await page.getByLabel(/clinic name/i).count();
+    if (has === 0) throw new Error('clinic name field missing — SignUpFormPage did not render');
+  });
+  await check('/signup renders the email field', async () => {
+    const has = await page.locator('input[type="email"]').count();
+    if (has === 0) throw new Error('email input missing — SignUpFormPage did not render');
+  });
+  await check('/signup renders the password field', async () => {
+    const has = await page.locator('input[type="password"]').count();
+    if (has === 0) throw new Error('password input missing — SignUpFormPage did not render');
+  });
+  await check('/signup has primary "Sign Up" submit button', async () => {
+    const has = await page.locator('button[type="submit"]:has-text("Sign Up")').count();
+    if (has === 0) throw new Error('Sign Up submit button missing');
+  });
+  await check('/signup footer links to /login', async () => {
+    const has = await page.locator('a[href="/login"]').count();
+    if (has === 0) throw new Error('footer link to /login missing');
   });
 });
 

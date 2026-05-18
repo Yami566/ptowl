@@ -1,0 +1,29 @@
+{
+  "// reason": "Repo-level VS Code settings so every contributor sees the same Problems-panel signal instead of project-jargon noise. Backs up .cspell.json + .markdownlint.json.",
+  "cSpell.enabled": true,
+  "cSpell.import": [".cspell.json"],
+  "markdownlint.config": {
+    "extends": ".markdownlint.json"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "// docs-noise-reduction": "Don't run the spell-checker on lockfiles, build output, snapshots, or generated artifacts — they generate hundreds of false positives.",
+  "cSpell.ignorePaths": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.wrangler/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "**/build/**",
+    "**/e2e-artifacts/**",
+    "pnpm-lock.yaml",
+    "**/*.lock",
+    "**/*.snap"
+  ]
+}
