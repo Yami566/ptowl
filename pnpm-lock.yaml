@@ -33,14 +33,14 @@ importers:
   apps/api:
     dependencies:
       '@hono/zod-validator':
-        specifier: ^0.7.6
-        version: 0.7.6(hono@4.12.18)(zod@4.4.3)
+        specifier: ^0.8.0
+        version: 0.8.0(hono@4.12.19)(zod@4.4.3)
       '@ptowl/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       hono:
-        specifier: ^4.6.0
-        version: 4.12.18
+        specifier: ^4.12.19
+        version: 4.12.19
       ical-generator:
         specifier: ^10.2.0
         version: 10.2.0(@types/node@25.6.0)(rrule@2.8.1)
@@ -67,8 +67,8 @@ importers:
         specifier: ^5.61.6
         version: 5.61.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@clerk/localizations':
-        specifier: ^4.6.4
-        version: 4.6.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^4.6.6
+        version: 4.6.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@fullcalendar/core':
         specifier: ^6.1.20
         version: 6.1.20
@@ -106,8 +106,8 @@ importers:
         specifier: ^3.5.0
         version: 3.5.0(react@19.2.6)
       react-router-dom:
-        specifier: ^7.1.0
-        version: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -198,8 +198,8 @@ packages:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
       react-dom: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
 
-  '@clerk/localizations@4.6.4':
-    resolution: {integrity: sha512-SMc/Wilj/DLonV+t2c37mV7Ey4y2xomxYdz79mFl3EkoSAB+CGsr8G882LGEwmSFdYwmoD45GsASJxBtwZ0ZyA==}
+  '@clerk/localizations@4.6.6':
+    resolution: {integrity: sha512-lRuwXAklgVedHQ5dbeMjX8xX2PDzSrHA+YgrXsuLDEl38UHKLQtBeCa3/RjmdRGxZrr0UsaP7sQb6dxoQZFslw==}
     engines: {node: '>=20.9.0'}
 
   '@clerk/shared@3.47.5':
@@ -214,8 +214,8 @@ packages:
       react-dom:
         optional: true
 
-  '@clerk/shared@4.12.0':
-    resolution: {integrity: sha512-LEe3lpi1r2DhFH9FuqzVrDQ2UkQJ3TA6XkkqnfHHRBfAJdh+jnYXYiivQpj3znMCihm3FVLOMXcpSqBz80XoQg==}
+  '@clerk/shared@4.12.2':
+    resolution: {integrity: sha512-jDkip8tKTzYz/cPKMCsjOoACH3Xh37zcbCrssMRTYOq3GZypIpZ6WAs4m4G82URL0WY+yz5frrHVjRrHyAb6LA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -748,10 +748,10 @@ packages:
     peerDependencies:
       '@fullcalendar/core': ~6.1.20
 
-  '@hono/zod-validator@0.7.6':
-    resolution: {integrity: sha512-Io1B6d011Gj1KknV4rXYz4le5+5EubcWEU/speUjuw9XMMIaP3n78yXLhjd2A3PXaXaUwEAluOiAyLqhBEJgsw==}
+  '@hono/zod-validator@0.8.0':
+    resolution: {integrity: sha512-5uS4S1/LKtZQYvD4BtpPUFkOv8d1wNxHHrChm26buMiEYc1FrHWvDUaKVBwkiVtvSExHSpLGDvcnpI2Copyj9w==}
     peerDependencies:
-      hono: '>=3.9.0'
+      hono: '>=4.10.0'
       zod: ^3.25.0 || ^4.0.0
 
   '@img/colour@1.1.0':
@@ -1233,6 +1233,9 @@ packages:
   '@tanstack/query-core@5.100.10':
     resolution: {integrity: sha512-8UR0yJR+GiQ40m3lPhUr0xbfAupe6GSQiksSBSa9SM2NjezFyxXCIA69/lz8cSoNKZLrw1/PktIyQBJcVeMi3w==}
 
+  '@tanstack/query-core@5.100.11':
+    resolution: {integrity: sha512-lmE0994apShXPj8CUxgx4ch5yUJhE9k/+tVwihBvPOyerACWdBocfFg24t8+0RhtlTd7tEgchDkhlCxNssvDxw==}
+
   '@tanstack/react-query@5.100.10':
     resolution: {integrity: sha512-FLaZf2RCrA/Zgp4aiu5tG3TyasTRO7aZ99skxQpr3Hg/zXOhu6yq5FZCYQ/tRaJtM9ylnoK8tFK7PolXQadv6Q==}
     peerDependencies:
@@ -1542,8 +1545,8 @@ packages:
     resolution: {integrity: sha512-1pgFdhK3J2LeM+dVf2Pd424yHx2ou338lC0ErNP2hPx4j8eW1Sp0XqSjNxtk6Tc4Kr5wlWtSvz8cn2yb7/SG/w==}
     engines: {node: '>=20'}
 
-  hono@4.12.18:
-    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
+  hono@4.12.19:
+    resolution: {integrity: sha512-xa3eYXYXx68XTT4hZ7dRzsXBhaq85ToSrlUJNoR0gwz/1Ap/CNwX47wfvV7pc/xWhjKVVkLT7zBJy8chhNguqQ==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@6.0.0:
@@ -1867,15 +1870,15 @@ packages:
       '@types/react':
         optional: true
 
-  react-router-dom@7.15.0:
-    resolution: {integrity: sha512-VcrVg64Fo8nwBvDscajG8gRTLIuTC6N50nb22l2HOOV4PTOHgoGp8mUjy9wLiHYoYTSYI36tUnXZgasSRFZorQ==}
+  react-router-dom@7.15.1:
+    resolution: {integrity: sha512-AzF62gjY6U9rkMq4RfP/r2EVtQ7DMfNMjyOp/flLTCrtRylLiK4wT4pSq6O8rOXZ2eXdZYJPEYe+ifomiv+Igg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
 
-  react-router@7.15.0:
-    resolution: {integrity: sha512-HW9vYwuM8f4yx66Izy8xfrzCM+SBJluoZcCbww9A1TySax11S5Vgw6fi3ZjMONw9J4gQwngL7PzkyIpJJpJ7RQ==}
+  react-router@7.15.1:
+    resolution: {integrity: sha512-R8rl9HhgikFYoPJymnUtPXWbnDb3oget6lQnfIoupbt61aT9aOhRkDsY2XRhZRyX1Z/8a5sL74fXmFNm3NRK5A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -2304,9 +2307,9 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       tslib: 2.8.1
 
-  '@clerk/localizations@4.6.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@clerk/localizations@4.6.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@clerk/shared': 4.12.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@clerk/shared': 4.12.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     transitivePeerDependencies:
       - react
       - react-dom
@@ -2323,9 +2326,9 @@ snapshots:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@clerk/shared@4.12.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@clerk/shared@4.12.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@tanstack/query-core': 5.100.10
+      '@tanstack/query-core': 5.100.11
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
       js-cookie: 3.0.5
@@ -2700,9 +2703,9 @@ snapshots:
       '@fullcalendar/core': 6.1.20
       '@fullcalendar/daygrid': 6.1.20(@fullcalendar/core@6.1.20)
 
-  '@hono/zod-validator@0.7.6(hono@4.12.18)(zod@4.4.3)':
+  '@hono/zod-validator@0.8.0(hono@4.12.19)(zod@4.4.3)':
     dependencies:
-      hono: 4.12.18
+      hono: 4.12.19
       zod: 4.4.3
 
   '@img/colour@1.1.0': {}
@@ -3061,6 +3064,8 @@ snapshots:
 
   '@tanstack/query-core@5.100.10': {}
 
+  '@tanstack/query-core@5.100.11': {}
+
   '@tanstack/react-query@5.100.10(react@19.2.6)':
     dependencies:
       '@tanstack/query-core': 5.100.10
@@ -3391,7 +3396,7 @@ snapshots:
     dependencies:
       ini: 6.0.0
 
-  hono@4.12.18: {}
+  hono@4.12.19: {}
 
   html-encoding-sniffer@6.0.0:
     dependencies:
@@ -3660,13 +3665,13 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  react-router-dom@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  react-router-dom@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
-      react-router: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      react-router: 7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
 
-  react-router@7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       cookie: 1.1.1
       react: 19.2.6
