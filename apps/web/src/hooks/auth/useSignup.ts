@@ -66,6 +66,19 @@ function mapClerkError(err: unknown): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyErr = err as any;
   const first = anyErr?.errors?.[0];
+  // Defense against the 2026-05-18 user-screenshot incident: when the
+  // Clerk dashboard has email auth disabled, signUp.create rejects
+  // with code 'form_param_unknown' + a message that includes the raw
+  // dashboard URL. Catch that specific shape and render friendly
+  // copy so end-users never see Clerk's internal URL. The form-mount
+  // probe in SignUpFormPage SHOULD prevent the submit from happening
+  // at all (90% of the time), but this is the belt-and-suspenders
+  // for when the 60-second strategies cache is stale and a user
+  // submits mid-config-change.
+  const msg: string = first?.message || first?.longMessage || '';
+  if (first?.code === 'form_param_unknown' && /email_address/i.test(msg)) {
+    return "Sign-up isn't accepting email accounts right now. Contact help@ptowl.com for assistance.";
+  }
   if (first?.longMessage) return first.longMessage;
   if (first?.message) return first.message;
   if (anyErr?.message) return anyErr.message;
