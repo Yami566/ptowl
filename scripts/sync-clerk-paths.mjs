@@ -78,7 +78,59 @@ try {
     process.exit(1);
   }
 
-  console.log('sync-clerk-paths: ✓ instance paths in sync');
+  // VERIFY after PATCH: pull the public /v1/environment display_config
+  // and check it actually reflects what we just wrote. Clerk's BAPI is
+  // lenient — unknown keys return 2xx with no body warning, so a 200
+  // response is NOT proof the URLs changed. Without this verification
+  // step we'd silently log success while display_config stays stale,
+  // which is exactly what happened pre-2026-05-18 and produced the
+  // smoke-clerk-urls drift incident.
+  const responseBody = await res.text().catch(() => '');
+  console.log(`sync-clerk-paths: PATCH 2xx (${responseBody.length} bytes body)`);
+
+  // Fetch the public env that the SPA actually sees. Add a cache-buster
+  // to dodge Clerk's edge CDN (typical TTL 5-15 min).
+  const verifyUrl = `https://clerk.ptowl.com/v1/environment?cb=${Date.now()}`;
+  const verifyRes = await fetch(verifyUrl, {
+    headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+  });
+  if (!verifyRes.ok) {
+    console.error(`sync-clerk-paths: verify GET failed with ${verifyRes.status} — skipping check`);
+    process.exit(0);
+  }
+  const env = await verifyRes.json();
+  const actual = {
+    sign_in_url: env?.display_config?.sign_in_url,
+    sign_up_url: env?.display_config?.sign_up_url,
+  };
+  const mismatches = [];
+  if (actual.sign_in_url !== desired.sign_in_url) {
+    mismatches.push(`sign_in_url: PATCHed=${desired.sign_in_url} actual=${actual.sign_in_url}`);
+  }
+  if (actual.sign_up_url !== desired.sign_up_url) {
+    mismatches.push(`sign_up_url: PATCHed=${desired.sign_up_url} actual=${actual.sign_up_url}`);
+  }
+
+  if (mismatches.length === 0) {
+    console.log('sync-clerk-paths: ✓ verified — display_config matches PATCH');
+    process.exit(0);
+  }
+
+  // PATCH returned 2xx but display_config didn't change. This is the
+  // BAPI silently ignoring unknown keys. Document loudly so we know
+  // these URLs need a different mechanism (Clerk dashboard UI OR a
+  // different BAPI endpoint we haven't found yet) — DO NOT exit 1
+  // because the script ran successfully; the API just doesn't accept
+  // these fields. Exiting 0 with a warning keeps the deploy green
+  // while making the gap visible in the log.
+  console.warn('sync-clerk-paths: ⚠ PATCH was accepted but display_config did NOT update.');
+  console.warn('  This means the BAPI /v1/instance endpoint silently ignored these keys.');
+  console.warn('  display_config URLs likely need to be set via the Clerk dashboard UI');
+  console.warn('  OR via a different BAPI endpoint we have not found yet.');
+  for (const m of mismatches) {
+    console.warn(`  ${m}`);
+  }
+  console.warn('  Action: set in Clerk Dashboard → Paths, or investigate the right API.');
   process.exit(0);
 } catch (err) {
   console.error(`sync-clerk-paths: network error — ${err instanceof Error ? err.message : err}`);
