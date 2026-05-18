@@ -186,6 +186,31 @@ async function runAgainstBrowser(browserName, ticket) {
   let failed = 0;
   const failures = [];
 
+  // On first failure, snapshot the page so CI can upload it as an
+  // artifact. One snapshot per browser is enough — the first failure is
+  // almost always the proximate cause, and subsequent checks usually
+  // cascade from the same broken state. Capturing every failure would
+  // bloat the artifact and confuse the diagnosis.
+  const artifactsDir = process.env.E2E_ARTIFACTS_DIR || './e2e-artifacts';
+  let snapshottedThisRun = false;
+
+  async function snapshotOnFailure(checkName) {
+    if (snapshottedThisRun) return;
+    snapshottedThisRun = true;
+    const safe = checkName.replace(/[^a-z0-9]+/gi, '-').slice(0, 60);
+    const stem = `${browserName}-${safe}`;
+    try {
+      const fs = await import('node:fs/promises');
+      await fs.mkdir(artifactsDir, { recursive: true });
+      await page.screenshot({ path: `${artifactsDir}/${stem}.png`, fullPage: true });
+      const html = await page.content();
+      await fs.writeFile(`${artifactsDir}/${stem}.html`, html);
+      console.log(`      📸 snapshot saved: ${artifactsDir}/${stem}.{png,html}`);
+    } catch (snapErr) {
+      console.log(`      (snapshot failed: ${snapErr.message})`);
+    }
+  }
+
   async function check(name, fn) {
     try {
       await fn();
@@ -197,6 +222,7 @@ async function runAgainstBrowser(browserName, ticket) {
       failures.push({ name, msg });
       console.log(`  ✗ ${name}`);
       console.log(`      ${msg}`);
+      await snapshotOnFailure(name);
     }
   }
 
